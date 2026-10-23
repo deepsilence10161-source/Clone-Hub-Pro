@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/coordinator"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark">
+
+    <!-- Top App Bar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/topAppBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface_dark"
+        android:fitsSystemWindows="true">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dp_56"
+            app:title="@string/app_name"
+            app:titleTextColor="@color/white">
+
+            <!-- Space Selector in Toolbar (< 1 >) -->
+            <LinearLayout
+                android:id="@+id/spaceContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="end|center_vertical"
+                android:layout_marginEnd="@dimen/margin_small"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btnPrevSpace"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/baseline_arrow_left_24"
+                    app:tint="@color/colorPrimary" />
+
+                <TextView
+                    android:id="@+id/tvSpaceIndicator"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="32dp"
+                    android:gravity="center"
+                    android:text="1"
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btnNextSpace"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/baseline_arrow_right_24"
+                    app:tint="@color/colorPrimary" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/btnSettings"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_action_setting"
+                    app:tint="@color/white" />
+            </LinearLayout>
+        </com.google.android.material.appbar.MaterialToolbar>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Content Area -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <!-- ViewPager2 for Swiping Between Spaces -->
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPagerSpaces"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingStart="@dimen/dp_12"
+            android:paddingEnd="@dimen/dp_12"
+            android:paddingTop="@dimen/dp_16"
+            android:paddingBottom="80dp" />
+
+        <!-- Empty State Hint -->
+        <LinearLayout
+            android:id="@+id/layoutEmpty"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_action_install"
+                app:tint="@color/text_secondary_dark" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/empty_space_hint"
+                android:textColor="@color/text_secondary_dark"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Loading Spinner -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:indeterminateTint="@color/colorPrimary"
+            android:visibility="gone" />
+    </RelativeLayout>
+
+    <!-- Floating Action Button for Adding Apps -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="@dimen/margin_normal"
+        android:backgroundTint="@color/colorPrimary"
+        android:src="@drawable/ic_action_add_24"
+        app:elevation="6dp"
+        app:fabSize="normal"
+        app:tint="@color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

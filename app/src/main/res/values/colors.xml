@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand Primary Colors (Matching Clone Hub Exactly) -->
+    <color name="colorPrimary">#00C3CC</color>
+    <color name="colorPrimaryDark">#0097A7</color>
+    <color name="colorPrimaryContainer">#1A00C3CC</color>
+    <color name="colorOnPrimary">#FFFFFF</color>
+    <color name="colorAccent">#00E5FF</color>
+    <color name="green">#00C3CC</color>
+    <color name="home_mask_color">#00C3CC</color>
+
+    <!-- Background and Surface Colors -->
+    <color name="background_dark">#121212</color>
+    <color name="surface_dark">#1E1E1E</color>
+    <color name="surface_variant_dark">#2A2A2A</color>
+    <color name="background_light">#F8F9FA</color>
+    <color name="surface_light">#FFFFFF</color>
+    <color name="surface_variant_light">#F1F3F4</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary_dark">#FFFFFF</color>
+    <color name="text_secondary_dark">#B0B0B0</color>
+    <color name="text_primary_light">#202124</color>
+    <color name="text_secondary_light">#5F6368</color>
+
+    <!-- System & UI Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="error_red">#FF5252</color>
+    <color name="badge_space">#00C3CC</color>
+    <color name="divider">#33FFFFFF</color>
+    <color name="ripple_color">#3300C3CC</color>
+</resources>

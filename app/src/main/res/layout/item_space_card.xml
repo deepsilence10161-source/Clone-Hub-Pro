@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardSpace"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="8dp"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    app:cardBackgroundColor="@color/surface_dark"
+    app:cardCornerRadius="@dimen/dp_12"
+    app:cardElevation="2dp"
+    app:contentPadding="12dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <!-- Top Header: Space Badge and Menu -->
+        <RelativeLayout
+            android:id="@+id/headerContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp">
+
+            <!-- Diagonal/Pill Space Tag Badge -->
+            <TextView
+                android:id="@+id/tvSpaceBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_permission_step"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="Space 1"
+                android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <!-- Card Menu Button -->
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btnSpaceMenu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_action_menu"
+                app:tint="@color/colorPrimary" />
+        </RelativeLayout>
+
+        <!-- RecyclerView Grid (4 Columns of Cloned Apps) -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerAppsGrid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@+id/headerContainer"
+            android:overScrollMode="never" />
+
+    </RelativeLayout>
+</androidx.cardview.widget.CardView>

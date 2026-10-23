@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Clone Hub Pro</string>
+    <string name="space_format">Space %1$d</string>
+    <string name="action_add">Add App</string>
+    <string name="action_app_hide">Hide app</string>
+    <string name="action_app_show">Show app</string>
+    <string name="action_clean">Clear data</string>
+    <string name="action_clear_storage">Clear Storage</string>
+    <string name="action_clone_next">Clone next space</string>
+    <string name="action_create_shortcut">Create shortcut</string>
+    <string name="action_force_stop">Force stop</string>
+    <string name="action_icon_fake">Icon Fake</string>
+    <string name="action_install">Install</string>
+    <string name="action_install_app">Install App</string>
+    <string name="action_plugins">Manage Plugin</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_reset_device">Reset Device</string>
+    <string name="action_reset_only">Just Reset</string>
+    <string name="action_search">Search apps</string>
+    <string name="action_share">Share</string>
+    <string name="action_uninstall">Uninstall</string>
+    <string name="action_view_mode">View Mode</string>
+    <string name="action_launch">Open</string>
+
+    <!-- Chips -->
+    <string name="chip_user">User</string>
+    <string name="chip_system">System</string>
+
+    <!-- Customize dialog -->
+    <string name="apps_change_icon_source">Select icon source</string>
+    <string name="apps_change_reset">Reset</string>
+    <string name="apps_change_from_host">System icon</string>
+    <string name="apps_change_from_photo">Album icon</string>
+    <string name="apps_tag_hint">App name / Tag</string>
+    <string name="positive">Save</string>
+    <string name="negative">Cancel</string>
+
+    <!-- Permission Guide -->
+    <string name="apps_permission_guide_title">Allow access to the app list</string>
+    <string name="apps_permission_guide_message">MIUI/HyperOS may block reading installed apps. Allow the app list permission, then come back to continue.</string>
+    <string name="apps_permission_guide_step_open">Open Clone Hub permission settings.</string>
+    <string name="apps_permission_guide_step_allow">Go to Permissions and allow Get installed apps.</string>
+    <string name="apps_permission_guide_step_retry">Return to Clone Hub and refresh.</string>
+    <string name="apps_permission_guide_open_settings">Open Settings</string>
+    <string name="app_retry">Retry</string>
+    <string name="empty_space_hint">Tap + to clone apps in this space</string>
+</resources>

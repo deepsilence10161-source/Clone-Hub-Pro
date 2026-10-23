@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface_dark"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Top title and reset -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/apps_change_icon_source"
+            android:textColor="@color/colorPrimary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnReset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="4dp"
+            android:text="@string/apps_change_reset"
+            android:textColor="@color/colorPrimary"
+            android:textSize="14sp" />
+    </RelativeLayout>
+
+    <!-- Current Icon Preview -->
+    <ImageView
+        android:id="@+id/ivCustomPreview"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Source Selection: System Icon vs Album Icon -->
+    <LinearLayout
+        android:id="@+id/btnSourceSystem"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/apps_change_from_host"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/btnSourceGallery"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/apps_change_from_photo"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Name / Tag Input -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/tilAppName"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="@string/apps_tag_hint"
+        app:boxStrokeColor="@color/colorPrimary"
+        app:hintTextColor="@color/colorPrimary">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/etAppName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:singleLine="true"
+            android:textColor="@color/white" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:gravity="end"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnCancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/negative"
+            android:textColor="@color/text_secondary_dark" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:backgroundTint="@color/colorPrimary"
+            android:text="@string/positive"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</LinearLayout>

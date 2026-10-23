@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- App Icon Container with Badge -->
+    <FrameLayout
+        android:layout_width="54dp"
+        android:layout_height="54dp">
+
+        <ImageView
+            android:id="@+id/ivAppIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:contentDescription="App Icon" />
+
+        <!-- Notification or Cloned Badge Indicator -->
+        <TextView
+            android:id="@+id/tvAppBadge"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="top|end"
+            android:background="@drawable/bg_permission_step"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- App Title Label -->
+    <TextView
+        android:id="@+id/tvAppTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="@color/text_primary_dark"
+        android:textSize="12sp" />
+</LinearLayout>

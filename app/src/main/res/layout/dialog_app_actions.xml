@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/surface_dark"
+    android:orientation="vertical"
+    android:paddingBottom="24dp">
+
+    <!-- Header with App Icon, Name, and Space -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp">
+
+        <ImageView
+            android:id="@+id/ivHeaderIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="14dp"
+            android:layout_toEndOf="@+id/ivHeaderIcon"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvHeaderTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHeaderSpace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Space 1"
+                android:textColor="@color/colorPrimary"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider" />
+
+    <!-- Action 1: Open / Launch -->
+    <LinearLayout
+        android:id="@+id/actionLaunch"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_install"
+            app:tint="@color/colorPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_launch"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Action 2: Change Icon / Disguise -->
+    <LinearLayout
+        android:id="@+id/actionFakeIcon"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_setting"
+            app:tint="@color/colorPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_icon_fake"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Action 3: Create Shortcut -->
+    <LinearLayout
+        android:id="@+id/actionCreateShortcut"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_app_shortcut_24"
+            app:tint="@color/colorPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_create_shortcut"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Action 4: Clone to Next Space -->
+    <LinearLayout
+        android:id="@+id/actionCloneNext"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_clone_next"
+            app:tint="@color/colorPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_clone_next"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Action 5: Clear Storage / Cache -->
+    <LinearLayout
+        android:id="@+id/actionClearStorage"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_clean"
+            app:tint="@color/colorAccent" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_clear_storage"
+            android:textColor="@color/white"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Action 6: Uninstall -->
+    <LinearLayout
+        android:id="@+id/actionUninstall"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_uninstall"
+            app:tint="@color/error_red" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_uninstall"
+            android:textColor="@color/error_red"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

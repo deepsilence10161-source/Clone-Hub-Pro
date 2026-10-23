@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background_dark"
+    android:orientation="vertical">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbarPicker"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dp_56"
+        android:background="@color/surface_dark"
+        app:navigationIcon="?attr/homeAsUpIndicator"
+        app:navigationIconTint="@color/white"
+        app:title="@string/action_install_app"
+        app:titleTextColor="@color/white" />
+
+    <!-- Search Input -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:cardBackgroundColor="@color/surface_dark"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="0dp">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            app:iconifiedByDefault="false"
+            app:queryHint="@string/action_search"
+            app:theme="@style/ThemeOverlay.AppCompat.Dark" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Filter Chips (User vs System) -->
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        app:singleSelection="true">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipUser"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:checkable="true"
+            android:text="@string/chip_user"
+            android:textColor="@color/white"
+            app:chipBackgroundColor="@color/surface_variant_dark" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/chipSystem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checkable="true"
+            android:text="@string/chip_system"
+            android:textColor="@color/white"
+            app:chipBackgroundColor="@color/surface_variant_dark" />
+    </com.google.android.material.chip.ChipGroup>
+
+    <!-- App List or Loading -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerInstalledApps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="24dp" />
+
+        <!-- MIUI / HyperOS Permission Card if blocked -->
+        <ScrollView
+            android:id="@+id/permissionGuide"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                app:cardBackgroundColor="@color/surface_dark"
+                app:cardCornerRadius="12dp"
+                app:strokeColor="@color/colorPrimary"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_action_setting"
+                        app:tint="@color/colorPrimary" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:text="@string/apps_permission_guide_title"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:gravity="center"
+                        android:text="@string/apps_permission_guide_message"
+                        android:textColor="@color/text_secondary_dark"
+                        android:textSize="13sp" />
+
+                    <Button
+                        android:id="@+id/btnOpenSettings"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:backgroundTint="@color/colorPrimary"
+                        android:text="@string/apps_permission_guide_open_settings"
+                        android:textColor="@color/white" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </ScrollView>
+
+        <ProgressBar
+            android:id="@+id/progressBarPicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/colorPrimary" />
+    </FrameLayout>
+</LinearLayout>

@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Essential Android 14/15 Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    
+    <!-- Shortcut Pinning -->
+    <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT" />
+
+    <!-- Queries for Package Visibility on Android 11+ (Safe & Policy-Compliant) -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".CloneHubApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CloneHub"
+        android:usesCleartextTraffic="false"
+        tools:targetApi="35">
+
+        <!-- Main Home Activity (SingleTask to avoid multiple launcher instances) -->
+        <activity
+            android:name=".ui.home.HomeActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.CloneHub">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- App Picker Screen -->
+        <activity
+            android:name=".ui.picker.AppPickerActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.home.HomeActivity"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- 100% Android 14/15 Compliant Foreground Service (Zero Crash) -->
+        <service
+            android:name=".core.service.ContainerForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Advanced Isolated Multi-Space Virtual Engine" />
+        </service>
+
+        <!-- Dynamic Shortcut Trampoline Activity -->
+        <activity
+            android:name=".ui.home.ShortcutLauncherActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+    
+        <!-- Virtual Container Engine Core Service -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$Service"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$Service"
+            android:exported="false"
+            android:process=":service" />
+
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$File"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$File"
+            android:exported="false"
+            android:process=":service" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$PA"
+            android:exported="false"
+            android:process=":service"
+            android:theme="@style/Theme.CloneHub" />
+
+        <service
+            android:name="com.multibox.clone.hub.Jrhl$PS"
+            android:exported="false"
+            android:process=":service" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$Proxy"
+            android:exported="false"
+            android:multiprocess="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$ProxyE"
+            android:exported="false"
+            android:multiprocess="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$ProxyT"
+            android:exported="false"
+            android:multiprocess="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$Choose"
+            android:exported="false"
+            android:theme="@style/Theme.CloneHub" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$Trump"
+            android:exported="false"
+            android:theme="@style/Theme.CloneHub" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$Resolve"
+            android:exported="false"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 0 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P0"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P0"
+            android:exported="false"
+            android:process=":agent0" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A0"
+            android:exported="false"
+            android:process=":agent0"
+            android:taskAffinity="${applicationId}.affinity0"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 1 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P1"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P1"
+            android:exported="false"
+            android:process=":agent1" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A1"
+            android:exported="false"
+            android:process=":agent1"
+            android:taskAffinity="${applicationId}.affinity1"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 2 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P2"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P2"
+            android:exported="false"
+            android:process=":agent2" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A2"
+            android:exported="false"
+            android:process=":agent2"
+            android:taskAffinity="${applicationId}.affinity2"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 3 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P3"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P3"
+            android:exported="false"
+            android:process=":agent3" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A3"
+            android:exported="false"
+            android:process=":agent3"
+            android:taskAffinity="${applicationId}.affinity3"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 4 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P4"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P4"
+            android:exported="false"
+            android:process=":agent4" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A4"
+            android:exported="false"
+            android:process=":agent4"
+            android:taskAffinity="${applicationId}.affinity4"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 5 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P5"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P5"
+            android:exported="false"
+            android:process=":agent5" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A5"
+            android:exported="false"
+            android:process=":agent5"
+            android:taskAffinity="${applicationId}.affinity5"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 6 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P6"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P6"
+            android:exported="false"
+            android:process=":agent6" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A6"
+            android:exported="false"
+            android:process=":agent6"
+            android:taskAffinity="${applicationId}.affinity6"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 7 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P7"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P7"
+            android:exported="false"
+            android:process=":agent7" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A7"
+            android:exported="false"
+            android:process=":agent7"
+            android:taskAffinity="${applicationId}.affinity7"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 8 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P8"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P8"
+            android:exported="false"
+            android:process=":agent8" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A8"
+            android:exported="false"
+            android:process=":agent8"
+            android:taskAffinity="${applicationId}.affinity8"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 9 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P9"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P9"
+            android:exported="false"
+            android:process=":agent9" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A9"
+            android:exported="false"
+            android:process=":agent9"
+            android:taskAffinity="${applicationId}.affinity9"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 10 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P10"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P10"
+            android:exported="false"
+            android:process=":agent10" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A10"
+            android:exported="false"
+            android:process=":agent10"
+            android:taskAffinity="${applicationId}.affinity10"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 11 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P11"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P11"
+            android:exported="false"
+            android:process=":agent11" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A11"
+            android:exported="false"
+            android:process=":agent11"
+            android:taskAffinity="${applicationId}.affinity11"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 12 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P12"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P12"
+            android:exported="false"
+            android:process=":agent12" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A12"
+            android:exported="false"
+            android:process=":agent12"
+            android:taskAffinity="${applicationId}.affinity12"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 13 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P13"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P13"
+            android:exported="false"
+            android:process=":agent13" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A13"
+            android:exported="false"
+            android:process=":agent13"
+            android:taskAffinity="${applicationId}.affinity13"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 14 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P14"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P14"
+            android:exported="false"
+            android:process=":agent14" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A14"
+            android:exported="false"
+            android:process=":agent14"
+            android:taskAffinity="${applicationId}.affinity14"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 15 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P15"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P15"
+            android:exported="false"
+            android:process=":agent15" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A15"
+            android:exported="false"
+            android:process=":agent15"
+            android:taskAffinity="${applicationId}.affinity15"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 16 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P16"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P16"
+            android:exported="false"
+            android:process=":agent16" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A16"
+            android:exported="false"
+            android:process=":agent16"
+            android:taskAffinity="${applicationId}.affinity16"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 17 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P17"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P17"
+            android:exported="false"
+            android:process=":agent17" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A17"
+            android:exported="false"
+            android:process=":agent17"
+            android:taskAffinity="${applicationId}.affinity17"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 18 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P18"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P18"
+            android:exported="false"
+            android:process=":agent18" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A18"
+            android:exported="false"
+            android:process=":agent18"
+            android:taskAffinity="${applicationId}.affinity18"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 19 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P19"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P19"
+            android:exported="false"
+            android:process=":agent19" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A19"
+            android:exported="false"
+            android:process=":agent19"
+            android:taskAffinity="${applicationId}.affinity19"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 20 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P20"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P20"
+            android:exported="false"
+            android:process=":agent20" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A20"
+            android:exported="false"
+            android:process=":agent20"
+            android:taskAffinity="${applicationId}.affinity20"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 21 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P21"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P21"
+            android:exported="false"
+            android:process=":agent21" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A21"
+            android:exported="false"
+            android:process=":agent21"
+            android:taskAffinity="${applicationId}.affinity21"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 22 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P22"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P22"
+            android:exported="false"
+            android:process=":agent22" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A22"
+            android:exported="false"
+            android:process=":agent22"
+            android:taskAffinity="${applicationId}.affinity22"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 23 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P23"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P23"
+            android:exported="false"
+            android:process=":agent23" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A23"
+            android:exported="false"
+            android:process=":agent23"
+            android:taskAffinity="${applicationId}.affinity23"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 24 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P24"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P24"
+            android:exported="false"
+            android:process=":agent24" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A24"
+            android:exported="false"
+            android:process=":agent24"
+            android:taskAffinity="${applicationId}.affinity24"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 25 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P25"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P25"
+            android:exported="false"
+            android:process=":agent25" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A25"
+            android:exported="false"
+            android:process=":agent25"
+            android:taskAffinity="${applicationId}.affinity25"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 26 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P26"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P26"
+            android:exported="false"
+            android:process=":agent26" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A26"
+            android:exported="false"
+            android:process=":agent26"
+            android:taskAffinity="${applicationId}.affinity26"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 27 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P27"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P27"
+            android:exported="false"
+            android:process=":agent27" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A27"
+            android:exported="false"
+            android:process=":agent27"
+            android:taskAffinity="${applicationId}.affinity27"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 28 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P28"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P28"
+            android:exported="false"
+            android:process=":agent28" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A28"
+            android:exported="false"
+            android:process=":agent28"
+            android:taskAffinity="${applicationId}.affinity28"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!-- Agent Process 29 -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$P29"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P29"
+            android:exported="false"
+            android:process=":agent29" />
+
+        <activity
+            android:name="com.multibox.clone.hub.Jrhl$A29"
+            android:exported="false"
+            android:process=":agent29"
+            android:taskAffinity="${applicationId}.affinity29"
+            android:excludeFromRecents="true"
+            android:screenOrientation="behind"
+            android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.CloneHub" />
+</application>
+</manifest>
