@@ -5,13 +5,13 @@ plugins {
 
 android {
     namespace 'com.clonehub.advanced'
-    compileSdk 36
+    compileSdk 35
     buildToolsVersion "35.0.0"
 
     defaultConfig {
         applicationId "com.clonehub.advanced"
         minSdk 24
-        targetSdk 36
+        targetSdk 35
         versionCode 2001
         versionName "2.0.1"
 

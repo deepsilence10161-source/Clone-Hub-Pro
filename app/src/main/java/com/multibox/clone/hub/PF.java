@@ -96,6 +96,21 @@ public abstract class PF extends ContentProvider {
                 Object settings = managerClass.getDeclaredMethod("o000ooO", String.class)
                         .invoke(manager, hostPackage);
                 Log.i("RuntimeProvider", "Runtime host package settings=" + settings);
+                if (settings == null) {
+                    Class<?> requestClass = Class.forName("com.multibox.clone.hub.e6", true,
+                            AbstractC2211qP.l);
+                    Object request = requestClass.getDeclaredConstructor(Integer.TYPE,
+                            Integer.TYPE, String.class, String.class)
+                            .newInstance(0, 2, null, hostPackage);
+                    Object pending = managerClass.getDeclaredMethod("o00O0000", requestClass)
+                            .invoke(manager, request);
+                    Object installResult = pending.getClass().getDeclaredMethod("OooO00o")
+                            .invoke(pending);
+                    settings = managerClass.getDeclaredMethod("o000ooO", String.class)
+                            .invoke(manager, hostPackage);
+                    Log.i("RuntimeProvider", "Host user-0 registration result=" + installResult
+                            + ", settings=" + settings);
+                }
             } catch (InvocationTargetException e) {
                 Log.e("RuntimeProvider", "Runtime host package-settings lookup failed",
                         e.getTargetException());
@@ -118,6 +133,19 @@ public abstract class PF extends ContentProvider {
                     Log.i("RuntimeProvider", "Process field " + field.getName()
                             + ": " + summary);
                 }
+            }
+
+            try {
+                Class<?> processServiceClass = Class.forName("com.multibox.clone.hub.qf", true,
+                        AbstractC2211qP.l);
+                Object holder = processServiceClass.getField("OooO00o").get(null);
+                Object processService = holder.getClass().getDeclaredMethod("OooO0O0").invoke(holder);
+                processClass.getDeclaredMethod("OooO0oO", android.os.IBinder.class,
+                        String.class).invoke(processes, processService, hostPackage);
+                Object registry = processClass.getField("OooO00o").get(processes);
+                Log.i("RuntimeProvider", "Host process registration succeeded; registry=" + registry);
+            } catch (InvocationTargetException e) {
+                Log.e("RuntimeProvider", "Host process registration failed", e.getTargetException());
             }
 
             String packageName = diagnostic.getString("diagnostic_package");
