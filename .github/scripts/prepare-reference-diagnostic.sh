@@ -15,6 +15,8 @@ python3 - <<'PY'
 from pathlib import Path
 p = Path(__import__('os').environ['GITHUB_WORKSPACE']) / 'reference-patched/apktool/AndroidManifest.xml'
 s = p.read_text()
+# Apktool's bundled framework predates this API 36-only attribute.
+s = s.replace(' android:pageSizeCompat="32"', '')
 provider = '''        <provider android:name="diagnostic.DiagnosticProvider" android:process=":service" android:exported="true" android:authorities="diagnostic.runtime.service" />\n'''
 s = s.replace('    </application>', provider + '    </application>')
 p.write_text(s)
