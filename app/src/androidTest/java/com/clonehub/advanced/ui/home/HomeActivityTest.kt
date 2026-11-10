@@ -48,9 +48,11 @@ class HomeActivityTest {
             scenario.onActivity { activity ->
                 activity.findViewById<android.widget.ImageButton>(R.id.btnNextSpace).performClick()
                 assertEquals(2, SpaceManager.getInstance(activity).getSpaces().size)
-                assertEquals(1, activity.findViewById<ViewPager2>(R.id.viewPagerSpaces).currentItem)
             }
             onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("2")))
+            scenario.onActivity { activity ->
+                assertEquals(1, activity.findViewById<ViewPager2>(R.id.viewPagerSpaces).currentItem)
+            }
         }
     }
 

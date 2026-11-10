@@ -23,6 +23,13 @@ adb shell wm dismiss-keyguard
 adb logcat -c
 adb shell getprop ro.product.cpu.abilist | tee "${EVIDENCE_DIR}/emulator-abis.txt"
 
+# A launcher ANR dialog takes window focus away from every ActivityScenario test.
+# No test needs a home screen, so remove that source of system UI interference.
+adb shell settings put global anr_show_background 0
+adb shell settings put secure anr_show_first_instance 0 || true
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || \
+  echo "WARNING: Pixel Launcher could not be disabled in this test image"
+
 # The app does not use Google services. Disable the CI image's GMS process so a
 # dying downloadable-fonts provider cannot kill the app during instrumentation.
 adb shell pm disable-user --user 0 com.google.android.gms || \
