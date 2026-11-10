@@ -67,7 +67,8 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: default
+          # Google APIs x86_64 images include ARM64 translation required by the bundled runtime.
+          target: google_apis
           arch: x86_64
           profile: pixel_6
           cores: 4

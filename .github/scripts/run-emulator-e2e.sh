@@ -23,6 +23,13 @@ adb shell wm dismiss-keyguard
 adb logcat -c
 adb shell getprop ro.product.cpu.abilist | tee "${EVIDENCE_DIR}/emulator-abis.txt"
 
+# The app does not use Google services. Disable the CI image's GMS process so a
+# dying downloadable-fonts provider cannot kill the app during instrumentation.
+adb shell pm disable-user --user 0 com.google.android.gms || \
+  echo "WARNING: GMS could not be disabled in this test image"
+adb shell pm disable-user --user 0 com.google.android.googlequicksearchbox || \
+  echo "WARNING: Google search could not be disabled in this test image"
+
 echo "Installing application under test"
 adb install -r -t artifacts/app-debug.apk
 adb shell pm list packages | grep "^package:${PACKAGE_ID}$"
