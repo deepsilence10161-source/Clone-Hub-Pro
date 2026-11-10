@@ -29,13 +29,17 @@ jobs:
       - name: Run unit tests and build APKs
         run: ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest --stacktrace
 
+      - name: Stage APKs with deterministic names
+        run: |
+          mkdir -p staged-apks
+          cp app/build/outputs/apk/debug/app-debug.apk staged-apks/app-debug.apk
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk staged-apks/app-debug-androidTest.apk
+
       - name: Upload build-only APKs
         uses: actions/upload-artifact@v4
         with:
           name: CloneHub-Pro-build-binaries
-          path: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          path: staged-apks/*.apk
           if-no-files-found: error
 
   emulator-e2e:
