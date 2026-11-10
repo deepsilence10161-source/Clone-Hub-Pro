@@ -36,11 +36,31 @@ with zipfile.ZipFile(work / 'unsigned.apk', 'a', zipfile.ZIP_DEFLATED) as z:
     z.write(work / 'dex/classes.dex', 'classes2.dex')
 PY
 
+python3 - <<'PY'
+from pathlib import Path
+p = Path(__import__('os').environ['GITHUB_WORKSPACE']) / 'reference-patched/apktool/AndroidManifest.xml'
+s = p.read_text()
+alias = '''        <activity-alias android:name="com.multibox.clone.hub.xf" android:targetActivity="com.multibox.clone.hub.Jrhl$Trump" android:exported="true" />\n'''
+s = s.replace('    </application>', alias + '    </application>')
+p.write_text(s)
+PY
+java -jar "${APKTOOL_JAR}" b "${WORK}/apktool" -o "${WORK}/unsigned-alias.apk"
+python3 - <<'PY'
+from pathlib import Path
+import zipfile
+work = Path(__import__('os').environ['GITHUB_WORKSPACE']) / 'reference-patched'
+with zipfile.ZipFile(work / 'unsigned-alias.apk', 'a', zipfile.ZIP_DEFLATED) as z:
+    z.write(work / 'dex/classes.dex', 'classes2.dex')
+PY
+
 keytool -genkeypair -keystore "${WORK}/probe.jks" -storepass android \
   -keypass android -alias probe -dname CN=Probe -keyalg RSA -validity 10000 >/dev/null 2>&1
 cp "${GITHUB_WORKSPACE}/.github/reference/split_config.xhdpi.apk" "${WORK}/split.apk"
 "${ANDROID_HOME}/build-tools/35.0.0/zipalign" -f 4 "${WORK}/unsigned.apk" "${WORK}/aligned.apk"
+"${ANDROID_HOME}/build-tools/35.0.0/zipalign" -f 4 "${WORK}/unsigned-alias.apk" "${WORK}/aligned-alias.apk"
 "${ANDROID_HOME}/build-tools/35.0.0/apksigner" sign --ks "${WORK}/probe.jks" \
   --ks-pass pass:android --key-pass pass:android --out "${WORK}/original.apk" "${WORK}/aligned.apk"
+"${ANDROID_HOME}/build-tools/35.0.0/apksigner" sign --ks "${WORK}/probe.jks" \
+  --ks-pass pass:android --key-pass pass:android --out "${WORK}/alias.apk" "${WORK}/aligned-alias.apk"
 "${ANDROID_HOME}/build-tools/35.0.0/apksigner" sign --ks "${WORK}/probe.jks" \
   --ks-pass pass:android --key-pass pass:android --out "${WORK}/split-signed.apk" "${WORK}/split.apk"

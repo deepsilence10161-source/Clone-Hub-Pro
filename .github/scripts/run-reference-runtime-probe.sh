@@ -39,3 +39,33 @@ sleep 5
 cat "${EVIDENCE_DIR}/reference-launch.txt"
 cat "${EVIDENCE_DIR}/reference-provider-call.txt"
 cat "${EVIDENCE_DIR}/reference-diagnostic-call.txt"
+
+# Launch the same visible fixture through the original host first, without the
+# compatibility alias. The provider performs only the normal install/launch calls.
+adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am force-stop com.multibox.clone.hub
+adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainActivity \
+  > "${EVIDENCE_DIR}/reference-original-relaunch.txt" 2>&1 || true
+sleep 5
+adb shell content call --uri 'content://diagnostic.runtime.service' \
+  --method launch --arg com.clonehub.advanced.debug.test \
+  > "${EVIDENCE_DIR}/reference-original-fixture-launch.txt" 2>&1 || true
+sleep 12
+adb logcat -d -v threadtime > "${EVIDENCE_DIR}/reference-original-logcat.txt" 2>/dev/null || true
+adb shell dumpsys activity activities > "${EVIDENCE_DIR}/reference-original-activity-stack.txt" 2>/dev/null || true
+adb shell ps -A > "${EVIDENCE_DIR}/reference-original-processes.txt" 2>/dev/null || true
+adb exec-out screencap -p > "${EVIDENCE_DIR}/reference-original-fixture-screen.png" 2>/dev/null || true
+
+# Repeat against the identical patched original plus only the xf activity alias.
+adb logcat -c
+adb install-multiple -r -t reference-patched/alias.apk reference-patched/split-signed.apk
+adb shell am force-stop com.multibox.clone.hub
+adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainActivity \
+  > "${EVIDENCE_DIR}/reference-alias-relaunch.txt" 2>&1 || true
+sleep 5
+adb shell content call --uri 'content://diagnostic.runtime.service' \
+  --method launch --arg com.clonehub.advanced.debug.test \
+  > "${EVIDENCE_DIR}/reference-alias-fixture-launch.txt" 2>&1 || true
+sleep 12
+cat "${EVIDENCE_DIR}/reference-original-fixture-launch.txt"
+cat "${EVIDENCE_DIR}/reference-alias-fixture-launch.txt"

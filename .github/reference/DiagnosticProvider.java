@@ -23,6 +23,7 @@ public final class DiagnosticProvider extends ContentProvider {
 
     @Override
     public Bundle call(String method, String arg, Bundle extras) {
+        if ("launch".equals(method)) return launchFixture(arg);
         try {
             Class<?> bridge = Class.forName("com.multibox.clone.hub.p2");
             ClassLoader loader = (ClassLoader) bridge.getField("i").get(null);
@@ -57,6 +58,64 @@ public final class DiagnosticProvider extends ContentProvider {
             Log.e("ReferenceDiagnostic", "Inspection failed", th);
         }
         return Bundle.EMPTY;
+    }
+
+    private Bundle launchFixture(String packageName) {
+        Bundle output = new Bundle();
+        try {
+            Class<?> bridge = Class.forName("com.multibox.clone.hub.p2");
+            Method call = bridge.getMethod("a", String.class, String.class, Bundle.class);
+            Bundle service = (Bundle) call.invoke(null, "995", null, Bundle.EMPTY);
+            android.os.IBinder binder = null;
+            if (service != null) {
+                for (String key : service.keySet()) {
+                    android.os.IBinder candidate = service.getBinder(key);
+                    if (candidate != null) { binder = candidate; break; }
+                }
+            }
+            if (binder == null) throw new IllegalStateException("No runtime service Binder");
+            String descriptor = binder.getInterfaceDescriptor();
+            Log.i("ReferenceDiagnostic", "Launch descriptor=" + descriptor);
+
+            android.os.Parcel data = android.os.Parcel.obtain();
+            android.os.Parcel reply = android.os.Parcel.obtain();
+            try {
+                data.writeInterfaceToken(descriptor);
+                data.writeString(packageName);
+                data.writeInt(2);
+                data.writeInt(0);
+                data.writeInt(1);
+                Bundle options = new Bundle();
+                options.putString("fohwt.BBYZW_IJB", null);
+                options.putString("fohwt.IAJSVXW_IJB", null);
+                options.putInt("fohwt.GSHG", -1);
+                options.writeToParcel(data, 0);
+                boolean accepted = binder.transact(6, data, reply, 0);
+                reply.readException();
+                Log.i("ReferenceDiagnostic", "Install accepted=" + accepted
+                        + ", hasResult=" + reply.readInt());
+            } finally { data.recycle(); reply.recycle(); }
+
+            data = android.os.Parcel.obtain();
+            reply = android.os.Parcel.obtain();
+            int result;
+            try {
+                data.writeInterfaceToken(descriptor);
+                data.writeString(packageName);
+                data.writeInt(0);
+                data.writeInt(0);
+                boolean accepted = binder.transact(12, data, reply, 0);
+                reply.readException();
+                result = reply.readInt();
+                Log.i("ReferenceDiagnostic", "Launch accepted=" + accepted
+                        + ", result=" + result);
+            } finally { data.recycle(); reply.recycle(); }
+            output.putInt("result", result);
+        } catch (Throwable th) {
+            Log.e("ReferenceDiagnostic", "Reference launch failed", th);
+            output.putInt("result", -1000);
+        }
+        return output;
     }
 
     private static void dumpFields(Object object, String prefix) {

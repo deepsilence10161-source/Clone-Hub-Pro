@@ -13,6 +13,8 @@ jobs:
         with:
           java-version: "17"
           distribution: temurin
+      - name: Build the visible clone fixture
+        run: ./gradlew :app:assembleDebugAndroidTest --no-daemon
       - name: Inject read-only diagnostic provider into reference
         run: bash .github/scripts/prepare-reference-diagnostic.sh
       - name: Enable KVM hardware acceleration
