@@ -105,7 +105,13 @@ object VirtualContainerEngine {
                 return false
             }
             reply.readException()
-            val result = reply.readBundle(Bundle::class.java.classLoader)
+            // AIDL writes a presence int before a non-null Parcelable. readBundle()
+            // expects the Bundle length directly, so consume the presence int first.
+            val result = if (reply.readInt() != 0) {
+                Bundle.CREATOR.createFromParcel(reply)
+            } else {
+                null
+            }
 
             // A returned Bundle alone is not proof of success. Match the original client:
             // query the runtime package manager and require a real PackageInfo afterwards.
@@ -142,7 +148,11 @@ object VirtualContainerEngine {
                 return null
             }
             reply.readException()
-            reply.readParcelable(PackageInfo::class.java.classLoader)
+            if (reply.readInt() != 0) {
+                PackageInfo.CREATOR.createFromParcel(reply)
+            } else {
+                null
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Could not verify installed package $packageName in Space $spaceId", e)
             null
