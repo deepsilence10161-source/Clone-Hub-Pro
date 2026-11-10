@@ -46,7 +46,7 @@ jobs:
     name: Strict Android 14 emulator E2E
     needs: build
     # Native ARM64 avoids the x86_64 ART/ARM translation incompatibility.
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       PACKAGE_ID: com.clonehub.advanced.debug
