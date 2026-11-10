@@ -13,12 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - name: Enable KVM hardware acceleration
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -49,7 +43,7 @@ jobs:
           if-no-files-found: error
 
   emulator-e2e:
-    name: Strict Android 14 emulator E2E
+    name: Strict Android 15 emulator E2E
     needs: build
     # Linux x64 KVM is required for the instrumented emulator.
     runs-on: ubuntu-latest
@@ -59,6 +53,12 @@ jobs:
       TEST_PACKAGE_ID: com.clonehub.advanced.debug.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
     steps:
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
