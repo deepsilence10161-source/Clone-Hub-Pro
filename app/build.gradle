@@ -5,13 +5,13 @@ plugins {
 
 android {
     namespace 'com.clonehub.advanced'
-    compileSdk 35
+    compileSdk 36
     buildToolsVersion "35.0.0"
 
     defaultConfig {
         applicationId "com.clonehub.advanced"
         minSdk 24
-        targetSdk 35
+        targetSdk 36
         versionCode 2001
         versionName "2.0.1"
 
@@ -26,9 +26,6 @@ android {
         debug {
             minifyEnabled false
             applicationIdSuffix ".debug"
-            // The bundled VM uses legacy JNI reference handling. Match the
-            // original non-debuggable host instead of enabling CheckJNI.
-            debuggable false
         }
     }
 
