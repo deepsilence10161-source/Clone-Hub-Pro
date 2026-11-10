@@ -18,6 +18,15 @@ public abstract class PF extends ContentProvider {
         super.attachInfo(context, providerInfo);
         try {
             AbstractC2211qP.l = AbstractC2211qP.g(context);
+            // The runtime probes the optional Apache HTTP legacy jar from gb's static
+            // initializer. On the translated x86_64 runtime, doing that after WJW.XY()
+            // installs its ART hooks crashes while constructing the ENOENT exception.
+            // Initialize this data-only class first, with the same decoder marker that
+            // RXT 1000 receives below; no runtime code or native library is replaced.
+            Class<?> decoder = Class.forName("com.multibox.clone.hub.o0O00o0", true,
+                    AbstractC2211qP.l);
+            decoder.getDeclaredField("OooO00o").setByte(null, (byte) 0);
+            Class.forName("com.multibox.clone.hub.gb", true, AbstractC2211qP.l);
             Method declaredMethod = Class.forName("com.multibox.clone.hub.RXT", true, AbstractC2211qP.l)
                     .getDeclaredMethod("eakt", Integer.TYPE, Object[].class);
             AbstractC2211qP.k = declaredMethod;
