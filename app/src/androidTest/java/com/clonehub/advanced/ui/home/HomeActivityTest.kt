@@ -1,5 +1,6 @@
 package com.clonehub.advanced.ui.home
 
+import android.util.Log
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
@@ -30,6 +31,14 @@ class HomeActivityTest {
     @Test
     fun nextSpaceButton_createsAndSelectsSecondSpace() {
         ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val nextButton = activity.findViewById<android.widget.ImageButton>(R.id.btnNextSpace)
+                nextButton.setOnTouchListener { view, event ->
+                    Log.i("HomeActivityTest", "Next touch: action=${event.action}, " +
+                        "x=${event.x}, y=${event.y}, focused=${view.hasWindowFocus()}")
+                    false
+                }
+            }
             onView(withId(R.id.btnNextSpace)).perform(click())
             onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("2")))
             scenario.onActivity { activity ->
