@@ -3,6 +3,7 @@ package com.clonehub.advanced.ui.home
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -103,10 +104,12 @@ class HomeActivity : AppCompatActivity() {
         btnNextSpace.setOnClickListener {
             val current = viewPager.currentItem
             val count = spacePagerAdapter.itemCount
+            Log.i("HomeActivity", "Next space action: current=$current, count=$count")
             if (current < count - 1) {
                 selectSpace(current + 1)
             } else {
                 val newSpace = spaceManager.createNextSpace()
+                Log.i("HomeActivity", "Created Space ${newSpace.spaceId}; total=${spaceManager.getSpaces().size}")
                 refreshSpaces()
                 // Let ViewPager consume the adapter update before selecting the new page;
                 // otherwise its restoration callback can move back to Space 1.

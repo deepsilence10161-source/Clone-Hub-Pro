@@ -43,6 +43,18 @@ class HomeActivityTest {
     }
 
     @Test
+    fun nextSpaceButton_performClickCreatesSecondSpace() {
+        ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                activity.findViewById<android.widget.ImageButton>(R.id.btnNextSpace).performClick()
+                assertEquals(2, SpaceManager.getInstance(activity).getSpaces().size)
+                assertEquals(1, activity.findViewById<ViewPager2>(R.id.viewPagerSpaces).currentItem)
+            }
+            onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("2")))
+        }
+    }
+
+    @Test
     fun addAction_opensAppPicker() {
         ActivityScenario.launch(HomeActivity::class.java).use {
             onView(withId(R.id.fabAdd)).perform(click())
