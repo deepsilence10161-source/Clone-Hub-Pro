@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -49,6 +50,11 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshSpaces()
+    }
+
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        Log.i("HomeActivity", "Dispatch touch: action=${event.action}, x=${event.x}, y=${event.y}")
+        return super.dispatchTouchEvent(event)
     }
 
     private fun initViews() {

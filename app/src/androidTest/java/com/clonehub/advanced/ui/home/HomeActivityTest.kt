@@ -1,5 +1,6 @@
 package com.clonehub.advanced.ui.home
 
+import android.graphics.Rect
 import android.util.Log
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -36,6 +37,10 @@ class HomeActivityTest {
         ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val nextButton = activity.findViewById<android.widget.ImageButton>(R.id.btnNextSpace)
+                val rect = Rect()
+                nextButton.getGlobalVisibleRect(rect)
+                Log.i("HomeActivityTest", "Next rect=$rect, clickable=${nextButton.isClickable}, " +
+                    "enabled=${nextButton.isEnabled}, focused=${nextButton.hasWindowFocus()}")
                 nextButton.setOnTouchListener { view, event ->
                     Log.i("HomeActivityTest", "Next touch: action=${event.action}, " +
                         "x=${event.x}, y=${event.y}, focused=${view.hasWindowFocus()}")
