@@ -8,6 +8,11 @@ cleanup() {
   STATUS=$?
   trap - EXIT
   adb logcat -d -v threadtime > "${EVIDENCE_DIR}/live_test_logcat.txt" 2>/dev/null || true
+  adb shell dumpsys activity activities > "${EVIDENCE_DIR}/final-activity-stack.txt" 2>/dev/null || true
+  adb shell ps -A > "${EVIDENCE_DIR}/final-processes.txt" 2>/dev/null || true
+  adb exec-out screencap -p > "${EVIDENCE_DIR}/final-screen.png" 2>/dev/null || true
+  adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/real-user-flow" \
+    "${EVIDENCE_DIR}/real-user-flow" 2>/dev/null || true
   exit "${STATUS}"
 }
 trap cleanup EXIT
