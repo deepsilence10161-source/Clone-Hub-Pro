@@ -72,13 +72,15 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: |
             set -eu
+            EVIDENCE_DIR="${GITHUB_WORKSPACE}/evidence"
+            mkdir -p "${EVIDENCE_DIR}"
             cleanup() {
               STATUS=$?
-              trap - EXIT
-              adb logcat -d -v threadtime > live_test_logcat.txt 2>/dev/null || true
+              trap - 0
+              adb logcat -d -v threadtime > "${EVIDENCE_DIR}/live_test_logcat.txt" 2>/dev/null || true
               exit "${STATUS}"
             }
-            trap cleanup EXIT
+            trap cleanup 0
             adb wait-for-device
             until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
             adb shell settings put global window_animation_scale 0
@@ -95,11 +97,12 @@ jobs:
             adb shell am start -W -S -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"
             sleep 5
             adb shell pidof "${PACKAGE_ID}" | grep -E '[0-9]+'
-            adb exec-out screencap -p > live_test_home_screen.png
+            adb exec-out screencap -p > "${EVIDENCE_DIR}/live_test_home_screen.png"
             # UI XML is supplementary evidence; instrumentation below is the required UI assertion.
-            if adb shell uiautomator dump /sdcard/clonehub-window.xml; then
-              adb pull /sdcard/clonehub-window.xml live_test_window.xml
-              grep -q "Clone Hub Pro" live_test_window.xml
+            if adb shell uiautomator dump /sdcard/clonehub-window.xml && \
+              adb pull /sdcard/clonehub-window.xml "${EVIDENCE_DIR}/live_test_window.xml"; then
+              grep -q "Clone Hub Pro" "${EVIDENCE_DIR}/live_test_window.xml" || \
+                echo "WARNING: optional UI XML did not contain the expected title"
             else
               echo "WARNING: optional UI XML capture failed; strict instrumentation will still run"
             fi
@@ -109,16 +112,17 @@ jobs:
             set +e
             adb shell am instrument -w -r --no-window-animation \
               "${TEST_PACKAGE_ID}/androidx.test.runner.AndroidJUnitRunner" \
-              2>&1 | tee instrumentation-results.txt
-            TEST_STATUS=${PIPESTATUS[0]}
+              > "${EVIDENCE_DIR}/instrumentation-results.txt" 2>&1
+            TEST_STATUS=$?
             set -e
-            if [ "${TEST_STATUS}" -ne 0 ] || grep -q "FAILURES!!!" instrumentation-results.txt; then
+            cat "${EVIDENCE_DIR}/instrumentation-results.txt"
+            if [ "${TEST_STATUS}" -ne 0 ] || grep -q "FAILURES!!!" "${EVIDENCE_DIR}/instrumentation-results.txt"; then
               echo "Instrumentation tests failed"
               exit 1
             fi
 
-            adb logcat -d -v threadtime > live_test_logcat.txt
-            if grep -q "FATAL EXCEPTION" live_test_logcat.txt; then
+            adb logcat -d -v threadtime > "${EVIDENCE_DIR}/live_test_logcat.txt"
+            if grep -q "FATAL EXCEPTION" "${EVIDENCE_DIR}/live_test_logcat.txt"; then
               echo "A fatal application exception was found in logcat"
               exit 1
             fi
@@ -129,12 +133,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: CloneHub-Pro-emulator-evidence
-          path: |
-            live_test_home_screen.png
-            live_test_window.xml
-            instrumentation-results.txt
-            live_test_logcat.txt
-          if-no-files-found: warn
+          path: evidence/
+          if-no-files-found: error
 
       - name: Upload verified debug APK
         if: success()
