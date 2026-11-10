@@ -112,6 +112,11 @@
             android:process=":service" android:taskAffinity="${applicationId}.intent.trump"
             android:excludeFromRecents="true" android:screenOrientation="behind"
             android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|fontScale|uiMode|orientation|screenSize|smallestScreenSize" android:supportsPictureInPicture="true" />
+        <!-- The runtime addresses its startup trampoline by its internal name xf.
+             Route that name to the same Trump activity when the legacy hook is absent. -->
+        <activity-alias android:name="com.multibox.clone.hub.xf"
+            android:targetActivity="com.multibox.clone.hub.Jrhl$Trump"
+            android:exported="true" />
         <activity android:name="com.multibox.clone.hub.Jrhl$Resolve"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
             android:process=":service" android:taskAffinity="${applicationId}.intent.resolve"
