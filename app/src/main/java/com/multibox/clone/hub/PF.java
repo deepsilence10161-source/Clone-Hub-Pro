@@ -76,6 +76,31 @@ public abstract class PF extends ContentProvider {
 
             Class<?> processClass = Class.forName("com.multibox.clone.hub.o000OO0O", true,
                     AbstractC2211qP.l);
+            String hostPackage = getContext().getPackageName();
+            android.content.pm.ApplicationInfo directHostInfo = getContext().getPackageManager()
+                    .getApplicationInfo(hostPackage, 0);
+            Log.i("RuntimeProvider", "Direct host ApplicationInfo=" + directHostInfo
+                    + ", uid=" + directHostInfo.uid + ", process=" + directHostInfo.processName
+                    + ", source=" + directHostInfo.sourceDir);
+            try {
+                Class<?> lookupClass = Class.forName("com.multibox.clone.hub.fb", true,
+                        AbstractC2211qP.l);
+                Object runtimeHostInfo = lookupClass.getDeclaredMethod("OooO00o",
+                        android.content.pm.PackageManager.class, String.class).invoke(null,
+                        getContext().getPackageManager(), hostPackage);
+                Log.i("RuntimeProvider", "Runtime fb host ApplicationInfo=" + runtimeHostInfo);
+            } catch (InvocationTargetException e) {
+                Log.e("RuntimeProvider", "Runtime fb host lookup failed", e.getTargetException());
+            }
+            try {
+                Object settings = managerClass.getDeclaredMethod("o000ooO", String.class)
+                        .invoke(manager, hostPackage);
+                Log.i("RuntimeProvider", "Runtime host package settings=" + settings);
+            } catch (InvocationTargetException e) {
+                Log.e("RuntimeProvider", "Runtime host package-settings lookup failed",
+                        e.getTargetException());
+            }
+
             Object processes = processClass.getDeclaredMethod("OooO0Oo").invoke(null);
             for (java.lang.reflect.Field field : processClass.getDeclaredFields()) {
                 if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
