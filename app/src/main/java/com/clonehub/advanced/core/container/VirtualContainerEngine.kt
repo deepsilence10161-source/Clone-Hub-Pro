@@ -298,7 +298,7 @@ object VirtualContainerEngine {
                     field.isAccessible = true
                     val value = field.get(manager)
                     val summary = when (value) {
-                        is Map -> "size=${value.size}, keys=${value.keys.take(8)}"
+                        is Map<*, *> -> "size=${value.size}, keys=${value.keys.take(8)}"
                         is android.util.SparseArray<*> -> "size=${value.size()}"
                         else -> value.toString()
                     }
