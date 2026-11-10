@@ -2,65 +2,128 @@ name: Android CI & Live Emulator Test
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: ["main", "master"]
   workflow_dispatch:
 
 jobs:
-  build-and-test:
-    name: Build APK & Run E2E Emulator
-    # Using macos-14 gives hardware acceleration (M1/ARM64) for seamless ARM Android testing
-    runs-on: macos-14
-    timeout-minutes: 45
-
+  build:
+    name: Build APK and instrumentation tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: temurin
           cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew || true
+      - name: Grant Gradle wrapper permission
+        run: chmod +x gradlew
 
-      - name: Build Debug APK
-        run: |
-          ./gradlew assembleDebug --stacktrace || gradle assembleDebug
+      - name: Run unit tests and build APKs
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest --stacktrace
 
-      - name: Run Android Emulator Live E2E Testing
+      - name: Upload build-only APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloneHub-Pro-build-binaries
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          if-no-files-found: error
+
+  emulator-e2e:
+    name: Strict Android 14 emulator E2E
+    needs: build
+    # Apple Silicon hosted runners do not support nested virtualization.
+    # Intel macOS + x86_64 is the verified accelerated configuration for this workflow.
+    runs-on: macos-15-intel
+    timeout-minutes: 45
+    env:
+      PACKAGE_ID: com.clonehub.advanced.debug
+      MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
+    steps:
+      - name: Download APKs from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: CloneHub-Pro-build-binaries
+          path: artifacts
+
+      - name: Boot emulator and run strict E2E checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           target: google_apis
-          arch: arm64-v8a
+          arch: x86_64
           profile: pixel_6
+          cores: 4
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: |
+            set -eu
             adb wait-for-device
-            adb devices
-            echo "Device booted successfully!"
-            # Install freshly built APK
-            adb install -r app/build/outputs/apk/debug/app-debug.apk || echo "Installation check"
-            # Launch MainActivity
-            adb shell am start -n com.clonehub.advanced/.ui.home.HomeActivity
+            until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            adb shell wm dismiss-keyguard
+            adb logcat -c
+
+            echo "Installing application under test"
+            adb install -r -t artifacts/app-debug.apk
+            adb shell pm list packages | grep "^package:${PACKAGE_ID}$"
+
+            echo "Launching HomeActivity and waiting for rendering"
+            adb shell am start -W -S -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"
             sleep 5
-            # Capture screenshot as proof of live UI launch
+            adb shell pidof "${PACKAGE_ID}" | grep -E '[0-9]+'
             adb exec-out screencap -p > live_test_home_screen.png
-            echo "Live E2E test completed successfully!"
+            adb shell uiautomator dump /sdcard/clonehub-window.xml
+            adb pull /sdcard/clonehub-window.xml live_test_window.xml
+            grep -q "Clone Hub Pro" live_test_window.xml
 
-      - name: Upload Test Screenshot
-        uses: actions/upload-artifact@v4
+            echo "Installing and running instrumentation tests"
+            adb install -r -t artifacts/app-debug-androidTest.apk
+            set +e
+            adb shell am instrument -w -r --no-window-animation \
+              "${PACKAGE_ID}/androidx.test.runner.AndroidJUnitRunner" \
+              2>&1 | tee instrumentation-results.txt
+            TEST_STATUS=${PIPESTATUS[0]}
+            set -e
+            if [ "${TEST_STATUS}" -ne 0 ] || grep -q "FAILURES!!!" instrumentation-results.txt; then
+              echo "Instrumentation tests failed"
+              exit 1
+            fi
+
+            adb logcat -d -v threadtime > live_test_logcat.txt
+            if grep -q "FATAL EXCEPTION" live_test_logcat.txt; then
+              echo "A fatal application exception was found in logcat"
+              exit 1
+            fi
+            echo "All emulator E2E checks passed"
+
+      - name: Upload E2E evidence
         if: always()
-        with:
-          name: live-emulator-screenshot
-          path: live_test_home_screen.png
-
-      - name: Upload Debug APK Deliverable
         uses: actions/upload-artifact@v4
         with:
-          name: CloneHub-Pro-v2-Debug
-          path: app/build/outputs/apk/debug/*.apk
+          name: CloneHub-Pro-emulator-evidence
+          path: |
+            live_test_home_screen.png
+            live_test_window.xml
+            instrumentation-results.txt
+            live_test_logcat.txt
+          if-no-files-found: warn
+
+      - name: Upload verified debug APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CloneHub-Pro-v2.0.1-verified-debug
+          path: artifacts/app-debug.apk
+          if-no-files-found: error
