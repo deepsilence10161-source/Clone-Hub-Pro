@@ -23,7 +23,8 @@ adb shell wm dismiss-keyguard
 adb logcat -c
 adb shell getprop ro.product.cpu.abilist | tee "${EVIDENCE_DIR}/reference-emulator-abis.txt"
 
-adb install -r -t .github/reference/original.apk
+adb install-multiple -r -t \
+  .github/reference/original.apk .github/reference/split_config.xhdpi.apk
 adb shell pm list packages | grep '^package:com.multibox.clone.hub$'
 adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainActivity \
   > "${EVIDENCE_DIR}/reference-launch.txt" 2>&1 || true
