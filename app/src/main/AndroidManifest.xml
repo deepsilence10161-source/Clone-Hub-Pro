@@ -70,7 +70,7 @@
         <!-- Virtual Container Engine Core Service -->
         <provider
             android:name="com.multibox.clone.hub.Jrhl$Service"
-            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$Service"
+            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service"
             android:exported="false"
             android:process=":service" />
 

@@ -17,6 +17,10 @@ object VirtualContainerEngine {
 
     private const val TAG = "VirtualContainerEngine"
     private const val PROVIDER_METHOD_SERVICE = "995"
+    // The bundled runtime uses this fixed authority to select its server mode.
+    // An applicationId-prefixed authority selects the passive client mode instead.
+    private const val SERVICE_PROVIDER_AUTHORITY =
+        "com.multibox.clone.hub.com.multibox.clone.hub.Jrhl\$Service"
     private const val TRANSACTION_GET_PACKAGE_INFO = 5
     private const val TRANSACTION_INSTALL_PACKAGE = 6
     private const val TRANSACTION_LAUNCH_PACKAGE = 12
@@ -41,7 +45,7 @@ object VirtualContainerEngine {
 
         remoteBinder = null
         try {
-            val authority = "${context.packageName}.com.multibox.clone.hub.Jrhl\$Service"
+            val authority = SERVICE_PROVIDER_AUTHORITY
             val cr: ContentResolver = context.contentResolver
             val client = cr.acquireUnstableContentProviderClient(authority)
             if (client != null) {
