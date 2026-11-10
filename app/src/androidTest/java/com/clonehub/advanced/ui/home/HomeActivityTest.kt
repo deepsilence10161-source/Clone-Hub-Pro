@@ -31,11 +31,11 @@ class HomeActivityTest {
     fun nextSpaceButton_createsAndSelectsSecondSpace() {
         ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
             onView(withId(R.id.btnNextSpace)).perform(click())
+            onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("2")))
             scenario.onActivity { activity ->
                 assertEquals(2, SpaceManager.getInstance(activity).getSpaces().size)
                 assertEquals(1, activity.findViewById<ViewPager2>(R.id.viewPagerSpaces).currentItem)
             }
-            onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("2")))
 
             onView(withId(R.id.btnPrevSpace)).perform(click())
             onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("1")))
