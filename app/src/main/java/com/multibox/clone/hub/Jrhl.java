@@ -8,7 +8,8 @@ import android.os.IBinder;
 
 public class Jrhl {
 
-    public static class ServiceProvider extends PF {}
+    /** Application-specific lookup alias; the fixed Service provider owns runtime init. */
+    public static class ServiceProvider extends File {}
     public static class Service extends PF {}
 
     /** File is a forwarding provider in the original host, not a runtime initializer. */
@@ -27,7 +28,7 @@ public class Jrhl {
                 String selection, String[] selectionArgs) { return 0; }
     }
 
-    public static class Client extends PF {}
+    public static class Client extends File {}
 
     public static class PA extends OF { public PA() { super(1); } }
     public static class Proxy extends OF { public Proxy() { super(1); } }

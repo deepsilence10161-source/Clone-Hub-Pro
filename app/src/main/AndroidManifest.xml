@@ -74,6 +74,18 @@
             android:exported="false"
             android:process=":service" />
 
+        <!-- Runtime's native package manager also resolves application-specific aliases. -->
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$ServiceProvider"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$Service"
+            android:exported="false"
+            android:process=":service" />
+
+        <provider
+            android:name="com.multibox.clone.hub.Jrhl$Client"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$Client"
+            android:exported="false" />
+
         <provider
             android:name="com.multibox.clone.hub.Jrhl$File"
             android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$File"
