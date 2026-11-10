@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:theme="@style/Theme.CloneHub">
+    <application android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <!-- A separate, ordinary user app used only to prove the complete clone flow. -->
         <activity
             android:name="com.clonehub.advanced.fixture.CloneFixtureActivity"
