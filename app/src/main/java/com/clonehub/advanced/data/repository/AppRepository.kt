@@ -52,7 +52,8 @@ class AppRepository(private val context: Context) {
             )
         }
 
-        list.sortBy { it.appName.lowercase() }
-        list
+        // A package may expose several launcher activities; show each package only once.
+        list.distinctBy { it.packageName }
+            .sortedBy { it.appName.lowercase() }
     }
 }

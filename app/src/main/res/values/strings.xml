@@ -45,4 +45,6 @@
     <string name="apps_permission_guide_open_settings">Open Settings</string>
     <string name="app_retry">Retry</string>
     <string name="empty_space_hint">Tap + to clone apps in this space</string>
+    <string name="clone_failed">Could not clone %1$s. The virtual engine is unavailable on this device.</string>
+    <string name="launch_failed">Could not open %1$s in this space.</string>
 </resources>

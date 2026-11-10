@@ -15,6 +15,7 @@ import androidx.core.content.pm.ShortcutInfoCompat
 import androidx.core.content.pm.ShortcutManagerCompat
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.lifecycleScope
 import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.core.container.VirtualContainerEngine
@@ -22,6 +23,9 @@ import com.clonehub.advanced.data.model.ClonedApp
 import com.clonehub.advanced.ui.home.ShortcutLauncherActivity
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import java.io.File
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AppActionsBottomSheet(
     private val app: ClonedApp,
@@ -58,8 +62,20 @@ class AppActionsBottomSheet(
 
         // Action 1: Open / Launch
         view.findViewById<View>(R.id.actionLaunch).setOnClickListener {
-            VirtualContainerEngine.launchApp(requireContext(), app, spaceId)
-            dismiss()
+            lifecycleScope.launch {
+                val launched = withContext(Dispatchers.IO) {
+                    VirtualContainerEngine.launchApp(requireContext(), app, spaceId)
+                }
+                if (launched) {
+                    dismiss()
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.launch_failed, app.appName),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
 
         // Action 2: Change Icon / Name
@@ -77,16 +93,30 @@ class AppActionsBottomSheet(
         }
 
         // Action 4: Clone to Next Space
-        view.findViewById<View>(R.id.actionCloneNext).setOnClickListener {
-            val targetSpace = spaceId + 1
-            SpaceManager.getInstance(requireContext()).addAppToSpace(
-                spaceId = targetSpace,
-                packageName = app.packageName,
-                appName = app.appName
-            )
-            Toast.makeText(context, "Cloned to Space $targetSpace", Toast.LENGTH_SHORT).show()
-            onAppUpdated()
-            dismiss()
+        view.findViewById<View>(R.id.actionCloneNext).setOnClickListener { action ->
+            action.isEnabled = false
+            val manager = SpaceManager.getInstance(requireContext())
+            val targetSpace = manager.getSpace(spaceId + 1) ?: manager.createNextSpace()
+            val targetSpaceId = targetSpace.spaceId
+
+            lifecycleScope.launch {
+                val installed = withContext(Dispatchers.IO) {
+                    VirtualContainerEngine.installApp(requireContext(), app.packageName, targetSpaceId)
+                }
+                if (installed) {
+                    manager.addAppToSpace(targetSpaceId, app.packageName, app.appName)
+                    Toast.makeText(context, "Cloned to Space $targetSpaceId", Toast.LENGTH_SHORT).show()
+                    onAppUpdated()
+                    dismiss()
+                } else {
+                    action.isEnabled = true
+                    Toast.makeText(
+                        requireContext(),
+                        getString(R.string.clone_failed, app.appName),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
         }
 
         // Action 5: Clear Storage

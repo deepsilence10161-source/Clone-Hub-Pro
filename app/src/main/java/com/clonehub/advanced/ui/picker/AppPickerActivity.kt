@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.View
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.isVisible
@@ -18,13 +19,16 @@ import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.data.repository.AppRepository
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.chip.Chip
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AppPickerActivity : AppCompatActivity() {
 
     private lateinit var appRepo: AppRepository
     private lateinit var adapter: AppPickerAdapter
     private var targetSpaceId: Int = 1
+    private var isCloning: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,22 +54,38 @@ class AppPickerActivity : AppCompatActivity() {
         val rv: RecyclerView = findViewById(R.id.recyclerInstalledApps)
         rv.layoutManager = LinearLayoutManager(this)
         adapter = AppPickerAdapter { selectedApp ->
-            // Clone into Space
-            SpaceManager.getInstance(this).addAppToSpace(
-                spaceId = targetSpaceId,
-                packageName = selectedApp.packageName,
-                appName = selectedApp.appName
-            )
-            // Register and install into virtual container sandbox
-            kotlin.concurrent.thread {
-                com.clonehub.advanced.core.container.VirtualContainerEngine.installApp(
-                    this,
-                    selectedApp.packageName,
-                    targetSpaceId
-                )
+            if (isCloning) return@AppPickerAdapter
+            isCloning = true
+            findViewById<ProgressBar>(R.id.progressBarPicker).isVisible = true
+
+            lifecycleScope.launch {
+                val installed = withContext(Dispatchers.IO) {
+                    com.clonehub.advanced.core.container.VirtualContainerEngine.installApp(
+                        this@AppPickerActivity,
+                        selectedApp.packageName,
+                        targetSpaceId
+                    )
+                }
+
+                if (installed) {
+                    // Update the visible model only after the runtime accepts the installation.
+                    SpaceManager.getInstance(this@AppPickerActivity).addAppToSpace(
+                        spaceId = targetSpaceId,
+                        packageName = selectedApp.packageName,
+                        appName = selectedApp.appName
+                    )
+                    setResult(Activity.RESULT_OK)
+                    finish()
+                } else {
+                    findViewById<ProgressBar>(R.id.progressBarPicker).isVisible = false
+                    isCloning = false
+                    Toast.makeText(
+                        this@AppPickerActivity,
+                        getString(R.string.clone_failed, selectedApp.appName),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
-            setResult(Activity.RESULT_OK)
-            finish()
         }
         rv.adapter = adapter
     }

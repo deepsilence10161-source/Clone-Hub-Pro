@@ -8,16 +8,22 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.core.container.VirtualContainerEngine
+import com.clonehub.advanced.core.service.ContainerForegroundService
 import com.clonehub.advanced.data.model.ClonedApp
 import com.clonehub.advanced.ui.dialogs.AppActionsBottomSheet
 import com.clonehub.advanced.ui.picker.AppPickerActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeActivity : AppCompatActivity() {
 
@@ -28,6 +34,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var btnPrevSpace: ImageButton
     private lateinit var btnNextSpace: ImageButton
     private lateinit var fabAdd: FloatingActionButton
+    private var isLaunching: Boolean = false
 
     private val pickerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -74,7 +81,7 @@ class HomeActivity : AppCompatActivity() {
         spacePagerAdapter = SpacePagerAdapter(
             context = this,
             onAppClick = { app, spaceId ->
-                VirtualContainerEngine.launchApp(this, app, spaceId)
+                launchClonedApp(app, spaceId)
             },
             onAppLongClick = { app, spaceId ->
                 val sheet = AppActionsBottomSheet(app, spaceId) {
@@ -146,6 +153,28 @@ class HomeActivity : AppCompatActivity() {
         val spaces = spaceManager.getSpaces()
         val pos = viewPager.currentItem
         return if (pos in spaces.indices) spaces[pos].spaceId else 1
+    }
+
+    private fun launchClonedApp(app: ClonedApp, spaceId: Int) {
+        if (isLaunching) return
+        isLaunching = true
+
+        lifecycleScope.launch {
+            val launched = withContext(Dispatchers.IO) {
+                VirtualContainerEngine.launchApp(this@HomeActivity, app, spaceId)
+            }
+            isLaunching = false
+
+            if (launched) {
+                runCatching { ContainerForegroundService.start(this@HomeActivity, app.appName, spaceId) }
+            } else {
+                Toast.makeText(
+                    this@HomeActivity,
+                    getString(R.string.launch_failed, app.appName),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun openAppPicker(spaceId: Int) {
