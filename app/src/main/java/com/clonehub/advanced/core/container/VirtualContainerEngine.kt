@@ -95,6 +95,13 @@ object VirtualContainerEngine {
             return false
         }
 
+        Log.i(
+            TAG,
+            "Runtime descriptor=$descriptor, spaces=${queryRuntimeSpaces(binder, descriptor)?.joinToString()}, " +
+                "SettingsInSpace0=${queryInstalledPackage(binder, descriptor, packageName, 0) != null}, " +
+                "packagesInTargetSpace=${queryInstalledPackageNames(binder, descriptor, spaceId)?.size}"
+        )
+
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         return try {
@@ -134,6 +141,47 @@ object VirtualContainerEngine {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to install package $packageName into Space $spaceId", e)
             false
+        } finally {
+            data.recycle()
+            reply.recycle()
+        }
+    }
+
+    private fun queryRuntimeSpaces(binder: IBinder, descriptor: String): IntArray? {
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
+        return try {
+            data.writeInterfaceToken(descriptor)
+            data.writeString(null)
+            if (!binder.transact(1, data, reply, 0)) return null
+            reply.readException()
+            reply.createIntArray()
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not list runtime spaces", e)
+            null
+        } finally {
+            data.recycle()
+            reply.recycle()
+        }
+    }
+
+    private fun queryInstalledPackageNames(
+        binder: IBinder,
+        descriptor: String,
+        spaceId: Int
+    ): List<String>? {
+        val data = Parcel.obtain()
+        val reply = Parcel.obtain()
+        return try {
+            data.writeInterfaceToken(descriptor)
+            data.writeInt(8192)
+            data.writeInt(spaceId)
+            if (!binder.transact(3, data, reply, 0)) return null
+            reply.readException()
+            reply.createStringArrayList()
+        } catch (e: Exception) {
+            Log.e(TAG, "Could not list packages in Space $spaceId", e)
+            null
         } finally {
             data.recycle()
             reply.recycle()
