@@ -8,7 +8,10 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.viewpager2.widget.ViewPager2
 import com.clonehub.advanced.R
+import com.clonehub.advanced.core.container.SpaceManager
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -26,8 +29,12 @@ class HomeActivityTest {
 
     @Test
     fun nextSpaceButton_createsAndSelectsSecondSpace() {
-        ActivityScenario.launch(HomeActivity::class.java).use {
+        ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
             onView(withId(R.id.btnNextSpace)).perform(click())
+            scenario.onActivity { activity ->
+                assertEquals(2, SpaceManager.getInstance(activity).getSpaces().size)
+                assertEquals(1, activity.findViewById<ViewPager2>(R.id.viewPagerSpaces).currentItem)
+            }
             onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("2")))
 
             onView(withId(R.id.btnPrevSpace)).perform(click())

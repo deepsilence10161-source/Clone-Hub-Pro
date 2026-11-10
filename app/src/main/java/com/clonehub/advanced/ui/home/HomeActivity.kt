@@ -108,9 +108,13 @@ class HomeActivity : AppCompatActivity() {
             } else {
                 val newSpace = spaceManager.createNextSpace()
                 refreshSpaces()
-                val newPosition = spaceManager.getSpaces().indexOfFirst { it.spaceId == newSpace.spaceId }
-                if (newPosition >= 0) {
-                    selectSpace(newPosition)
+                // Let ViewPager consume the adapter update before selecting the new page;
+                // otherwise its restoration callback can move back to Space 1.
+                viewPager.post {
+                    val newPosition = spaceManager.getSpaces().indexOfFirst { it.spaceId == newSpace.spaceId }
+                    if (newPosition >= 0) {
+                        selectSpace(newPosition)
+                    }
                 }
             }
         }
