@@ -24,7 +24,7 @@ adb logcat -c
 adb shell getprop ro.product.cpu.abilist | tee "${EVIDENCE_DIR}/reference-emulator-abis.txt"
 
 adb install-multiple -r -t \
-  .github/reference/original.apk .github/reference/split_config.xhdpi.apk
+  reference-patched/original.apk reference-patched/split-signed.apk
 adb shell pm list packages | grep '^package:com.multibox.clone.hub$'
 adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainActivity \
   > "${EVIDENCE_DIR}/reference-launch.txt" 2>&1 || true
@@ -33,5 +33,9 @@ adb shell content call --uri \
   'content://com.multibox.clone.hub.com.multibox.clone.hub.Jrhl\$Service' \
   --method 995 > "${EVIDENCE_DIR}/reference-provider-call.txt" 2>&1 || true
 sleep 10
+adb shell content call --uri 'content://diagnostic.runtime.service' \
+  --method dump > "${EVIDENCE_DIR}/reference-diagnostic-call.txt" 2>&1 || true
+sleep 5
 cat "${EVIDENCE_DIR}/reference-launch.txt"
 cat "${EVIDENCE_DIR}/reference-provider-call.txt"
+cat "${EVIDENCE_DIR}/reference-diagnostic-call.txt"
