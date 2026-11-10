@@ -40,9 +40,9 @@ class RealUserCloneFlowInstrumentedTest {
         assertTrue("App picker did not open", device.wait(
             Until.hasObject(By.res(appId, "searchView")), UI_TIMEOUT_MS
         ))
-        device.findObject(By.res(appId, "searchView")).click()
+        capture(device, screenshotDir, "02-picker.png")
         val searchInput = device.wait(
-            Until.findObject(By.clazz("android.widget.EditText")), UI_TIMEOUT_MS
+            Until.findObject(By.res(appId, "search_src_text")), UI_TIMEOUT_MS
         )
         check(searchInput != null) { "Picker search input was not available" }
         searchInput.text = FIXTURE_PACKAGE
