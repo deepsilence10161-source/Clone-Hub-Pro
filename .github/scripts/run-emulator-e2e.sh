@@ -70,6 +70,10 @@ if grep -q "FATAL EXCEPTION" "${EVIDENCE_DIR}/live_test_logcat.txt"; then
   # The full log also contains unrelated system processes; instrumentation status is authoritative.
   echo "WARNING: a FATAL EXCEPTION section exists in full logcat; inspect package/PID evidence"
 fi
+# Instrumentation normally force-stops the target process when it finishes.
+# Relaunch it before enforcing the final liveness gate.
+adb shell am start -W -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"
+sleep 2
 adb shell pidof "${PACKAGE_ID}" | grep -E '[0-9]+'
 
 echo "All emulator E2E checks passed"
