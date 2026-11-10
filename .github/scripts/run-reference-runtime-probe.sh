@@ -30,7 +30,7 @@ adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainAc
   > "${EVIDENCE_DIR}/reference-launch.txt" 2>&1 || true
 sleep 15
 adb shell content call --uri \
-  'content://com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service' \
+  'content://com.multibox.clone.hub.com.multibox.clone.hub.Jrhl\$Service' \
   --method 995 > "${EVIDENCE_DIR}/reference-provider-call.txt" 2>&1 || true
 sleep 10
 cat "${EVIDENCE_DIR}/reference-launch.txt"
