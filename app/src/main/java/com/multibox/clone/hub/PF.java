@@ -7,6 +7,8 @@ import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class PF extends ContentProvider {
@@ -18,8 +20,10 @@ public abstract class PF extends ContentProvider {
             Method declaredMethod = Class.forName("com.multibox.clone.hub.RXT", true, AbstractC2211qP.l)
                     .getDeclaredMethod("eakt", Integer.TYPE, Object[].class);
             AbstractC2211qP.k = declaredMethod;
-            declaredMethod.invoke(null, 1000, new Object[]{context, providerInfo, -1,
+            Object mode = declaredMethod.invoke(null, 1000, new Object[]{context, providerInfo, -1,
                     RuntimeCallbackHandler.INSTANCE, (byte) 0});
+            Log.i("RuntimeProvider", "Initialized authority=" + providerInfo.authority
+                    + ", process=" + android.os.Process.myPid() + ", mode=" + mode);
         } catch (Throwable th) {
             th.printStackTrace();
             throw new RuntimeException("Virtual container provider initialization error", th);
@@ -34,10 +38,31 @@ public abstract class PF extends ContentProvider {
     @Override
     public Bundle call(String method, String arg, Bundle extras) {
         try {
-            return AbstractC2211qP.c(method, arg, extras);
+            Bundle result = AbstractC2211qP.c(method, arg, extras);
+            if ("995".equals(method)) {
+                inspectNativePackageManager();
+            }
+            return result;
         } catch (Throwable th) {
             th.printStackTrace();
             return Bundle.EMPTY;
+        }
+    }
+
+    private void inspectNativePackageManager() {
+        try {
+            Class<?> managerClass = Class.forName("com.multibox.clone.hub.qj", true,
+                    AbstractC2211qP.l);
+            Object manager = managerClass.getDeclaredMethod("o000o0oo").invoke(null);
+            Log.i("RuntimeProvider", "Native package manager=" + manager);
+            if (manager != null) {
+                Object spaces = managerClass.getDeclaredMethod("o000oOoo").invoke(manager);
+                Log.i("RuntimeProvider", "Native spaces=" + spaces);
+            }
+        } catch (InvocationTargetException e) {
+            Log.e("RuntimeProvider", "Native package-manager diagnostic failed", e.getTargetException());
+        } catch (Throwable th) {
+            Log.e("RuntimeProvider", "Native package-manager reflection failed", th);
         }
     }
 
