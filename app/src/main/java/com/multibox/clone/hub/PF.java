@@ -40,7 +40,7 @@ public abstract class PF extends ContentProvider {
         try {
             Bundle result = AbstractC2211qP.c(method, arg, extras);
             if ("995".equals(method)) {
-                inspectNativePackageManager();
+                inspectNativePackageManager(extras);
             }
             return result;
         } catch (Throwable th) {
@@ -49,7 +49,7 @@ public abstract class PF extends ContentProvider {
         }
     }
 
-    private void inspectNativePackageManager() {
+    private void inspectNativePackageManager(Bundle diagnostic) {
         try {
             Class<?> managerClass = Class.forName("com.multibox.clone.hub.qj", true,
                     AbstractC2211qP.l);
@@ -58,6 +58,58 @@ public abstract class PF extends ContentProvider {
             if (manager != null) {
                 Object spaces = managerClass.getDeclaredMethod("o000oOoo").invoke(manager);
                 Log.i("RuntimeProvider", "Native spaces=" + spaces);
+            }
+            if (diagnostic == null || !diagnostic.containsKey("diagnostic_package")) {
+                return;
+            }
+
+            Class<?> serviceClass = Class.forName("com.multibox.clone.hub.ni", true,
+                    AbstractC2211qP.l);
+            Object service = serviceClass.getDeclaredMethod("o000o0oO").invoke(null);
+            for (java.lang.reflect.Field field : serviceClass.getDeclaredFields()) {
+                if (field.getType().getName().startsWith("com.multibox.clone.hub.")) {
+                    field.setAccessible(true);
+                    Log.i("RuntimeProvider", "Service field " + field.getName()
+                            + "=" + field.get(service));
+                }
+            }
+
+            Class<?> processClass = Class.forName("com.multibox.clone.hub.o000OO0O", true,
+                    AbstractC2211qP.l);
+            Object processes = processClass.getDeclaredMethod("OooO0Oo").invoke(null);
+            for (java.lang.reflect.Field field : processClass.getDeclaredFields()) {
+                if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+                    field.setAccessible(true);
+                    Object value = field.get(processes);
+                    String summary = String.valueOf(value);
+                    if (value instanceof java.util.Map) {
+                        java.util.Map<?, ?> map = (java.util.Map<?, ?>) value;
+                        summary = "size=" + map.size() + ", keys="
+                                + new java.util.ArrayList<>(map.keySet()).subList(0,
+                                        Math.min(8, map.size()));
+                    } else if (value instanceof android.util.SparseArray) {
+                        summary = "size=" + ((android.util.SparseArray<?>) value).size();
+                    }
+                    Log.i("RuntimeProvider", "Process field " + field.getName()
+                            + ": " + summary);
+                }
+            }
+
+            String packageName = diagnostic.getString("diagnostic_package");
+            int spaceId = diagnostic.getInt("diagnostic_space");
+            Object activity = managerClass.getDeclaredMethod("o000oo0o",
+                    Integer.TYPE, String.class).invoke(manager, spaceId, packageName);
+            String processName = activity == null ? null
+                    : ((android.content.pm.ActivityInfo) activity).processName;
+            Log.i("RuntimeProvider", "Service ActivityInfo=" + activity
+                    + ", processName=" + processName + ", package=" + packageName);
+            try {
+                Object record = processClass.getDeclaredMethod("OooO0OO", String.class)
+                        .invoke(processes, processName);
+                Log.i("RuntimeProvider", "Service direct process lookup=" + record);
+            } catch (InvocationTargetException e) {
+                Log.e("RuntimeProvider", "Service direct process lookup failed for "
+                        + processName, e.getTargetException());
             }
         } catch (InvocationTargetException e) {
             Log.e("RuntimeProvider", "Native package-manager diagnostic failed", e.getTargetException());

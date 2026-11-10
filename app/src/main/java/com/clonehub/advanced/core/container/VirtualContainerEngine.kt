@@ -279,51 +279,28 @@ object VirtualContainerEngine {
         }
     }
 
-    /** Temporary read-only diagnostics for the native process lookup failure. */
+    /** Temporary read-only diagnostics inside the remote service process. */
     private fun dumpRuntimeProcessState(context: Context, packageName: String, spaceId: Int) {
+        val diagnostic = Bundle().apply {
+            putString("diagnostic_package", packageName)
+            putInt("diagnostic_space", spaceId)
+        }
         try {
-            val loader = com.multibox.clone.hub.AbstractC2211qP.g(context)
-            val serviceClass = loader.loadClass("com.multibox.clone.hub.ni")
-            val service = serviceClass.getDeclaredMethod("o000o0oO").invoke(null)
-            for (field in serviceClass.declaredFields) {
-                if (field.type.name.startsWith("com.multibox.clone.hub.")) {
-                    field.isAccessible = true
-                    Log.i(TAG, "Runtime service field ${field.name}=${field.get(service)}")
-                }
+            val client = context.contentResolver.acquireUnstableContentProviderClient(
+                SERVICE_PROVIDER_AUTHORITY
+            )
+            if (client == null) {
+                Log.e(TAG, "Could not acquire service process for launch diagnostics")
+                return
             }
-            val managerClass = loader.loadClass("com.multibox.clone.hub.o000OO0O")
-            val manager = managerClass.getDeclaredMethod("OooO0Oo").invoke(null)
-            for (field in managerClass.declaredFields) {
-                if (!java.lang.reflect.Modifier.isStatic(field.modifiers)) {
-                    field.isAccessible = true
-                    val value = field.get(manager)
-                    val summary = when (value) {
-                        is Map<*, *> -> "size=${value.size}, keys=${value.keys.take(8)}"
-                        is android.util.SparseArray<*> -> "size=${value.size()}"
-                        else -> value.toString()
-                    }
-                    Log.i(TAG, "Process manager field ${field.name}: $summary")
-                }
-            }
-            val packagesClass = loader.loadClass("com.multibox.clone.hub.qj")
-            val packages = packagesClass.getDeclaredMethod("o000o0oo").invoke(null)
-            val activity = packagesClass.getDeclaredMethod("o000oo0o", Int::class.javaPrimitiveType,
-                String::class.java).invoke(packages, spaceId, packageName)
-            val processName = activity?.let {
-                android.content.pm.ActivityInfo::class.java.getField("processName").get(it) as? String
-            }
-            Log.i(TAG, "Launch ActivityInfo=$activity, processName=$processName, package=$packageName")
             try {
-                val record = managerClass.getDeclaredMethod("OooO0OO", String::class.java)
-                    .invoke(manager, processName)
-                Log.i(TAG, "Direct process lookup returned $record")
-            } catch (e: java.lang.reflect.InvocationTargetException) {
-                Log.e(TAG, "Direct process lookup failed for $processName", e.targetException)
+                client.call(PROVIDER_METHOD_SERVICE, null, diagnostic)
+                Log.i(TAG, "Requested remote process-state diagnostics for $packageName")
+            } finally {
+                client.release()
             }
-        } catch (e: java.lang.reflect.InvocationTargetException) {
-            Log.e(TAG, "Runtime process diagnostic invocation failed", e.targetException)
         } catch (e: Throwable) {
-            Log.e(TAG, "Runtime process diagnostic failed", e)
+            Log.e(TAG, "Remote process diagnostic failed", e)
         }
     }
 
