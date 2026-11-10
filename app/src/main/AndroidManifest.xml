@@ -71,15 +71,9 @@
         <provider android:name="com.multibox.clone.hub.Jrhl$Service"
             android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service"
             android:exported="true" android:process=":service" />
-        <provider android:name="com.multibox.clone.hub.Jrhl$File"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$File"
-            android:exported="false" android:process=":service"
-            android:grantUriPermissions="true" />
-        <provider android:name="com.multibox.clone.hub.Jrhl$Client"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Client"
-            android:exported="false" android:grantUriPermissions="true" />
-
-        <!-- Runtime also resolves application-specific client-side aliases. -->
+        <!-- Client/File authorities are derived from the actual host package. Keeping a
+             second fixed-authority instance makes Android validate calls against the
+             wrong ContentProvider transport when applicationId differs. -->
         <provider android:name="com.multibox.clone.hub.Jrhl$ServiceProvider"
             android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$Service"
             android:exported="false" android:process=":service" />
