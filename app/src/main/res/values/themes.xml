@@ -17,4 +17,16 @@
         <!-- Edge to Edge & Modern Android 15 Support -->
         <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">false</item>
     </style>
+
+    <!-- Exact agent-theme behavior required by the virtual activity stubs. -->
+    <style name="Theme.CloneHub.Agent" parent="@android:style/Theme.NoTitleBar">
+        <item name="android:windowBackground">@null</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+    <style name="Theme.CloneHub.Agent.EdgeToEdge" parent="Theme.CloneHub.Agent">
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
+    </style>
+    <style name="Theme.CloneHub.Agent.Translucent" parent="@android:style/Theme.Translucent.NoTitleBar" />
 </resources>
