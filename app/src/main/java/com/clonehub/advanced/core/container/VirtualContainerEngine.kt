@@ -22,6 +22,10 @@ object VirtualContainerEngine {
     private const val TRANSACTION_LAUNCH_PACKAGE = 12
     private const val TRANSACTION_FORCE_STOP = 15
     private const val INSTALL_EXISTING_PACKAGE = 2
+    private const val INSTALL_OPTION_PRIMARY_PATH = "fohwt.BBYZW_IJB"
+    private const val INSTALL_OPTION_SECONDARY_PATH = "fohwt.IAJSVXW_IJB"
+    private const val INSTALL_OPTION_FLAGS = "fohwt.GSHG"
+    private const val INSTALL_RESULT_CODE = "fohwt.XTAEA_QMWG"
     private const val ANDROID_START_SUCCESS = 0
 
     private var remoteBinder: IBinder? = null
@@ -99,7 +103,12 @@ object VirtualContainerEngine {
             data.writeInt(INSTALL_EXISTING_PACKAGE)
             data.writeInt(spaceId) // userId / spaceId
             data.writeInt(1) // has bundle
-            Bundle.EMPTY.writeToParcel(data, 0)
+            val installOptions = Bundle().apply {
+                putString(INSTALL_OPTION_PRIMARY_PATH, null)
+                putString(INSTALL_OPTION_SECONDARY_PATH, null)
+                putInt(INSTALL_OPTION_FLAGS, -1)
+            }
+            installOptions.writeToParcel(data, 0)
             if (!binder.transact(TRANSACTION_INSTALL_PACKAGE, data, reply, 0)) {
                 Log.e(TAG, "Runtime rejected install transaction for $packageName")
                 return false
@@ -119,7 +128,7 @@ object VirtualContainerEngine {
             Log.i(
                 TAG,
                 "Package $packageName install verification in Space $spaceId: " +
-                    "installed=$installed, result=$result"
+                    "installed=$installed, resultCode=${result?.getInt(INSTALL_RESULT_CODE, -1)}, result=$result"
             )
             installed
         } catch (e: Exception) {
