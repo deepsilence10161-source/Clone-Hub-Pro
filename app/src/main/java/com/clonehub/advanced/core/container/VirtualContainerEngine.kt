@@ -249,6 +249,8 @@ object VirtualContainerEngine {
             return false
         }
 
+        dumpRuntimeProcessState(context, app.packageName, spaceId)
+
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         return try {
@@ -274,6 +276,54 @@ object VirtualContainerEngine {
         } finally {
             data.recycle()
             reply.recycle()
+        }
+    }
+
+    /** Temporary read-only diagnostics for the native process lookup failure. */
+    private fun dumpRuntimeProcessState(context: Context, packageName: String, spaceId: Int) {
+        try {
+            val loader = com.multibox.clone.hub.AbstractC2211qP.g(context)
+            val serviceClass = loader.loadClass("com.multibox.clone.hub.ni")
+            val service = serviceClass.getDeclaredMethod("o000o0oO").invoke(null)
+            for (field in serviceClass.declaredFields) {
+                if (field.type.name.startsWith("com.multibox.clone.hub.")) {
+                    field.isAccessible = true
+                    Log.i(TAG, "Runtime service field ${field.name}=${field.get(service)}")
+                }
+            }
+            val managerClass = loader.loadClass("com.multibox.clone.hub.o000OO0O")
+            val manager = managerClass.getDeclaredMethod("OooO0Oo").invoke(null)
+            for (field in managerClass.declaredFields) {
+                if (!java.lang.reflect.Modifier.isStatic(field.modifiers)) {
+                    field.isAccessible = true
+                    val value = field.get(manager)
+                    val summary = when (value) {
+                        is Map -> "size=${value.size}, keys=${value.keys.take(8)}"
+                        is android.util.SparseArray<*> -> "size=${value.size()}"
+                        else -> value.toString()
+                    }
+                    Log.i(TAG, "Process manager field ${field.name}: $summary")
+                }
+            }
+            val packagesClass = loader.loadClass("com.multibox.clone.hub.qj")
+            val packages = packagesClass.getDeclaredMethod("o000o0oo").invoke(null)
+            val activity = packagesClass.getDeclaredMethod("o000oo0o", Int::class.javaPrimitiveType,
+                String::class.java).invoke(packages, spaceId, packageName)
+            val processName = activity?.let {
+                android.content.pm.ActivityInfo::class.java.getField("processName").get(it) as? String
+            }
+            Log.i(TAG, "Launch ActivityInfo=$activity, processName=$processName, package=$packageName")
+            try {
+                val record = managerClass.getDeclaredMethod("OooO0OO", String::class.java)
+                    .invoke(manager, processName)
+                Log.i(TAG, "Direct process lookup returned $record")
+            } catch (e: java.lang.reflect.InvocationTargetException) {
+                Log.e(TAG, "Direct process lookup failed for $processName", e.targetException)
+            }
+        } catch (e: java.lang.reflect.InvocationTargetException) {
+            Log.e(TAG, "Runtime process diagnostic invocation failed", e.targetException)
+        } catch (e: Throwable) {
+            Log.e(TAG, "Runtime process diagnostic failed", e)
         }
     }
 
