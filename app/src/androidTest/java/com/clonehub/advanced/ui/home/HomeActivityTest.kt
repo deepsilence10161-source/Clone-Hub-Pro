@@ -14,13 +14,16 @@ import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.FixMethodOrder
 import org.junit.runner.RunWith
+import org.junit.runners.MethodSorters
 
 @RunWith(AndroidJUnit4::class)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class HomeActivityTest {
 
     @Test
-    fun homeScreen_displaysFirstSpaceAndAddAction() {
+    fun d_homeScreen_displaysFirstSpaceAndAddAction() {
         ActivityScenario.launch(HomeActivity::class.java).use {
             onView(withId(R.id.viewPagerSpaces)).check(matches(isDisplayed()))
             onView(withId(R.id.tvSpaceIndicator)).check(matches(withText("1")))
@@ -29,7 +32,7 @@ class HomeActivityTest {
     }
 
     @Test
-    fun nextSpaceButton_createsAndSelectsSecondSpace() {
+    fun a_nextSpaceButton_createsAndSelectsSecondSpace() {
         ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 val nextButton = activity.findViewById<android.widget.ImageButton>(R.id.btnNextSpace)
@@ -52,7 +55,7 @@ class HomeActivityTest {
     }
 
     @Test
-    fun nextSpaceButton_performClickCreatesSecondSpace() {
+    fun b_nextSpaceButton_performClickCreatesSecondSpace() {
         ActivityScenario.launch(HomeActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
                 activity.findViewById<android.widget.ImageButton>(R.id.btnNextSpace).performClick()
@@ -66,7 +69,7 @@ class HomeActivityTest {
     }
 
     @Test
-    fun addAction_opensAppPicker() {
+    fun c_addAction_opensAppPicker() {
         ActivityScenario.launch(HomeActivity::class.java).use {
             onView(withId(R.id.fabAdd)).perform(click())
             onView(withId(R.id.searchView)).check(matches(isDisplayed()))
