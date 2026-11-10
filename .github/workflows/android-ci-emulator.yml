@@ -10,7 +10,7 @@ on:
 jobs:
   build:
     name: Build APK and instrumentation tests
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout repository
@@ -45,7 +45,7 @@ jobs:
   emulator-e2e:
     name: Strict Android 14 emulator E2E
     needs: build
-    # Linux x64 supports KVM acceleration; ARM64 macOS nested HVF is unsupported.
+    # Native ARM64 avoids the x86_64 ART/ARM translation incompatibility.
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
     env:
@@ -72,7 +72,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          # Google APIs x86_64 images include ARM64 translation required by the bundled runtime.
+          # Run the bundled ARM runtime without x86_64 ART translation.
           target: google_apis
           arch: arm64-v8a
           profile: pixel_6
