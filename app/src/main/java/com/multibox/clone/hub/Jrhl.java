@@ -16,6 +16,11 @@ public class Jrhl {
 
     /** Forwarding-provider placeholder; it must never initialize the runtime. */
     public static class File extends android.content.ContentProvider {
+        @Override public void attachInfo(Context context,
+                android.content.pm.ProviderInfo providerInfo) {
+            tc.a = 0;
+            super.attachInfo(context, providerInfo);
+        }
         @Override public boolean onCreate() { return false; }
         @Override public android.database.Cursor query(android.net.Uri uri, String[] projection,
                 String selection, String[] selectionArgs, String sortOrder) { return null; }

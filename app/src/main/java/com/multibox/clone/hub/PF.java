@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 public abstract class PF extends ContentProvider {
     @Override
     public void attachInfo(Context context, ProviderInfo providerInfo) {
+        tc.a = 0;
         super.attachInfo(context, providerInfo);
         try {
             AbstractC2211qP.l = AbstractC2211qP.g(context);
