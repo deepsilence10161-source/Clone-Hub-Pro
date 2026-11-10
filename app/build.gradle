@@ -26,6 +26,8 @@ android {
         debug {
             minifyEnabled false
             applicationIdSuffix ".debug"
+            // The bundled VM uses legacy JNI references in virtual agent processes.
+            debuggable false
         }
     }
 
