@@ -197,7 +197,7 @@
 
         <!-- Agent process slot 0 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P0"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P0" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P0" android:exported="true"
             android:process=":agent0" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A0"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -207,7 +207,7 @@
 
         <!-- Agent process slot 1 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P1"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P1" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P1" android:exported="true"
             android:process=":agent1" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A1"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -217,7 +217,7 @@
 
         <!-- Agent process slot 2 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P2"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P2" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P2" android:exported="true"
             android:process=":agent2" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A2"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -227,7 +227,7 @@
 
         <!-- Agent process slot 3 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P3"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P3" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P3" android:exported="true"
             android:process=":agent3" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A3"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -237,7 +237,7 @@
 
         <!-- Agent process slot 4 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P4"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P4" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P4" android:exported="true"
             android:process=":agent4" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A4"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -247,7 +247,7 @@
 
         <!-- Agent process slot 5 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P5"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P5" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P5" android:exported="true"
             android:process=":agent5" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A5"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -257,7 +257,7 @@
 
         <!-- Agent process slot 6 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P6"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P6" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P6" android:exported="true"
             android:process=":agent6" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A6"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -267,7 +267,7 @@
 
         <!-- Agent process slot 7 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P7"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P7" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P7" android:exported="true"
             android:process=":agent7" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A7"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -277,7 +277,7 @@
 
         <!-- Agent process slot 8 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P8"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P8" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P8" android:exported="true"
             android:process=":agent8" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A8"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -287,7 +287,7 @@
 
         <!-- Agent process slot 9 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P9"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P9" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P9" android:exported="true"
             android:process=":agent9" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A9"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -297,7 +297,7 @@
 
         <!-- Agent process slot 10 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P10"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P10" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P10" android:exported="true"
             android:process=":agent10" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A10"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -307,7 +307,7 @@
 
         <!-- Agent process slot 11 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P11"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P11" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P11" android:exported="true"
             android:process=":agent11" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A11"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -317,7 +317,7 @@
 
         <!-- Agent process slot 12 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P12"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P12" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P12" android:exported="true"
             android:process=":agent12" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A12"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -327,7 +327,7 @@
 
         <!-- Agent process slot 13 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P13"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P13" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P13" android:exported="true"
             android:process=":agent13" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A13"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -337,7 +337,7 @@
 
         <!-- Agent process slot 14 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P14"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P14" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P14" android:exported="true"
             android:process=":agent14" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A14"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -347,7 +347,7 @@
 
         <!-- Agent process slot 15 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P15"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P15" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P15" android:exported="true"
             android:process=":agent15" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A15"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -357,7 +357,7 @@
 
         <!-- Agent process slot 16 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P16"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P16" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P16" android:exported="true"
             android:process=":agent16" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A16"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -367,7 +367,7 @@
 
         <!-- Agent process slot 17 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P17"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P17" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P17" android:exported="true"
             android:process=":agent17" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A17"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -377,7 +377,7 @@
 
         <!-- Agent process slot 18 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P18"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P18" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P18" android:exported="true"
             android:process=":agent18" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A18"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -387,7 +387,7 @@
 
         <!-- Agent process slot 19 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P19"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P19" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P19" android:exported="true"
             android:process=":agent19" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A19"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -397,7 +397,7 @@
 
         <!-- Agent process slot 20 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P20"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P20" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P20" android:exported="true"
             android:process=":agent20" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A20"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -407,7 +407,7 @@
 
         <!-- Agent process slot 21 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P21"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P21" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P21" android:exported="true"
             android:process=":agent21" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A21"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -417,7 +417,7 @@
 
         <!-- Agent process slot 22 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P22"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P22" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P22" android:exported="true"
             android:process=":agent22" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A22"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -427,7 +427,7 @@
 
         <!-- Agent process slot 23 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P23"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P23" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P23" android:exported="true"
             android:process=":agent23" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A23"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -437,7 +437,7 @@
 
         <!-- Agent process slot 24 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P24"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P24" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P24" android:exported="true"
             android:process=":agent24" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A24"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -447,7 +447,7 @@
 
         <!-- Agent process slot 25 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P25"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P25" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P25" android:exported="true"
             android:process=":agent25" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A25"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -457,7 +457,7 @@
 
         <!-- Agent process slot 26 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P26"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P26" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P26" android:exported="true"
             android:process=":agent26" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A26"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -467,7 +467,7 @@
 
         <!-- Agent process slot 27 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P27"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P27" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P27" android:exported="true"
             android:process=":agent27" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A27"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -477,7 +477,7 @@
 
         <!-- Agent process slot 28 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P28"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P28" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P28" android:exported="true"
             android:process=":agent28" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A28"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -487,7 +487,7 @@
 
         <!-- Agent process slot 29 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P29"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P29" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P29" android:exported="true"
             android:process=":agent29" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A29"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -497,7 +497,7 @@
 
         <!-- Agent process slot 30 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P30"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P30" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P30" android:exported="true"
             android:process=":agent30" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A30"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -507,7 +507,7 @@
 
         <!-- Agent process slot 31 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P31"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P31" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P31" android:exported="true"
             android:process=":agent31" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A31"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -517,7 +517,7 @@
 
         <!-- Agent process slot 32 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P32"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P32" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P32" android:exported="true"
             android:process=":agent32" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A32"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -527,7 +527,7 @@
 
         <!-- Agent process slot 33 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P33"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P33" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P33" android:exported="true"
             android:process=":agent33" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A33"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -537,7 +537,7 @@
 
         <!-- Agent process slot 34 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P34"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P34" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P34" android:exported="true"
             android:process=":agent34" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A34"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -547,7 +547,7 @@
 
         <!-- Agent process slot 35 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P35"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P35" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P35" android:exported="true"
             android:process=":agent35" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A35"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -557,7 +557,7 @@
 
         <!-- Agent process slot 36 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P36"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P36" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P36" android:exported="true"
             android:process=":agent36" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A36"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -567,7 +567,7 @@
 
         <!-- Agent process slot 37 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P37"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P37" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P37" android:exported="true"
             android:process=":agent37" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A37"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -577,7 +577,7 @@
 
         <!-- Agent process slot 38 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P38"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P38" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P38" android:exported="true"
             android:process=":agent38" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A38"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -587,7 +587,7 @@
 
         <!-- Agent process slot 39 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P39"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P39" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P39" android:exported="true"
             android:process=":agent39" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A39"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -597,7 +597,7 @@
 
         <!-- Agent process slot 40 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P40"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P40" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P40" android:exported="true"
             android:process=":agent40" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A40"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -607,7 +607,7 @@
 
         <!-- Agent process slot 41 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P41"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P41" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P41" android:exported="true"
             android:process=":agent41" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A41"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -617,7 +617,7 @@
 
         <!-- Agent process slot 42 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P42"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P42" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P42" android:exported="true"
             android:process=":agent42" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A42"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -627,7 +627,7 @@
 
         <!-- Agent process slot 43 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P43"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P43" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P43" android:exported="true"
             android:process=":agent43" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A43"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -637,7 +637,7 @@
 
         <!-- Agent process slot 44 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P44"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P44" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P44" android:exported="true"
             android:process=":agent44" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A44"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -647,7 +647,7 @@
 
         <!-- Agent process slot 45 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P45"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P45" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P45" android:exported="true"
             android:process=":agent45" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A45"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -657,7 +657,7 @@
 
         <!-- Agent process slot 46 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P46"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P46" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P46" android:exported="true"
             android:process=":agent46" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A46"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -667,7 +667,7 @@
 
         <!-- Agent process slot 47 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P47"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P47" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P47" android:exported="true"
             android:process=":agent47" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A47"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -677,7 +677,7 @@
 
         <!-- Agent process slot 48 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P48"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P48" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P48" android:exported="true"
             android:process=":agent48" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A48"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -687,7 +687,7 @@
 
         <!-- Agent process slot 49 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P49"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P49" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P49" android:exported="true"
             android:process=":agent49" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A49"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -697,7 +697,7 @@
 
         <!-- Agent process slot 50 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P50"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P50" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P50" android:exported="true"
             android:process=":agent50" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A50"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -707,7 +707,7 @@
 
         <!-- Agent process slot 51 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P51"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P51" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P51" android:exported="true"
             android:process=":agent51" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A51"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -717,7 +717,7 @@
 
         <!-- Agent process slot 52 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P52"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P52" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P52" android:exported="true"
             android:process=":agent52" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A52"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -727,7 +727,7 @@
 
         <!-- Agent process slot 53 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P53"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P53" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P53" android:exported="true"
             android:process=":agent53" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A53"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -737,7 +737,7 @@
 
         <!-- Agent process slot 54 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P54"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P54" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P54" android:exported="true"
             android:process=":agent54" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A54"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -747,7 +747,7 @@
 
         <!-- Agent process slot 55 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P55"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P55" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P55" android:exported="true"
             android:process=":agent55" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A55"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -757,7 +757,7 @@
 
         <!-- Agent process slot 56 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P56"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P56" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P56" android:exported="true"
             android:process=":agent56" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A56"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -767,7 +767,7 @@
 
         <!-- Agent process slot 57 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P57"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P57" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P57" android:exported="true"
             android:process=":agent57" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A57"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -777,7 +777,7 @@
 
         <!-- Agent process slot 58 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P58"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P58" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P58" android:exported="true"
             android:process=":agent58" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A58"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -787,7 +787,7 @@
 
         <!-- Agent process slot 59 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P59"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P59" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P59" android:exported="true"
             android:process=":agent59" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A59"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -797,7 +797,7 @@
 
         <!-- Agent process slot 60 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P60"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P60" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P60" android:exported="true"
             android:process=":agent60" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A60"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -807,7 +807,7 @@
 
         <!-- Agent process slot 61 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P61"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P61" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P61" android:exported="true"
             android:process=":agent61" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A61"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -817,7 +817,7 @@
 
         <!-- Agent process slot 62 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P62"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P62" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P62" android:exported="true"
             android:process=":agent62" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A62"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -827,7 +827,7 @@
 
         <!-- Agent process slot 63 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P63"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P63" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P63" android:exported="true"
             android:process=":agent63" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A63"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -837,7 +837,7 @@
 
         <!-- Agent process slot 64 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P64"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P64" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P64" android:exported="true"
             android:process=":agent64" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A64"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -847,7 +847,7 @@
 
         <!-- Agent process slot 65 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P65"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P65" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P65" android:exported="true"
             android:process=":agent65" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A65"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -857,7 +857,7 @@
 
         <!-- Agent process slot 66 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P66"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P66" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P66" android:exported="true"
             android:process=":agent66" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A66"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -867,7 +867,7 @@
 
         <!-- Agent process slot 67 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P67"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P67" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P67" android:exported="true"
             android:process=":agent67" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A67"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -877,7 +877,7 @@
 
         <!-- Agent process slot 68 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P68"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P68" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P68" android:exported="true"
             android:process=":agent68" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A68"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -887,7 +887,7 @@
 
         <!-- Agent process slot 69 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P69"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P69" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P69" android:exported="true"
             android:process=":agent69" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A69"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -897,7 +897,7 @@
 
         <!-- Agent process slot 70 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P70"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P70" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P70" android:exported="true"
             android:process=":agent70" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A70"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -907,7 +907,7 @@
 
         <!-- Agent process slot 71 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P71"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P71" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P71" android:exported="true"
             android:process=":agent71" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A71"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -917,7 +917,7 @@
 
         <!-- Agent process slot 72 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P72"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P72" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P72" android:exported="true"
             android:process=":agent72" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A72"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -927,7 +927,7 @@
 
         <!-- Agent process slot 73 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P73"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P73" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P73" android:exported="true"
             android:process=":agent73" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A73"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -937,7 +937,7 @@
 
         <!-- Agent process slot 74 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P74"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P74" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P74" android:exported="true"
             android:process=":agent74" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A74"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -947,7 +947,7 @@
 
         <!-- Agent process slot 75 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P75"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P75" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P75" android:exported="true"
             android:process=":agent75" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A75"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -957,7 +957,7 @@
 
         <!-- Agent process slot 76 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P76"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P76" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P76" android:exported="true"
             android:process=":agent76" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A76"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -967,7 +967,7 @@
 
         <!-- Agent process slot 77 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P77"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P77" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P77" android:exported="true"
             android:process=":agent77" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A77"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -977,7 +977,7 @@
 
         <!-- Agent process slot 78 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P78"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P78" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P78" android:exported="true"
             android:process=":agent78" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A78"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -987,7 +987,7 @@
 
         <!-- Agent process slot 79 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P79"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P79" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P79" android:exported="true"
             android:process=":agent79" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A79"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -997,7 +997,7 @@
 
         <!-- Agent process slot 80 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P80"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P80" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P80" android:exported="true"
             android:process=":agent80" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A80"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1007,7 +1007,7 @@
 
         <!-- Agent process slot 81 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P81"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P81" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P81" android:exported="true"
             android:process=":agent81" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A81"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1017,7 +1017,7 @@
 
         <!-- Agent process slot 82 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P82"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P82" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P82" android:exported="true"
             android:process=":agent82" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A82"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1027,7 +1027,7 @@
 
         <!-- Agent process slot 83 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P83"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P83" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P83" android:exported="true"
             android:process=":agent83" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A83"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1037,7 +1037,7 @@
 
         <!-- Agent process slot 84 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P84"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P84" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P84" android:exported="true"
             android:process=":agent84" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A84"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1047,7 +1047,7 @@
 
         <!-- Agent process slot 85 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P85"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P85" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P85" android:exported="true"
             android:process=":agent85" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A85"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1057,7 +1057,7 @@
 
         <!-- Agent process slot 86 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P86"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P86" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P86" android:exported="true"
             android:process=":agent86" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A86"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1067,7 +1067,7 @@
 
         <!-- Agent process slot 87 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P87"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P87" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P87" android:exported="true"
             android:process=":agent87" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A87"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1077,7 +1077,7 @@
 
         <!-- Agent process slot 88 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P88"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P88" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P88" android:exported="true"
             android:process=":agent88" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A88"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1087,7 +1087,7 @@
 
         <!-- Agent process slot 89 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P89"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P89" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P89" android:exported="true"
             android:process=":agent89" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A89"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1097,7 +1097,7 @@
 
         <!-- Agent process slot 90 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P90"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P90" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P90" android:exported="true"
             android:process=":agent90" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A90"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1107,7 +1107,7 @@
 
         <!-- Agent process slot 91 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P91"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P91" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P91" android:exported="true"
             android:process=":agent91" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A91"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1117,7 +1117,7 @@
 
         <!-- Agent process slot 92 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P92"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P92" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P92" android:exported="true"
             android:process=":agent92" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A92"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1127,7 +1127,7 @@
 
         <!-- Agent process slot 93 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P93"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P93" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P93" android:exported="true"
             android:process=":agent93" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A93"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1137,7 +1137,7 @@
 
         <!-- Agent process slot 94 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P94"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P94" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P94" android:exported="true"
             android:process=":agent94" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A94"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1147,7 +1147,7 @@
 
         <!-- Agent process slot 95 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P95"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P95" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P95" android:exported="true"
             android:process=":agent95" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A95"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1157,7 +1157,7 @@
 
         <!-- Agent process slot 96 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P96"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P96" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P96" android:exported="true"
             android:process=":agent96" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A96"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1167,7 +1167,7 @@
 
         <!-- Agent process slot 97 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P97"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P97" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P97" android:exported="true"
             android:process=":agent97" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A97"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1177,7 +1177,7 @@
 
         <!-- Agent process slot 98 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P98"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P98" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P98" android:exported="true"
             android:process=":agent98" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A98"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1187,7 +1187,7 @@
 
         <!-- Agent process slot 99 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P99"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P99" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P99" android:exported="true"
             android:process=":agent99" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A99"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1197,7 +1197,7 @@
 
         <!-- Agent process slot 100 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P100"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P100" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P100" android:exported="true"
             android:process=":agent100" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A100"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1207,7 +1207,7 @@
 
         <!-- Agent process slot 101 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P101"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P101" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P101" android:exported="true"
             android:process=":agent101" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A101"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1217,7 +1217,7 @@
 
         <!-- Agent process slot 102 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P102"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P102" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P102" android:exported="true"
             android:process=":agent102" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A102"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1227,7 +1227,7 @@
 
         <!-- Agent process slot 103 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P103"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P103" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P103" android:exported="true"
             android:process=":agent103" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A103"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1237,7 +1237,7 @@
 
         <!-- Agent process slot 104 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P104"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P104" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P104" android:exported="true"
             android:process=":agent104" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A104"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1247,7 +1247,7 @@
 
         <!-- Agent process slot 105 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P105"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P105" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P105" android:exported="true"
             android:process=":agent105" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A105"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1257,7 +1257,7 @@
 
         <!-- Agent process slot 106 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P106"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P106" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P106" android:exported="true"
             android:process=":agent106" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A106"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1267,7 +1267,7 @@
 
         <!-- Agent process slot 107 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P107"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P107" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P107" android:exported="true"
             android:process=":agent107" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A107"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1277,7 +1277,7 @@
 
         <!-- Agent process slot 108 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P108"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P108" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P108" android:exported="true"
             android:process=":agent108" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A108"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1287,7 +1287,7 @@
 
         <!-- Agent process slot 109 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P109"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P109" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P109" android:exported="true"
             android:process=":agent109" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A109"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1297,7 +1297,7 @@
 
         <!-- Agent process slot 110 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P110"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P110" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P110" android:exported="true"
             android:process=":agent110" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A110"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1307,7 +1307,7 @@
 
         <!-- Agent process slot 111 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P111"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P111" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P111" android:exported="true"
             android:process=":agent111" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A111"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1317,7 +1317,7 @@
 
         <!-- Agent process slot 112 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P112"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P112" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P112" android:exported="true"
             android:process=":agent112" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A112"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1327,7 +1327,7 @@
 
         <!-- Agent process slot 113 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P113"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P113" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P113" android:exported="true"
             android:process=":agent113" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A113"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1337,7 +1337,7 @@
 
         <!-- Agent process slot 114 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P114"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P114" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P114" android:exported="true"
             android:process=":agent114" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A114"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1347,7 +1347,7 @@
 
         <!-- Agent process slot 115 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P115"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P115" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P115" android:exported="true"
             android:process=":agent115" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A115"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1357,7 +1357,7 @@
 
         <!-- Agent process slot 116 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P116"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P116" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P116" android:exported="true"
             android:process=":agent116" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A116"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1367,7 +1367,7 @@
 
         <!-- Agent process slot 117 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P117"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P117" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P117" android:exported="true"
             android:process=":agent117" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A117"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1377,7 +1377,7 @@
 
         <!-- Agent process slot 118 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P118"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P118" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P118" android:exported="true"
             android:process=":agent118" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A118"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1387,7 +1387,7 @@
 
         <!-- Agent process slot 119 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P119"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P119" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P119" android:exported="true"
             android:process=":agent119" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A119"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1397,7 +1397,7 @@
 
         <!-- Agent process slot 120 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P120"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P120" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P120" android:exported="true"
             android:process=":agent120" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A120"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1407,7 +1407,7 @@
 
         <!-- Agent process slot 121 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P121"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P121" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P121" android:exported="true"
             android:process=":agent121" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A121"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1417,7 +1417,7 @@
 
         <!-- Agent process slot 122 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P122"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P122" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P122" android:exported="true"
             android:process=":agent122" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A122"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1427,7 +1427,7 @@
 
         <!-- Agent process slot 123 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P123"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P123" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P123" android:exported="true"
             android:process=":agent123" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A123"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1437,7 +1437,7 @@
 
         <!-- Agent process slot 124 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P124"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P124" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P124" android:exported="true"
             android:process=":agent124" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A124"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1447,7 +1447,7 @@
 
         <!-- Agent process slot 125 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P125"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P125" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P125" android:exported="true"
             android:process=":agent125" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A125"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1457,7 +1457,7 @@
 
         <!-- Agent process slot 126 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P126"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P126" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P126" android:exported="true"
             android:process=":agent126" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A126"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1467,7 +1467,7 @@
 
         <!-- Agent process slot 127 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P127"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P127" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P127" android:exported="true"
             android:process=":agent127" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A127"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1477,7 +1477,7 @@
 
         <!-- Agent process slot 128 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P128"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P128" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P128" android:exported="true"
             android:process=":agent128" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A128"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1487,7 +1487,7 @@
 
         <!-- Agent process slot 129 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P129"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P129" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P129" android:exported="true"
             android:process=":agent129" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A129"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1497,7 +1497,7 @@
 
         <!-- Agent process slot 130 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P130"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P130" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P130" android:exported="true"
             android:process=":agent130" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A130"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1507,7 +1507,7 @@
 
         <!-- Agent process slot 131 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P131"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P131" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P131" android:exported="true"
             android:process=":agent131" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A131"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1517,7 +1517,7 @@
 
         <!-- Agent process slot 132 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P132"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P132" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P132" android:exported="true"
             android:process=":agent132" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A132"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1527,7 +1527,7 @@
 
         <!-- Agent process slot 133 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P133"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P133" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P133" android:exported="true"
             android:process=":agent133" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A133"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1537,7 +1537,7 @@
 
         <!-- Agent process slot 134 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P134"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P134" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P134" android:exported="true"
             android:process=":agent134" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A134"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1547,7 +1547,7 @@
 
         <!-- Agent process slot 135 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P135"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P135" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P135" android:exported="true"
             android:process=":agent135" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A135"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1557,7 +1557,7 @@
 
         <!-- Agent process slot 136 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P136"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P136" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P136" android:exported="true"
             android:process=":agent136" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A136"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1567,7 +1567,7 @@
 
         <!-- Agent process slot 137 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P137"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P137" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P137" android:exported="true"
             android:process=":agent137" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A137"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1577,7 +1577,7 @@
 
         <!-- Agent process slot 138 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P138"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P138" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P138" android:exported="true"
             android:process=":agent138" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A138"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1587,7 +1587,7 @@
 
         <!-- Agent process slot 139 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P139"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P139" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P139" android:exported="true"
             android:process=":agent139" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A139"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1597,7 +1597,7 @@
 
         <!-- Agent process slot 140 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P140"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P140" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P140" android:exported="true"
             android:process=":agent140" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A140"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1607,7 +1607,7 @@
 
         <!-- Agent process slot 141 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P141"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P141" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P141" android:exported="true"
             android:process=":agent141" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A141"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1617,7 +1617,7 @@
 
         <!-- Agent process slot 142 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P142"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P142" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P142" android:exported="true"
             android:process=":agent142" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A142"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1627,7 +1627,7 @@
 
         <!-- Agent process slot 143 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P143"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P143" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P143" android:exported="true"
             android:process=":agent143" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A143"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1637,7 +1637,7 @@
 
         <!-- Agent process slot 144 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P144"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P144" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P144" android:exported="true"
             android:process=":agent144" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A144"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1647,7 +1647,7 @@
 
         <!-- Agent process slot 145 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P145"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P145" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P145" android:exported="true"
             android:process=":agent145" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A145"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1657,7 +1657,7 @@
 
         <!-- Agent process slot 146 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P146"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P146" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P146" android:exported="true"
             android:process=":agent146" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A146"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1667,7 +1667,7 @@
 
         <!-- Agent process slot 147 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P147"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P147" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P147" android:exported="true"
             android:process=":agent147" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A147"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1677,7 +1677,7 @@
 
         <!-- Agent process slot 148 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P148"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P148" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P148" android:exported="true"
             android:process=":agent148" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A148"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1687,7 +1687,7 @@
 
         <!-- Agent process slot 149 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P149"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P149" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P149" android:exported="true"
             android:process=":agent149" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A149"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1697,7 +1697,7 @@
 
         <!-- Agent process slot 150 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P150"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P150" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P150" android:exported="true"
             android:process=":agent150" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A150"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1707,7 +1707,7 @@
 
         <!-- Agent process slot 151 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P151"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P151" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P151" android:exported="true"
             android:process=":agent151" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A151"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1717,7 +1717,7 @@
 
         <!-- Agent process slot 152 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P152"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P152" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P152" android:exported="true"
             android:process=":agent152" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A152"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1727,7 +1727,7 @@
 
         <!-- Agent process slot 153 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P153"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P153" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P153" android:exported="true"
             android:process=":agent153" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A153"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1737,7 +1737,7 @@
 
         <!-- Agent process slot 154 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P154"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P154" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P154" android:exported="true"
             android:process=":agent154" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A154"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1747,7 +1747,7 @@
 
         <!-- Agent process slot 155 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P155"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P155" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P155" android:exported="true"
             android:process=":agent155" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A155"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1757,7 +1757,7 @@
 
         <!-- Agent process slot 156 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P156"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P156" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P156" android:exported="true"
             android:process=":agent156" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A156"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1767,7 +1767,7 @@
 
         <!-- Agent process slot 157 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P157"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P157" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P157" android:exported="true"
             android:process=":agent157" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A157"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1777,7 +1777,7 @@
 
         <!-- Agent process slot 158 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P158"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P158" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P158" android:exported="true"
             android:process=":agent158" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A158"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1787,7 +1787,7 @@
 
         <!-- Agent process slot 159 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P159"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P159" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P159" android:exported="true"
             android:process=":agent159" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A159"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1797,7 +1797,7 @@
 
         <!-- Agent process slot 160 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P160"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P160" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P160" android:exported="true"
             android:process=":agent160" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A160"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1807,7 +1807,7 @@
 
         <!-- Agent process slot 161 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P161"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P161" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P161" android:exported="true"
             android:process=":agent161" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A161"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1817,7 +1817,7 @@
 
         <!-- Agent process slot 162 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P162"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P162" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P162" android:exported="true"
             android:process=":agent162" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A162"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1827,7 +1827,7 @@
 
         <!-- Agent process slot 163 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P163"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P163" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P163" android:exported="true"
             android:process=":agent163" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A163"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1837,7 +1837,7 @@
 
         <!-- Agent process slot 164 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P164"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P164" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P164" android:exported="true"
             android:process=":agent164" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A164"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1847,7 +1847,7 @@
 
         <!-- Agent process slot 165 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P165"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P165" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P165" android:exported="true"
             android:process=":agent165" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A165"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1857,7 +1857,7 @@
 
         <!-- Agent process slot 166 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P166"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P166" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P166" android:exported="true"
             android:process=":agent166" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A166"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1867,7 +1867,7 @@
 
         <!-- Agent process slot 167 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P167"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P167" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P167" android:exported="true"
             android:process=":agent167" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A167"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1877,7 +1877,7 @@
 
         <!-- Agent process slot 168 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P168"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P168" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P168" android:exported="true"
             android:process=":agent168" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A168"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1887,7 +1887,7 @@
 
         <!-- Agent process slot 169 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P169"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P169" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P169" android:exported="true"
             android:process=":agent169" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A169"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1897,7 +1897,7 @@
 
         <!-- Agent process slot 170 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P170"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P170" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P170" android:exported="true"
             android:process=":agent170" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A170"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1907,7 +1907,7 @@
 
         <!-- Agent process slot 171 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P171"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P171" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P171" android:exported="true"
             android:process=":agent171" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A171"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1917,7 +1917,7 @@
 
         <!-- Agent process slot 172 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P172"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P172" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P172" android:exported="true"
             android:process=":agent172" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A172"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1927,7 +1927,7 @@
 
         <!-- Agent process slot 173 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P173"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P173" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P173" android:exported="true"
             android:process=":agent173" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A173"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1937,7 +1937,7 @@
 
         <!-- Agent process slot 174 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P174"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P174" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P174" android:exported="true"
             android:process=":agent174" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A174"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1947,7 +1947,7 @@
 
         <!-- Agent process slot 175 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P175"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P175" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P175" android:exported="true"
             android:process=":agent175" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A175"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1957,7 +1957,7 @@
 
         <!-- Agent process slot 176 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P176"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P176" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P176" android:exported="true"
             android:process=":agent176" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A176"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1967,7 +1967,7 @@
 
         <!-- Agent process slot 177 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P177"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P177" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P177" android:exported="true"
             android:process=":agent177" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A177"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1977,7 +1977,7 @@
 
         <!-- Agent process slot 178 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P178"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P178" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P178" android:exported="true"
             android:process=":agent178" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A178"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1987,7 +1987,7 @@
 
         <!-- Agent process slot 179 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P179"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P179" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P179" android:exported="true"
             android:process=":agent179" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A179"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -1997,7 +1997,7 @@
 
         <!-- Agent process slot 180 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P180"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P180" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P180" android:exported="true"
             android:process=":agent180" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A180"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2007,7 +2007,7 @@
 
         <!-- Agent process slot 181 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P181"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P181" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P181" android:exported="true"
             android:process=":agent181" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A181"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2017,7 +2017,7 @@
 
         <!-- Agent process slot 182 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P182"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P182" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P182" android:exported="true"
             android:process=":agent182" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A182"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2027,7 +2027,7 @@
 
         <!-- Agent process slot 183 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P183"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P183" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P183" android:exported="true"
             android:process=":agent183" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A183"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2037,7 +2037,7 @@
 
         <!-- Agent process slot 184 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P184"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P184" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P184" android:exported="true"
             android:process=":agent184" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A184"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2047,7 +2047,7 @@
 
         <!-- Agent process slot 185 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P185"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P185" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P185" android:exported="true"
             android:process=":agent185" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A185"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2057,7 +2057,7 @@
 
         <!-- Agent process slot 186 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P186"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P186" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P186" android:exported="true"
             android:process=":agent186" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A186"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2067,7 +2067,7 @@
 
         <!-- Agent process slot 187 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P187"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P187" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P187" android:exported="true"
             android:process=":agent187" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A187"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2077,7 +2077,7 @@
 
         <!-- Agent process slot 188 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P188"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P188" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P188" android:exported="true"
             android:process=":agent188" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A188"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2087,7 +2087,7 @@
 
         <!-- Agent process slot 189 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P189"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P189" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P189" android:exported="true"
             android:process=":agent189" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A189"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2097,7 +2097,7 @@
 
         <!-- Agent process slot 190 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P190"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P190" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P190" android:exported="true"
             android:process=":agent190" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A190"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2107,7 +2107,7 @@
 
         <!-- Agent process slot 191 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P191"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P191" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P191" android:exported="true"
             android:process=":agent191" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A191"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2117,7 +2117,7 @@
 
         <!-- Agent process slot 192 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P192"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P192" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P192" android:exported="true"
             android:process=":agent192" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A192"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2127,7 +2127,7 @@
 
         <!-- Agent process slot 193 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P193"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P193" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P193" android:exported="true"
             android:process=":agent193" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A193"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2137,7 +2137,7 @@
 
         <!-- Agent process slot 194 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P194"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P194" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P194" android:exported="true"
             android:process=":agent194" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A194"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2147,7 +2147,7 @@
 
         <!-- Agent process slot 195 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P195"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P195" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P195" android:exported="true"
             android:process=":agent195" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A195"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2157,7 +2157,7 @@
 
         <!-- Agent process slot 196 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P196"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P196" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P196" android:exported="true"
             android:process=":agent196" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A196"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2167,7 +2167,7 @@
 
         <!-- Agent process slot 197 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P197"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P197" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P197" android:exported="true"
             android:process=":agent197" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A197"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2177,7 +2177,7 @@
 
         <!-- Agent process slot 198 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P198"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P198" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P198" android:exported="true"
             android:process=":agent198" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A198"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2187,7 +2187,7 @@
 
         <!-- Agent process slot 199 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P199"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P199" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P199" android:exported="true"
             android:process=":agent199" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A199"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2197,7 +2197,7 @@
 
         <!-- Agent process slot 200 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P200"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P200" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P200" android:exported="true"
             android:process=":agent200" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A200"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2207,7 +2207,7 @@
 
         <!-- Agent process slot 201 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P201"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P201" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P201" android:exported="true"
             android:process=":agent201" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A201"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2217,7 +2217,7 @@
 
         <!-- Agent process slot 202 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P202"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P202" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P202" android:exported="true"
             android:process=":agent202" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A202"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2227,7 +2227,7 @@
 
         <!-- Agent process slot 203 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P203"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P203" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P203" android:exported="true"
             android:process=":agent203" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A203"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2237,7 +2237,7 @@
 
         <!-- Agent process slot 204 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P204"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P204" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P204" android:exported="true"
             android:process=":agent204" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A204"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2247,7 +2247,7 @@
 
         <!-- Agent process slot 205 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P205"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P205" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P205" android:exported="true"
             android:process=":agent205" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A205"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2257,7 +2257,7 @@
 
         <!-- Agent process slot 206 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P206"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P206" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P206" android:exported="true"
             android:process=":agent206" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A206"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2267,7 +2267,7 @@
 
         <!-- Agent process slot 207 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P207"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P207" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P207" android:exported="true"
             android:process=":agent207" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A207"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2277,7 +2277,7 @@
 
         <!-- Agent process slot 208 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P208"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P208" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P208" android:exported="true"
             android:process=":agent208" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A208"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2287,7 +2287,7 @@
 
         <!-- Agent process slot 209 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P209"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P209" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P209" android:exported="true"
             android:process=":agent209" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A209"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2297,7 +2297,7 @@
 
         <!-- Agent process slot 210 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P210"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P210" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P210" android:exported="true"
             android:process=":agent210" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A210"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2307,7 +2307,7 @@
 
         <!-- Agent process slot 211 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P211"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P211" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P211" android:exported="true"
             android:process=":agent211" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A211"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2317,7 +2317,7 @@
 
         <!-- Agent process slot 212 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P212"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P212" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P212" android:exported="true"
             android:process=":agent212" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A212"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2327,7 +2327,7 @@
 
         <!-- Agent process slot 213 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P213"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P213" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P213" android:exported="true"
             android:process=":agent213" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A213"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2337,7 +2337,7 @@
 
         <!-- Agent process slot 214 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P214"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P214" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P214" android:exported="true"
             android:process=":agent214" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A214"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2347,7 +2347,7 @@
 
         <!-- Agent process slot 215 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P215"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P215" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P215" android:exported="true"
             android:process=":agent215" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A215"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2357,7 +2357,7 @@
 
         <!-- Agent process slot 216 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P216"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P216" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P216" android:exported="true"
             android:process=":agent216" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A216"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2367,7 +2367,7 @@
 
         <!-- Agent process slot 217 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P217"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P217" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P217" android:exported="true"
             android:process=":agent217" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A217"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2377,7 +2377,7 @@
 
         <!-- Agent process slot 218 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P218"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P218" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P218" android:exported="true"
             android:process=":agent218" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A218"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2387,7 +2387,7 @@
 
         <!-- Agent process slot 219 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P219"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P219" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P219" android:exported="true"
             android:process=":agent219" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A219"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2397,7 +2397,7 @@
 
         <!-- Agent process slot 220 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P220"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P220" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P220" android:exported="true"
             android:process=":agent220" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A220"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2407,7 +2407,7 @@
 
         <!-- Agent process slot 221 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P221"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P221" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P221" android:exported="true"
             android:process=":agent221" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A221"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2417,7 +2417,7 @@
 
         <!-- Agent process slot 222 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P222"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P222" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P222" android:exported="true"
             android:process=":agent222" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A222"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2427,7 +2427,7 @@
 
         <!-- Agent process slot 223 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P223"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P223" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P223" android:exported="true"
             android:process=":agent223" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A223"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2437,7 +2437,7 @@
 
         <!-- Agent process slot 224 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P224"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P224" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P224" android:exported="true"
             android:process=":agent224" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A224"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2447,7 +2447,7 @@
 
         <!-- Agent process slot 225 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P225"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P225" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P225" android:exported="true"
             android:process=":agent225" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A225"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2457,7 +2457,7 @@
 
         <!-- Agent process slot 226 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P226"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P226" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P226" android:exported="true"
             android:process=":agent226" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A226"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2467,7 +2467,7 @@
 
         <!-- Agent process slot 227 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P227"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P227" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P227" android:exported="true"
             android:process=":agent227" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A227"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2477,7 +2477,7 @@
 
         <!-- Agent process slot 228 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P228"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P228" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P228" android:exported="true"
             android:process=":agent228" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A228"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2487,7 +2487,7 @@
 
         <!-- Agent process slot 229 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P229"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P229" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P229" android:exported="true"
             android:process=":agent229" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A229"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2497,7 +2497,7 @@
 
         <!-- Agent process slot 230 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P230"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P230" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P230" android:exported="true"
             android:process=":agent230" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A230"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2507,7 +2507,7 @@
 
         <!-- Agent process slot 231 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P231"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P231" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P231" android:exported="true"
             android:process=":agent231" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A231"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2517,7 +2517,7 @@
 
         <!-- Agent process slot 232 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P232"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P232" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P232" android:exported="true"
             android:process=":agent232" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A232"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2527,7 +2527,7 @@
 
         <!-- Agent process slot 233 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P233"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P233" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P233" android:exported="true"
             android:process=":agent233" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A233"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2537,7 +2537,7 @@
 
         <!-- Agent process slot 234 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P234"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P234" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P234" android:exported="true"
             android:process=":agent234" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A234"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2547,7 +2547,7 @@
 
         <!-- Agent process slot 235 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P235"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P235" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P235" android:exported="true"
             android:process=":agent235" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A235"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2557,7 +2557,7 @@
 
         <!-- Agent process slot 236 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P236"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P236" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P236" android:exported="true"
             android:process=":agent236" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A236"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2567,7 +2567,7 @@
 
         <!-- Agent process slot 237 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P237"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P237" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P237" android:exported="true"
             android:process=":agent237" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A237"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2577,7 +2577,7 @@
 
         <!-- Agent process slot 238 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P238"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P238" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P238" android:exported="true"
             android:process=":agent238" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A238"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2587,7 +2587,7 @@
 
         <!-- Agent process slot 239 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P239"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P239" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P239" android:exported="true"
             android:process=":agent239" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A239"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2597,7 +2597,7 @@
 
         <!-- Agent process slot 240 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P240"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P240" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P240" android:exported="true"
             android:process=":agent240" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A240"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2607,7 +2607,7 @@
 
         <!-- Agent process slot 241 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P241"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P241" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P241" android:exported="true"
             android:process=":agent241" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A241"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2617,7 +2617,7 @@
 
         <!-- Agent process slot 242 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P242"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P242" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P242" android:exported="true"
             android:process=":agent242" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A242"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2627,7 +2627,7 @@
 
         <!-- Agent process slot 243 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P243"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P243" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P243" android:exported="true"
             android:process=":agent243" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A243"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2637,7 +2637,7 @@
 
         <!-- Agent process slot 244 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P244"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P244" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P244" android:exported="true"
             android:process=":agent244" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A244"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2647,7 +2647,7 @@
 
         <!-- Agent process slot 245 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P245"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P245" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P245" android:exported="true"
             android:process=":agent245" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A245"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2657,7 +2657,7 @@
 
         <!-- Agent process slot 246 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P246"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P246" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P246" android:exported="true"
             android:process=":agent246" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A246"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2667,7 +2667,7 @@
 
         <!-- Agent process slot 247 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P247"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P247" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P247" android:exported="true"
             android:process=":agent247" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A247"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2677,7 +2677,7 @@
 
         <!-- Agent process slot 248 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P248"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P248" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P248" android:exported="true"
             android:process=":agent248" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A248"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2687,7 +2687,7 @@
 
         <!-- Agent process slot 249 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P249"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P249" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P249" android:exported="true"
             android:process=":agent249" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A249"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2697,7 +2697,7 @@
 
         <!-- Agent process slot 250 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P250"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P250" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P250" android:exported="true"
             android:process=":agent250" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A250"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2707,7 +2707,7 @@
 
         <!-- Agent process slot 251 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P251"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P251" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P251" android:exported="true"
             android:process=":agent251" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A251"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2717,7 +2717,7 @@
 
         <!-- Agent process slot 252 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P252"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P252" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P252" android:exported="true"
             android:process=":agent252" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A252"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2727,7 +2727,7 @@
 
         <!-- Agent process slot 253 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P253"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P253" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P253" android:exported="true"
             android:process=":agent253" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A253"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2737,7 +2737,7 @@
 
         <!-- Agent process slot 254 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P254"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P254" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P254" android:exported="true"
             android:process=":agent254" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A254"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2747,7 +2747,7 @@
 
         <!-- Agent process slot 255 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P255"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P255" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P255" android:exported="true"
             android:process=":agent255" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A255"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2757,7 +2757,7 @@
 
         <!-- Agent process slot 256 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P256"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P256" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P256" android:exported="true"
             android:process=":agent256" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A256"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2767,7 +2767,7 @@
 
         <!-- Agent process slot 257 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P257"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P257" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P257" android:exported="true"
             android:process=":agent257" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A257"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2777,7 +2777,7 @@
 
         <!-- Agent process slot 258 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P258"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P258" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P258" android:exported="true"
             android:process=":agent258" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A258"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2787,7 +2787,7 @@
 
         <!-- Agent process slot 259 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P259"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P259" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P259" android:exported="true"
             android:process=":agent259" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A259"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2797,7 +2797,7 @@
 
         <!-- Agent process slot 260 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P260"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P260" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P260" android:exported="true"
             android:process=":agent260" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A260"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2807,7 +2807,7 @@
 
         <!-- Agent process slot 261 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P261"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P261" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P261" android:exported="true"
             android:process=":agent261" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A261"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2817,7 +2817,7 @@
 
         <!-- Agent process slot 262 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P262"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P262" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P262" android:exported="true"
             android:process=":agent262" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A262"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2827,7 +2827,7 @@
 
         <!-- Agent process slot 263 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P263"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P263" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P263" android:exported="true"
             android:process=":agent263" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A263"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2837,7 +2837,7 @@
 
         <!-- Agent process slot 264 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P264"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P264" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P264" android:exported="true"
             android:process=":agent264" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A264"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2847,7 +2847,7 @@
 
         <!-- Agent process slot 265 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P265"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P265" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P265" android:exported="true"
             android:process=":agent265" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A265"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2857,7 +2857,7 @@
 
         <!-- Agent process slot 266 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P266"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P266" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P266" android:exported="true"
             android:process=":agent266" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A266"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2867,7 +2867,7 @@
 
         <!-- Agent process slot 267 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P267"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P267" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P267" android:exported="true"
             android:process=":agent267" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A267"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2877,7 +2877,7 @@
 
         <!-- Agent process slot 268 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P268"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P268" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P268" android:exported="true"
             android:process=":agent268" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A268"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2887,7 +2887,7 @@
 
         <!-- Agent process slot 269 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P269"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P269" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P269" android:exported="true"
             android:process=":agent269" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A269"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2897,7 +2897,7 @@
 
         <!-- Agent process slot 270 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P270"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P270" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P270" android:exported="true"
             android:process=":agent270" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A270"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2907,7 +2907,7 @@
 
         <!-- Agent process slot 271 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P271"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P271" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P271" android:exported="true"
             android:process=":agent271" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A271"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2917,7 +2917,7 @@
 
         <!-- Agent process slot 272 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P272"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P272" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P272" android:exported="true"
             android:process=":agent272" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A272"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2927,7 +2927,7 @@
 
         <!-- Agent process slot 273 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P273"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P273" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P273" android:exported="true"
             android:process=":agent273" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A273"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2937,7 +2937,7 @@
 
         <!-- Agent process slot 274 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P274"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P274" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P274" android:exported="true"
             android:process=":agent274" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A274"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2947,7 +2947,7 @@
 
         <!-- Agent process slot 275 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P275"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P275" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P275" android:exported="true"
             android:process=":agent275" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A275"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2957,7 +2957,7 @@
 
         <!-- Agent process slot 276 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P276"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P276" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P276" android:exported="true"
             android:process=":agent276" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A276"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2967,7 +2967,7 @@
 
         <!-- Agent process slot 277 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P277"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P277" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P277" android:exported="true"
             android:process=":agent277" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A277"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2977,7 +2977,7 @@
 
         <!-- Agent process slot 278 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P278"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P278" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P278" android:exported="true"
             android:process=":agent278" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A278"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2987,7 +2987,7 @@
 
         <!-- Agent process slot 279 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P279"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P279" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P279" android:exported="true"
             android:process=":agent279" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A279"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -2997,7 +2997,7 @@
 
         <!-- Agent process slot 280 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P280"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P280" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P280" android:exported="true"
             android:process=":agent280" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A280"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3007,7 +3007,7 @@
 
         <!-- Agent process slot 281 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P281"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P281" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P281" android:exported="true"
             android:process=":agent281" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A281"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3017,7 +3017,7 @@
 
         <!-- Agent process slot 282 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P282"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P282" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P282" android:exported="true"
             android:process=":agent282" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A282"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3027,7 +3027,7 @@
 
         <!-- Agent process slot 283 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P283"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P283" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P283" android:exported="true"
             android:process=":agent283" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A283"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3037,7 +3037,7 @@
 
         <!-- Agent process slot 284 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P284"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P284" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P284" android:exported="true"
             android:process=":agent284" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A284"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3047,7 +3047,7 @@
 
         <!-- Agent process slot 285 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P285"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P285" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P285" android:exported="true"
             android:process=":agent285" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A285"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3057,7 +3057,7 @@
 
         <!-- Agent process slot 286 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P286"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P286" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P286" android:exported="true"
             android:process=":agent286" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A286"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3067,7 +3067,7 @@
 
         <!-- Agent process slot 287 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P287"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P287" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P287" android:exported="true"
             android:process=":agent287" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A287"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3077,7 +3077,7 @@
 
         <!-- Agent process slot 288 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P288"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P288" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P288" android:exported="true"
             android:process=":agent288" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A288"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3087,7 +3087,7 @@
 
         <!-- Agent process slot 289 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P289"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P289" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P289" android:exported="true"
             android:process=":agent289" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A289"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3097,7 +3097,7 @@
 
         <!-- Agent process slot 290 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P290"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P290" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P290" android:exported="true"
             android:process=":agent290" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A290"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3107,7 +3107,7 @@
 
         <!-- Agent process slot 291 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P291"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P291" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P291" android:exported="true"
             android:process=":agent291" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A291"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3117,7 +3117,7 @@
 
         <!-- Agent process slot 292 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P292"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P292" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P292" android:exported="true"
             android:process=":agent292" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A292"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3127,7 +3127,7 @@
 
         <!-- Agent process slot 293 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P293"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P293" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P293" android:exported="true"
             android:process=":agent293" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A293"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3137,7 +3137,7 @@
 
         <!-- Agent process slot 294 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P294"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P294" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P294" android:exported="true"
             android:process=":agent294" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A294"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3147,7 +3147,7 @@
 
         <!-- Agent process slot 295 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P295"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P295" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P295" android:exported="true"
             android:process=":agent295" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A295"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3157,7 +3157,7 @@
 
         <!-- Agent process slot 296 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P296"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P296" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P296" android:exported="true"
             android:process=":agent296" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A296"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3167,7 +3167,7 @@
 
         <!-- Agent process slot 297 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P297"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P297" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P297" android:exported="true"
             android:process=":agent297" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A297"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3177,7 +3177,7 @@
 
         <!-- Agent process slot 298 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P298"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P298" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P298" android:exported="true"
             android:process=":agent298" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A298"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
@@ -3187,7 +3187,7 @@
 
         <!-- Agent process slot 299 -->
         <provider android:name="com.multibox.clone.hub.Jrhl$P299"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$P299" android:exported="true"
+            android:authorities="${applicationId}.com.multibox.clone.hub.Jrhl$P299" android:exported="true"
             android:process=":agent299" />
         <activity android:name="com.multibox.clone.hub.Jrhl$A299"
             android:theme="@style/Theme.CloneHub.Agent" android:exported="true"
