@@ -45,7 +45,7 @@ jobs:
   emulator-e2e:
     name: Strict native ARM64 Android 14 emulator E2E
     needs: build
-    # Apple Silicon executes the bundled ARM64 runtime without translation.
+    # ARM64 software emulation avoids unavailable hosted HVF support.
     runs-on: macos-15
     timeout-minutes: 45
     env:
@@ -66,13 +66,14 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          # Native ARM64 guest with macOS hardware acceleration.
+          # ARM64 TCG guest; hosted macOS HVF is unavailable.
           target: google_apis
           arch: arm64-v8a
           profile: pixel_6
-          cores: 4
-          ram-size: 4096M
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
+          cores: 2
+          ram-size: 3072M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics -accel off
+          emulator-boot-timeout: 1200
           script: bash .github/scripts/run-emulator-e2e.sh
       - name: Upload E2E evidence
         if: always()
