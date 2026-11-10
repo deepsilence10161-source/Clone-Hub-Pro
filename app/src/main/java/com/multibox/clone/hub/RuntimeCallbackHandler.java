@@ -19,11 +19,14 @@ public final class RuntimeCallbackHandler extends ConcurrentHashMap<Object, Obje
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) {
+        android.util.Log.i("RuntimeCallback", "invoke proxy=" + proxy + ", method=" + method
+                + ", args=" + java.util.Arrays.toString(args));
         return null;
     }
 
     @Override
     public void uncaughtException(Thread thread, Throwable throwable) {
-        // The original host deliberately consumes runtime callback thread failures.
+        android.util.Log.e("RuntimeCallback", "Consumed runtime callback failure on " + thread,
+                throwable);
     }
 }

@@ -24,14 +24,48 @@ public abstract class PF extends ContentProvider {
                     RuntimeCallbackHandler.INSTANCE, (byte) 0});
             Log.i("RuntimeProvider", "Initialized authority=" + providerInfo.authority
                     + ", process=" + android.os.Process.myPid() + ", mode=" + mode);
+            if (Integer.valueOf(1).equals(mode)) {
+                Thread watchdog = new Thread(this::dumpAgentState, "agent-state-watchdog");
+                watchdog.setDaemon(true);
+                watchdog.start();
+            }
         } catch (Throwable th) {
             th.printStackTrace();
             throw new RuntimeException("Virtual container provider initialization error", th);
         }
     }
 
+    private void dumpAgentState() {
+        for (int delay : new int[]{3, 7, 10}) {
+            try {
+                Thread.sleep(delay * 1000L);
+                Thread main = android.os.Looper.getMainLooper().getThread();
+                Log.i("AgentDiagnostic", "Agent alive after " + delay
+                        + "s; main state=" + main.getState());
+                for (StackTraceElement frame : main.getStackTrace()) {
+                    Log.i("AgentDiagnostic", "Main stack: " + frame);
+                }
+                Class<?> activityThread = Class.forName("android.app.ActivityThread");
+                Object thread = activityThread.getDeclaredMethod("currentActivityThread").invoke(null);
+                for (String name : new String[]{"mBoundApplication", "mInstrumentation",
+                        "mInitialApplication", "mNewActivities"}) {
+                    java.lang.reflect.Field field = activityThread.getDeclaredField(name);
+                    field.setAccessible(true);
+                    Log.i("AgentDiagnostic", name + "=" + field.get(thread));
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            } catch (Throwable th) {
+                Log.e("AgentDiagnostic", "Agent state inspection failed", th);
+            }
+        }
+    }
+
     @Override
     public boolean onCreate() {
+        Log.i("AgentDiagnostic", "Provider onCreate; authority="
+                + (getContext() == null ? null : getContext().getPackageName()));
         return true;
     }
 
