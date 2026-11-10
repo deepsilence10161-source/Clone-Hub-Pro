@@ -19,6 +19,9 @@ done
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
+# Heads-up notifications cover the toolbar and silently consume injected touches.
+adb shell settings put global heads_up_notifications_enabled 0
+adb shell settings put global notification_bubbles 0
 adb shell wm dismiss-keyguard
 adb logcat -c
 adb shell getprop ro.product.cpu.abilist | tee "${EVIDENCE_DIR}/emulator-abis.txt"
@@ -29,6 +32,8 @@ adb shell settings put global anr_show_background 0
 adb shell settings put secure anr_show_first_instance 0 || true
 adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || \
   echo "WARNING: Pixel Launcher could not be disabled in this test image"
+adb shell pm disable-user --user 0 com.google.android.apps.wellbeing || \
+  echo "WARNING: Digital Wellbeing could not be disabled in this test image"
 
 # The app does not use Google services. Disable the CI image's GMS process so a
 # dying downloadable-fonts provider cannot kill the app during instrumentation.
