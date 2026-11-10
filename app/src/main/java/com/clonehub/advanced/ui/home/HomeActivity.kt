@@ -96,7 +96,7 @@ class HomeActivity : AppCompatActivity() {
         btnPrevSpace.setOnClickListener {
             val current = viewPager.currentItem
             if (current > 0) {
-                viewPager.setCurrentItem(current - 1, true)
+                selectSpace(current - 1)
             }
         }
 
@@ -104,14 +104,22 @@ class HomeActivity : AppCompatActivity() {
             val current = viewPager.currentItem
             val count = spacePagerAdapter.itemCount
             if (current < count - 1) {
-                viewPager.setCurrentItem(current + 1, true)
+                selectSpace(current + 1)
             } else {
-                // Create Next Space
                 val newSpace = spaceManager.createNextSpace()
                 refreshSpaces()
-                viewPager.setCurrentItem(newSpace.spaceId - 1, true)
+                val newPosition = spaceManager.getSpaces().indexOfFirst { it.spaceId == newSpace.spaceId }
+                if (newPosition >= 0) {
+                    selectSpace(newPosition)
+                }
             }
         }
+    }
+
+    private fun selectSpace(position: Int) {
+        // Immediate selection keeps the indicator and Add action in sync with the visible space.
+        viewPager.setCurrentItem(position, false)
+        updateSpaceIndicator(position)
     }
 
     private fun updateSpaceIndicator(position: Int) {
