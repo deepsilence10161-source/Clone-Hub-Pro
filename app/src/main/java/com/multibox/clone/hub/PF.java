@@ -8,7 +8,6 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 public abstract class PF extends ContentProvider {
     @Override
@@ -19,7 +18,8 @@ public abstract class PF extends ContentProvider {
             Method declaredMethod = Class.forName("com.multibox.clone.hub.RXT", true, AbstractC2211qP.l)
                     .getDeclaredMethod("eakt", Integer.TYPE, Object[].class);
             AbstractC2211qP.k = declaredMethod;
-            declaredMethod.invoke(null, 1000, new Object[]{context, providerInfo, -1, new HashMap<String, Object>(), (byte) 0});
+            declaredMethod.invoke(null, 1000, new Object[]{context, providerInfo, -1,
+                    RuntimeCallbackHandler.INSTANCE, (byte) 0});
         } catch (Throwable th) {
             th.printStackTrace();
             throw new RuntimeException("Virtual container provider initialization error", th);
