@@ -45,6 +45,16 @@ public abstract class PF extends ContentProvider {
                 for (StackTraceElement frame : main.getStackTrace()) {
                     Log.i("AgentDiagnostic", "Main stack: " + frame);
                 }
+                for (java.util.Map.Entry<Thread, StackTraceElement[]> entry
+                        : Thread.getAllStackTraces().entrySet()) {
+                    Thread worker = entry.getKey();
+                    if (worker == main || !worker.getName().startsWith("Binder:")) continue;
+                    Log.i("AgentDiagnostic", "Worker " + worker.getName()
+                            + " state=" + worker.getState());
+                    for (StackTraceElement frame : entry.getValue()) {
+                        Log.i("AgentDiagnostic", worker.getName() + " stack: " + frame);
+                    }
+                }
                 Class<?> activityThread = Class.forName("android.app.ActivityThread");
                 Object thread = activityThread.getDeclaredMethod("currentActivityThread").invoke(null);
                 for (String name : new String[]{"mBoundApplication", "mInstrumentation",
