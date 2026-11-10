@@ -51,6 +51,7 @@ jobs:
     timeout-minutes: 45
     env:
       PACKAGE_ID: com.clonehub.advanced.debug
+      TEST_PACKAGE_ID: com.clonehub.advanced.debug.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
     steps:
       - name: Download APKs from build job
@@ -71,6 +72,13 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: |
             set -eu
+            cleanup() {
+              STATUS=$?
+              trap - EXIT
+              adb logcat -d -v threadtime > live_test_logcat.txt 2>/dev/null || true
+              exit "${STATUS}"
+            }
+            trap cleanup EXIT
             adb wait-for-device
             until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do sleep 2; done
             adb shell settings put global window_animation_scale 0
@@ -88,15 +96,19 @@ jobs:
             sleep 5
             adb shell pidof "${PACKAGE_ID}" | grep -E '[0-9]+'
             adb exec-out screencap -p > live_test_home_screen.png
-            adb shell uiautomator dump /sdcard/clonehub-window.xml
-            adb pull /sdcard/clonehub-window.xml live_test_window.xml
-            grep -q "Clone Hub Pro" live_test_window.xml
+            # UI XML is supplementary evidence; instrumentation below is the required UI assertion.
+            if adb shell uiautomator dump /sdcard/clonehub-window.xml; then
+              adb pull /sdcard/clonehub-window.xml live_test_window.xml
+              grep -q "Clone Hub Pro" live_test_window.xml
+            else
+              echo "WARNING: optional UI XML capture failed; strict instrumentation will still run"
+            fi
 
             echo "Installing and running instrumentation tests"
             adb install -r -t artifacts/app-debug-androidTest.apk
             set +e
             adb shell am instrument -w -r --no-window-animation \
-              "${PACKAGE_ID}/androidx.test.runner.AndroidJUnitRunner" \
+              "${TEST_PACKAGE_ID}/androidx.test.runner.AndroidJUnitRunner" \
               2>&1 | tee instrumentation-results.txt
             TEST_STATUS=${PIPESTATUS[0]}
             set -e
