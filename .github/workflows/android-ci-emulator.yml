@@ -13,6 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -45,7 +51,7 @@ jobs:
   emulator-e2e:
     name: Strict Android 14 emulator E2E
     needs: build
-    # Native ARM64 avoids the x86_64 ART/ARM translation incompatibility.
+    # Linux x64 KVM is required for the instrumented emulator.
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -65,14 +71,14 @@ jobs:
       - name: Boot emulator and run strict E2E checks
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          # Run the bundled ARM runtime without x86_64 ART translation.
+          api-level: 35
+          # Exercise the runtime against the Android 15 ART implementation.
           target: google_apis
-          arch: arm64-v8a
+          arch: x86_64
           profile: pixel_6
           cores: 4
           ram-size: 4096M
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics -accel off
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: bash .github/scripts/run-emulator-e2e.sh
       - name: Upload E2E evidence
         if: always()
