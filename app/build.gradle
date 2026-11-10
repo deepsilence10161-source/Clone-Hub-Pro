@@ -26,6 +26,9 @@ android {
         debug {
             minifyEnabled false
             applicationIdSuffix ".debug"
+            // The bundled VM uses legacy JNI reference handling. Match the
+            // original non-debuggable host instead of enabling CheckJNI.
+            debuggable false
         }
     }
 
