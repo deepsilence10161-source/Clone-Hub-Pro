@@ -95,24 +95,6 @@ public abstract class PF extends ContentProvider {
                 }
             }
 
-            // A/B diagnostic: retry the failed host registration with the runtime's
-            // real process-service Binder instead of the startup null Binder.
-            try {
-                Class<?> processServiceClass = Class.forName("com.multibox.clone.hub.qf", true,
-                        AbstractC2211qP.l);
-                Object holder = processServiceClass.getField("OooO00o").get(null);
-                Object processService = holder.getClass().getDeclaredMethod("OooO0O0").invoke(holder);
-                processClass.getDeclaredMethod("OooO0oO", android.os.IBinder.class,
-                        String.class).invoke(processes, processService,
-                        getContext().getPackageName());
-                Object registry = processClass.getField("OooO00o").get(processes);
-                Log.i("RuntimeProvider", "Host registration with runtime Binder succeeded; registry="
-                        + registry);
-            } catch (InvocationTargetException e) {
-                Log.e("RuntimeProvider", "Host registration with runtime Binder failed",
-                        e.getTargetException());
-            }
-
             String packageName = diagnostic.getString("diagnostic_package");
             int spaceId = diagnostic.getInt("diagnostic_space");
             Object activity = managerClass.getDeclaredMethod("o000oo0o",

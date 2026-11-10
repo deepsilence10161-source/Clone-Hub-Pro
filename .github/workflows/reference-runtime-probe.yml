@@ -1,0 +1,35 @@
+name: Temporary reference runtime probe
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  reference-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Boot Android 14 and run untouched reference runtime
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          cores: 4
+          ram-size: 4096M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: bash .github/scripts/run-reference-runtime-probe.sh
+      - name: Upload reference runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-runtime-evidence
+          path: reference-evidence/
+          if-no-files-found: error
