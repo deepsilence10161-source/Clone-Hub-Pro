@@ -48,6 +48,12 @@ public abstract class AbstractC2211qP {
                 extractNativeLibs(targetApk, libDir);
             }
 
+            // Android 14 rejects DEX loading from a writable APK. The bundled
+            // runtime's original loader marks this extracted file read-only too.
+            if (Build.VERSION.SDK_INT >= 34 && !targetApk.setReadOnly()) {
+                throw new IOException("Could not make virtual runtime APK read-only: " + targetApk);
+            }
+
             // Determine ABI search paths
             ArrayList<String> libPaths = new ArrayList<>();
             if (Process.is64Bit()) {
