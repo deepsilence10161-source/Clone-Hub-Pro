@@ -225,6 +225,7 @@ object VirtualContainerEngine {
 
         // 1. Ensure the package is installed into the virtual space; never launch after a failed install.
         val installed = installAppOutcome(context, app.packageName, spaceId)
+        Log.i(TAG, "Install step for ${app.packageName} in Space $spaceId: ${installed.describe()}")
         if (!installed.isSuccess) {
             return when (installed) {
                 is EngineOutcome.NotVerified -> EngineOutcome.NotVerified("launch/install", installed.detail)
@@ -250,6 +251,10 @@ object VirtualContainerEngine {
             }
             reply.readException()
             val resultCode = reply.readInt()
+            // A launch result is only evidence about *this* space, so record it verbatim: the
+            // 16-test compatibility suite and the native E2E gates read this line to distinguish
+            // "runtime refused" from "app started but drew nothing".
+            Log.i(TAG, "Launch result for ${app.packageName} in Space $spaceId: code=$resultCode")
             if (isLaunchResultSuccessful(resultCode)) {
                 EngineOutcome.Success
             } else {

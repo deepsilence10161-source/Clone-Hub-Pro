@@ -72,7 +72,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          archive="evidence-strict.tar.gz".replace("strict", "strict")
+          archive="evidence.tar.gz"
           tar -czf "$archive" evidence 2>/dev/null || true
           [ -s "$archive" ] || exit 0
           gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \

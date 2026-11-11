@@ -120,7 +120,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          archive="evidence-real-app.tar.gz".replace("real-app", "real-app")
+          archive="evidence.tar.gz"
           tar -czf "$archive" evidence 2>/dev/null || true
           [ -s "$archive" ] || exit 0
           gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \

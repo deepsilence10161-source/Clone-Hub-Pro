@@ -28,6 +28,13 @@ class EngineOutcomeTest {
     }
 
     @Test
+    fun notVerifiedStepForLaunches_namesTheFailingTransaction() {
+        val outcome = EngineOutcome.NotVerified("launch/install", "runtime lists no package")
+        assertFalse(outcome.isSuccess)
+        assertTrue(outcome.describe().contains("launch/install"))
+    }
+
+    @Test
     fun unavailableRuntime_neverClaimsSuccess() {
         val outcome = EngineOutcome.RuntimeUnavailable("address resolution failed")
         assertFalse(outcome.isSuccess)
