@@ -2,6 +2,12 @@ name: Real app compatibility smoke
 
 on:
   workflow_dispatch:
+    inputs:
+      test_class:
+        description: Fully qualified instrumentation test class
+        required: true
+        default: com.clonehub.advanced.ui.home.ThirdPartyCloneCompatibilityInstrumentedTest
+        type: string
 
 jobs:
   build:
@@ -36,7 +42,7 @@ jobs:
       TEST_PACKAGE_ID: com.clonehub.pro.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
       ANDROID_SERIAL: localhost:5555
-      TEST_CLASS: com.clonehub.advanced.ui.home.ThirdPartyCloneCompatibilityInstrumentedTest
+      TEST_CLASS: ${{ inputs.test_class }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
