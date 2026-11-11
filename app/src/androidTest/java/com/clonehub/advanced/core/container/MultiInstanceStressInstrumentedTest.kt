@@ -33,7 +33,7 @@ class MultiInstanceStressInstrumentedTest {
             android.util.Log.i(TAG, outcome)
         }
         // A single clone must always work; higher counts are capacity information, not a promise.
-        assertTrue(singleCloneVerified(), "A single clone could not be verified")
+        assertTrue("A single clone could not be verified", singleCloneVerified())
     }
 
     private fun runInstanceStep(count: Int): String {
