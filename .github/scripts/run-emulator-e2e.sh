@@ -127,4 +127,11 @@ adb shell am start -W -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"
 sleep 2
 adb shell pidof "${PACKAGE_ID}" | grep -E '[0-9]+'
 
+# Second launch must also survive: the first shows the app cold, this one proves an already-warm
+# process (which the previous kill left in a restart state) still renders the home screen.
+adb shell am start -W -n "${PACKAGE_ID}/${MAIN_ACTIVITY}" || { echo "Second launch failed"; exit 1; }
+sleep 2
+adb shell pidof "${PACKAGE_ID}" | grep -E '[0-9]+'
+adb shell dumpsys activity activities | grep -m1 "topResumedActivity" >> "${EVIDENCE_DIR}/final-activity-stack.txt" 2>/dev/null || true
+
 echo "All emulator E2E checks passed"
