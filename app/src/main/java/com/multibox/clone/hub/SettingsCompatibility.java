@@ -54,6 +54,37 @@ final class SettingsCompatibility {
         }
     }
 
+    private static Object createCompatibleUserService(Object original,
+            android.os.IBinder originalBinder, Class<?> serviceInterface) {
+        return Proxy.newProxyInstance(serviceInterface.getClassLoader(),
+                new Class<?>[]{serviceInterface, android.os.IBinder.class},
+                (proxy, method, args) -> {
+                    String name = method.getName();
+                    if ("queryLocalInterface".equals(name) && args != null
+                            && args.length == 1
+                            && "android.os.IUserManager".equals(args[0])) {
+                        return proxy;
+                    }
+                    if ("getUserRestrictionSources".equals(name)) {
+                        return 0; // UserManager.RESTRICTION_NOT_SET
+                    }
+                    if (name.startsWith("hasUserRestriction")
+                            || "hasBaseUserRestriction".equals(name)) {
+                        return false;
+                    }
+                    if ("getUserRestrictions".equals(name)) {
+                        return new Bundle();
+                    }
+                    Object target = method.getDeclaringClass() == android.os.IBinder.class
+                            ? originalBinder : original;
+                    try {
+                        return method.invoke(target, args);
+                    } catch (InvocationTargetException error) {
+                        throw error.getCause();
+                    }
+                });
+    }
+
     private static void exposeUnmanagedUserRestrictions(Application application) {
         try {
             UserManager userManager = application.getSystemService(UserManager.class);
@@ -61,28 +92,21 @@ final class SettingsCompatibility {
             serviceField.setAccessible(true);
             Object original = serviceField.get(userManager);
             Class<?> serviceInterface = Class.forName("android.os.IUserManager");
-            Object compatible = Proxy.newProxyInstance(
-                    serviceInterface.getClassLoader(), new Class<?>[]{serviceInterface},
-                    (proxy, method, args) -> {
-                        String name = method.getName();
-                        if ("getUserRestrictionSources".equals(name)) {
-                            return 0; // UserManager.RESTRICTION_NOT_SET
-                        }
-                        if (name.startsWith("hasUserRestriction")
-                                || "hasBaseUserRestriction".equals(name)) {
-                            return false;
-                        }
-                        if ("getUserRestrictions".equals(name)) {
-                            return new Bundle();
-                        }
-                        try {
-                            return method.invoke(original, args);
-                        } catch (InvocationTargetException error) {
-                            throw error.getCause();
-                        }
-                    });
+            Class<?> serviceManagerClass = Class.forName("android.os.ServiceManager");
+            android.os.IBinder originalBinder = (android.os.IBinder) serviceManagerClass
+                    .getMethod("getService", String.class).invoke(null, "user");
+            Object compatible = createCompatibleUserService(
+                    original, originalBinder, serviceInterface);
             serviceField.set(userManager, compatible);
-            Log.i(TAG, "Exposed unmanaged user restrictions to cloned Settings");
+            // Activity and PreferenceController contexts create their own UserManager wrappers.
+            // Patch the cloned process's cached binder too, not just the Application's instance.
+            Field cacheField = serviceManagerClass.getDeclaredField("sCache");
+            cacheField.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, android.os.IBinder> cache =
+                    (java.util.Map<String, android.os.IBinder>) cacheField.get(null);
+            cache.put("user", (android.os.IBinder) compatible);
+            Log.i(TAG, "Exposed unmanaged user restrictions to all cloned Settings contexts");
         } catch (Throwable error) {
             Log.e(TAG, "Could not apply Settings user restriction compatibility", error);
         }
