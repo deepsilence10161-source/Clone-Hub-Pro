@@ -52,6 +52,22 @@ for attempt in $(seq 1 90); do
   sleep 2
 done
 
+# Timeout: keep everything that explains why the emulator never became usable, because the job log
+# is the only other place and it needs repository admin rights to read.
+{
+  echo "--- docker ps -a"
+  docker ps -a
+  echo "--- adb devices"
+  adb devices
+  echo "--- last adb connect/boot answers"
+  adb connect localhost:5555 || true
+  adb -s localhost:5555 shell getprop sys.boot_completed || true
+  adb -s localhost:5555 shell getprop init.svc.bootanim || true
+  echo "--- binder devices"
+  ls -l /dev/binderfs 2>&1 || true
+} > "$OUT/redroid-timeout.txt" 2>&1 || true
 docker logs redroid > "$OUT/redroid-docker.log" 2>&1 || true
 echo "Timed out waiting for native ARM64 redroid"
+cat "$OUT/redroid-timeout.txt" || true
+tail -n 40 "$OUT/redroid-docker.log" || true
 exit 1
