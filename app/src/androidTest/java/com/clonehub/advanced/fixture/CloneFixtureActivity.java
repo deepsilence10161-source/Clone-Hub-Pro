@@ -38,6 +38,11 @@ public final class CloneFixtureActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        android.content.SharedPreferences state = getSharedPreferences("fixture_state", MODE_PRIVATE);
+        int launchCount = state.getInt("launch_count", 0) + 1;
+        // Synchronous commit makes a force-stop/relaunch isolation check deterministic.
+        state.edit().putInt("launch_count", launchCount).commit();
+
         TextView status = new TextView(this);
         status.setText("CLONE_FIXTURE_RUNNING");
         status.setTextSize(24f);
@@ -51,6 +56,7 @@ public final class CloneFixtureActivity extends Activity {
                 + "\nprocess=" + processName
                 + "\npid=" + android.os.Process.myPid()
                 + " uid=" + android.os.Process.myUid()
+                + "\nlaunchCount=" + launchCount
                 + "\nAndroid=" + Build.VERSION.RELEASE + " SDK=" + Build.VERSION.SDK_INT
                 + "\ntime=" + timestamp());
         details.setTextSize(16f);
