@@ -1,5 +1,9 @@
 name: Native ARM64 deep clone testing
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   push:
     branches: ["main"]
@@ -51,6 +55,21 @@ jobs:
           mkdir -p deep-evidence
           docker logs redroid > deep-evidence/redroid-docker.log 2>&1 || true
           adb -s localhost:5555 shell getprop > deep-evidence/redroid-getprop.txt 2>&1 || true
+      # Public diagnosis channel: artifact downloads need account scope that this repository
+      # token does not have, so failing evidence is attached to a rolling pre-release instead.
+      - name: Publish test evidence to diagnostics release
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          archive="evidence-deep.tar.gz"
+          tar -czf "$archive" deep-evidence 2>/dev/null || true
+          [ -s "$archive" ] || exit 0
+          gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
+            || gh release create ci-diagnostics --repo "${{ github.repository }}" \
+                 --prerelease --title "CI diagnostics" --notes "Rolling build and test diagnostics"
+          gh release upload ci-diagnostics "$archive" --repo "${{ github.repository }}" --clobber
       - uses: actions/upload-artifact@v4
         if: always()
         with:
