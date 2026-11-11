@@ -24,6 +24,15 @@ for path in list((REPO / 'app/src/main').rglob('*.xml')):
     except ET.ParseError as error:
         problems.append(f'{path.relative_to(REPO)}: invalid XML ({error})')
 
+# Backup documents must stay decodable by the JVM test suite that guards them.
+backup_dir = REPO / 'app/src/main/java/com/clonehub/advanced/core/backup'
+for name in ('BackupDocument.kt', 'CloneBackupManager.kt'):
+    if not (backup_dir / name).exists():
+        problems.append(f'backup/{name}: missing')
+tests = REPO / 'app/src/test/java/com/clonehub/advanced/core/backup/BackupDocumentTest.kt'
+if not tests.exists():
+    problems.append('backup tests are missing')
+
 manifest = (REPO / 'app/src/main/AndroidManifest.xml').read_text()
 defined = set(re.findall(r'<permission[^>]*android:name="([^"]+)"', manifest))
 for used in set(re.findall(r'android:permission="((?!android\.)[^"]+)"', manifest)):

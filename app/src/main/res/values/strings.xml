@@ -68,4 +68,38 @@
     <string name="clear_storage_unavailable_body">The bundled virtual engine does not expose a per-clone data deletion call. Removing data would have to be faked, so CloneHub Pro does not offer it. Remove the clone from this space to stop using it.</string>
     <string name="removed_from_space">Removed %1$s from Space %2$d</string>
     <string name="remove_failed">Could not remove %1$s</string>
+
+    <!-- Backup & restore -->
+    <string name="backup_title">Backup &amp; restore</string>
+    <string name="backup_summary">%1$d space(s), %2$d clone(s) in this app.</string>
+    <string name="backup_create">Create a backup file…</string>
+    <string name="backup_choose_location">Choose where the backup file should be saved.</string>
+    <string name="backup_writing">Verifying and writing the backup…</string>
+    <string name="backup_done">Backup saved: %1$d clone(s), %2$d bytes. It was verified before saving.</string>
+    <string name="backup_failed">Backup failed: %1$s</string>
+    <string name="backup_cancelled">Backup cancelled. Nothing was written.</string>
+    <string name="backup_cannot_write">The chosen location could not be written.</string>
+    <string name="backup_cleaned_partial">Removed %1$d unfinished backup file(s) from a previous run.</string>
+    <string name="backup_scope_note">A backup contains this app\'s clone list: which apps are cloned into which space, their names, icons and launch history. The cloned apps\' own internal data is stored by the virtual engine in its private storage and is not part of this file.</string>
+    <string name="restore_pick">Choose a backup file…</string>
+    <string name="restore_pick_first">Choose a backup file first.</string>
+    <string name="restore_choose_file">Choose the backup file to inspect.</string>
+    <string name="restore_cancelled">No file chosen.</string>
+    <string name="restore_reading">Checking the backup file…</string>
+    <string name="restore_cannot_read">The file could not be read.</string>
+    <string name="restore_rejected">This file cannot be restored: %1$s</string>
+    <string name="restore_found">Found %1$d space(s) and %2$d clone(s), created %3$s.</string>
+    <string name="restore_unknown_date">date unknown</string>
+    <string name="restore_explainer">%1$s\n\nNothing has changed yet. Merge adds what is missing; Replace swaps the whole list and writes a safety copy first.</string>
+    <string name="restore_merge">Merge into current clones</string>
+    <string name="restore_replace">Replace current clones…</string>
+    <string name="restore_replace_title">Replace all clones?</string>
+    <string name="restore_replace_body">Your current clone list will be replaced by the backup. A safety copy of the current list is written next to the backup first, so this can be undone.</string>
+    <string name="restore_replace_confirm">Replace</string>
+    <string name="restore_applying">Applying the backup…</string>
+    <string name="restore_done_merged">Restored: %1$d new space(s), %2$d new clone(s), %3$d already present.</string>
+    <string name="restore_done_replaced">Restored: %1$d space(s), %2$d clone(s).</string>
+    <string name="restore_safety_copy">\nSafety copy: %1$s</string>
+    <string name="restore_failed">Restore failed: %1$s</string>
+    <string name="action_backup">Backup &amp; restore</string>
 </resources>

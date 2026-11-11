@@ -76,6 +76,12 @@
         </service>
 
         <!-- Dynamic Shortcut Trampoline Activity -->
+        <!-- Backup & restore: in-app only, never exported. -->
+        <activity
+            android:name=".ui.backup.BackupActivity"
+            android:exported="false"
+            android:label="@string/backup_title"
+            android:parentActivityName=".ui.home.HomeActivity" />
         <activity
             android:name=".ui.home.ShortcutLauncherActivity"
             android:exported="true"

@@ -3,6 +3,7 @@ package com.clonehub.advanced.core.container
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import com.clonehub.advanced.data.model.CloneModel
 import com.clonehub.advanced.data.model.ClonedApp
 import com.clonehub.advanced.data.model.Space
 import com.google.gson.Gson
@@ -166,6 +167,76 @@ class SpaceManager private constructor(private val context: Context) {
         app.appName = newName
         app.customIconPath = customIconPath
         saveSpaces()
+    }
+
+    /** Full model snapshot for backup and diagnostics. */
+    @Synchronized
+    fun exportModel(): CloneModel = CloneModel(spaces = spaces.map { it.copy(apps = it.apps.toMutableList()) })
+
+    /** Result of applying a backup. */
+    sealed class ImportOutcome {
+        data class Success(
+            val addedSpaces: Int,
+            val addedClones: Int,
+            val skippedDuplicates: Int
+        ) : ImportOutcome()
+
+        data class Failure(val reason: String) : ImportOutcome() {
+            fun toRestoreFailure(): String = reason
+        }
+    }
+
+    /**
+     * Applies a validated backup.
+     *
+     * Merge mode never removes an existing space or clone. Replace mode swaps the whole model and is
+     * only reached after the caller has written a safety copy of the current model. The clone-slot
+     * limit is enforced here too, so a backup cannot create more clones than the runtime can host.
+     */
+    @Synchronized
+    fun importModel(model: CloneModel, replaceExisting: Boolean): ImportOutcome {
+        if (model.spaces.isEmpty()) {
+            return ImportOutcome.Failure("Backup contains no spaces")
+        }
+        val incomingClones = model.spaces.sumOf { it.apps.size }
+        if (incomingClones > MAX_CLONE_SLOTS) {
+            return ImportOutcome.Failure(
+                "Backup holds $incomingClones clones; the runtime supports $MAX_CLONE_SLOTS"
+            )
+        }
+
+        if (replaceExisting) {
+            spaces.clear()
+            model.spaces.sortedBy { it.spaceId }.forEach { spaces.add(it.copy(apps = it.apps.toMutableList())) }
+            saveSpaces()
+            Log.i(TAG, "Model replaced from backup: spaces=${spaces.size}, clones=$incomingClones")
+            return ImportOutcome.Success(spaces.size, incomingClones, 0)
+        }
+
+        var addedSpaces = 0
+        var addedClones = 0
+        var skipped = 0
+        model.spaces.sortedBy { it.spaceId }.forEach { incoming ->
+            val existing = spaces.find { it.spaceId == incoming.spaceId }
+            if (existing == null) {
+                spaces.add(incoming.copy(apps = incoming.apps.toMutableList()))
+                addedSpaces++
+                addedClones += incoming.apps.size
+                return@forEach
+            }
+            incoming.apps.forEach { app ->
+                if (existing.apps.any { it.packageName == app.packageName } || !canAddClone()) {
+                    skipped++
+                } else {
+                    existing.apps.add(app.copy(spaceId = existing.spaceId))
+                    addedClones++
+                }
+            }
+        }
+        spaces.sortBy { it.spaceId }
+        saveSpaces()
+        Log.i(TAG, "Model merged from backup: +spaces=$addedSpaces +clones=$addedClones skipped=$skipped")
+        return ImportOutcome.Success(addedSpaces, addedClones, skipped)
     }
 
     fun getSpaceDataDirectory(spaceId: Int, packageName: String): File {

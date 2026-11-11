@@ -18,6 +18,7 @@ import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.core.container.VirtualContainerEngine
 import com.clonehub.advanced.core.service.ContainerForegroundService
 import com.clonehub.advanced.data.model.ClonedApp
+import com.clonehub.advanced.ui.backup.BackupActivity
 import com.clonehub.advanced.ui.dialogs.AppActionsBottomSheet
 import com.clonehub.advanced.ui.picker.AppPickerActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -49,6 +50,9 @@ class HomeActivity : AppCompatActivity() {
         spaceManager = SpaceManager.getInstance(this)
 
         initViews()
+        findViewById<View>(R.id.btnBackup).setOnClickListener {
+            startActivity(BackupActivity.intent(this))
+        }
         setupViewPager()
         setupSpaceControls()
         refreshSpaces()
