@@ -1,5 +1,9 @@
 name: Real app compatibility smoke
 
+permissions:
+  contents: write
+  actions: read
+
 on:
   # Every functional change to main must run the real-device suite, not just manual dispatches.
   push:
@@ -47,6 +51,21 @@ jobs:
           name: lint-report
           path: app/build/reports/lint-results-debug.*
           if-no-files-found: ignore
+      # Diagnosis channel that does not need repository admin rights: on failure the build log
+      # is attached to a rolling pre-release, so the compiler error is readable from the API.
+      - name: Publish build log on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          grep -E "^e: |error:|Unresolved|cannot find symbol|FAILURE:" gradle-build.log > compile-errors.txt || true
+          head -n 60 compile-errors.txt
+          gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
+            || gh release create ci-diagnostics --repo "${{ github.repository }}" \
+                 --prerelease --title "CI diagnostics" --notes "Rolling build diagnostics"
+          gh release upload ci-diagnostics gradle-build.log compile-errors.txt \
+            --repo "${{ github.repository }}" --clobber
       - name: Enforce build result
         run: grep -q "GRADLE_EXIT=0" gradle-build.log
       - run: |
