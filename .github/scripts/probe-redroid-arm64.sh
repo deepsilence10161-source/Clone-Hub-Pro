@@ -25,7 +25,9 @@ trap cleanup EXIT
 } > "$OUT/host.txt" 2>&1
 
 sudo apt-get update
-sudo apt-get install -y adb linux-modules-extra-$(uname -r)
+sudo apt-get install -y adb
+# Hosted kernels may already include Binder; their extra-modules package is optional.
+sudo apt-get install -y linux-modules-extra-$(uname -r) || true
 sudo modprobe binder_linux devices="binder,hwbinder,vndbinder"
 sudo modprobe ashmem_linux 2>/dev/null || true
 ls -l /dev/binder* | tee "$OUT/binder-devices.txt"
