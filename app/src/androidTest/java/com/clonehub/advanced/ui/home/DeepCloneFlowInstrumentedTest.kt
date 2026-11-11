@@ -146,7 +146,7 @@ class DeepCloneFlowInstrumentedTest {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private companion object {
-        const val FIXTURE_PACKAGE = "com.clonehub.advanced.debug.test"
+        const val FIXTURE_PACKAGE = "com.clonehub.pro.test"
         const val FIXTURE_LABEL = "Clone Hub Fixture"
         const val MARKER = "CLONE_FIXTURE_RUNNING"
         const val PREFS_NAME = "deep_clone_test_state"

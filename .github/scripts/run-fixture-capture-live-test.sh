@@ -17,7 +17,7 @@ trap cleanup EXIT
 adb wait-for-device
 adb install -r -t artifacts/app-debug-androidTest.apk
 adb shell am start -W -S -n \
-  com.clonehub.advanced.debug.test/com.clonehub.advanced.fixture.CloneFixtureActivity
+  com.clonehub.pro.test/com.clonehub.advanced.fixture.CloneFixtureActivity
 sleep 8
 adb shell uiautomator dump /sdcard/fixture-ui.xml
 adb pull /sdcard/fixture-ui.xml "$OUT/fixture-ui.xml"
@@ -25,7 +25,7 @@ adb pull /sdcard/fixture-ui.xml "$OUT/fixture-ui.xml"
 set +e
 adb pull /sdcard/Pictures/CloneHubEvidence "$OUT/gallery" > "$OUT/gallery-pull.txt" 2>&1
 GALLERY_STATUS=$?
-adb pull /sdcard/Android/data/com.clonehub.advanced.debug.test/files/Pictures/CloneHubEvidence \
+adb pull /sdcard/Android/data/com.clonehub.pro.test/files/Pictures/CloneHubEvidence \
   "$OUT/app-fallback" > "$OUT/fallback-pull.txt" 2>&1
 FALLBACK_STATUS=$?
 set -e

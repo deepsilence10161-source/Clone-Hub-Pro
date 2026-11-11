@@ -51,6 +51,22 @@ echo "Installing application under test"
 adb install -r -t artifacts/app-debug.apk
 adb shell pm list packages | grep "^package:${PACKAGE_ID}$"
 
+echo "Installing untouched real Clone Hub beside Clone Hub Pro"
+# This catches both package-name and provider-authority conflicts in the same
+# direction reported by users: Pro is already present, then real Clone Hub installs.
+set +e
+adb install-multiple -r -t \
+  .github/reference/original.apk .github/reference/split_config.xhdpi.apk \
+  > "${EVIDENCE_DIR}/real-clonehub-install.txt" 2>&1
+REFERENCE_INSTALL_STATUS=$?
+set -e
+cat "${EVIDENCE_DIR}/real-clonehub-install.txt"
+if [ "${REFERENCE_INSTALL_STATUS}" -ne 0 ]; then
+  echo "Real Clone Hub could not install beside Clone Hub Pro"
+  exit 1
+fi
+adb shell pm list packages | grep '^package:com.multibox.clone.hub$'
+
 echo "Launching HomeActivity and waiting for rendering"
 adb shell am start -W -S -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"
 sleep 5

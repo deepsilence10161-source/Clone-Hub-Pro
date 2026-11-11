@@ -48,7 +48,7 @@ adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainAc
   > "${EVIDENCE_DIR}/reference-original-relaunch.txt" 2>&1 || true
 sleep 5
 adb shell content call --uri 'content://diagnostic.runtime.service' \
-  --method launch --arg com.clonehub.advanced.debug.test \
+  --method launch --arg com.clonehub.pro.test \
   > "${EVIDENCE_DIR}/reference-original-fixture-launch.txt" 2>&1 || true
 sleep 12
 adb logcat -d -v threadtime > "${EVIDENCE_DIR}/reference-original-logcat.txt" 2>/dev/null || true
@@ -64,7 +64,7 @@ adb shell am start -W -S -n com.multibox.clone.hub/com.multibox.clone.hub.MainAc
   > "${EVIDENCE_DIR}/reference-alias-relaunch.txt" 2>&1 || true
 sleep 5
 adb shell content call --uri 'content://diagnostic.runtime.service' \
-  --method launch --arg com.clonehub.advanced.debug.test \
+  --method launch --arg com.clonehub.pro.test \
   > "${EVIDENCE_DIR}/reference-alias-fixture-launch.txt" 2>&1 || true
 sleep 12
 cat "${EVIDENCE_DIR}/reference-original-fixture-launch.txt"

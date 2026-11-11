@@ -9,7 +9,7 @@ android {
     buildToolsVersion "35.0.0"
 
     defaultConfig {
-        applicationId "com.clonehub.advanced"
+        applicationId "com.clonehub.pro"
         minSdk 24
         targetSdk 35
         versionCode 2001
@@ -25,7 +25,7 @@ android {
         }
         debug {
             minifyEnabled false
-            applicationIdSuffix ".debug"
+            // Keep the tested APK's package identical to the installable main app.
             // The bundled VM uses legacy JNI references in virtual agent processes.
             debuggable false
         }

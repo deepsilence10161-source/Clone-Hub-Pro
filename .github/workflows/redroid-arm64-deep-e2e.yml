@@ -33,8 +33,8 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 40
     env:
-      PACKAGE_ID: com.clonehub.advanced.debug
-      TEST_PACKAGE_ID: com.clonehub.advanced.debug.test
+      PACKAGE_ID: com.clonehub.pro
+      TEST_PACKAGE_ID: com.clonehub.pro.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
       ANDROID_SERIAL: localhost:5555
     steps:

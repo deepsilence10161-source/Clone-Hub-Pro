@@ -88,7 +88,7 @@ class RealUserCloneFlowInstrumentedTest {
 
     private companion object {
         const val TAG = "RealUserCloneFlowE2E"
-        const val FIXTURE_PACKAGE = "com.clonehub.advanced.debug.test"
+        const val FIXTURE_PACKAGE = "com.clonehub.pro.test"
         const val FIXTURE_LABEL = "Clone Hub Fixture"
         const val UI_TIMEOUT_MS = 20_000L
         const val INSTALL_TIMEOUT_MS = 90_000L

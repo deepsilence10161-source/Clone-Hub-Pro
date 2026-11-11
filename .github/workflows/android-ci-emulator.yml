@@ -47,8 +47,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      PACKAGE_ID: com.clonehub.advanced.debug
-      TEST_PACKAGE_ID: com.clonehub.advanced.debug.test
+      PACKAGE_ID: com.clonehub.pro
+      TEST_PACKAGE_ID: com.clonehub.pro.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
     steps:
       - name: Enable KVM hardware acceleration

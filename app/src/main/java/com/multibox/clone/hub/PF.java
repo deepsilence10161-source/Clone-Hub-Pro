@@ -15,6 +15,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class PF extends ContentProvider {
+    private static final String SERVICE_AUTHORITY =
+            "com.clonehub.pro.virtual.container.server0001.Jrhl$Service";
+    private static final String LEGACY_RUNTIME_SERVER_AUTHORITY =
+            "com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service";
     private String providerAuthority;
     private ContentProviderClient stableSelfClient;
     private int runtimeMode = -1;
@@ -28,7 +32,7 @@ public abstract class PF extends ContentProvider {
                 ContentProviderClient client = null;
                 try {
                     client = context.getContentResolver().acquireUnstableContentProviderClient(
-                            "com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service");
+                            SERVICE_AUTHORITY);
                     if (client != null) {
                         Bundle heartbeat = client.call("995", null, Bundle.EMPTY);
                         Log.d("AgentDiagnostic", "Runtime heartbeat; pid="
@@ -100,11 +104,28 @@ public abstract class PF extends ContentProvider {
         super.attachInfo(context, providerInfo);
         try {
             AbstractC2211qP.l = AbstractC2211qP.g(context);
-            Method declaredMethod = Class.forName("com.multibox.clone.hub.RXT", true, AbstractC2211qP.l)
+            ClassLoader runtimeLoader = AbstractC2211qP.l;
+            Method declaredMethod = Class.forName("com.multibox.clone.hub.RXT", true, runtimeLoader)
                     .getDeclaredMethod("eakt", Integer.TYPE, Object[].class);
             AbstractC2211qP.k = declaredMethod;
-            Object mode = declaredMethod.invoke(null, 1000, new Object[]{context, providerInfo, -1,
+            ProviderInfo runtimeProviderInfo = providerInfo;
+            boolean serverProvider = SERVICE_AUTHORITY.equals(providerAuthority);
+            if (serverProvider) {
+                // The bundled engine selects server mode from its legacy authority.
+                // Give it a temporary descriptor only during mode selection; Android
+                // sees and registers exclusively our non-conflicting Pro authority.
+                runtimeProviderInfo = new ProviderInfo(providerInfo);
+                runtimeProviderInfo.authority = LEGACY_RUNTIME_SERVER_AUTHORITY;
+            }
+            Object mode = declaredMethod.invoke(null, 1000, new Object[]{context, runtimeProviderInfo, -1,
                     RuntimeCallbackHandler.INSTANCE, (byte) 0});
+            if (serverProvider) {
+                runtimeProviderInfo.authority = SERVICE_AUTHORITY;
+            }
+            // Every provider initialization recomputes this field. Always restore the
+            // Pro transport so later runtime calls never cross into the real Clone Hub.
+            Class.forName("com.multibox.clone.hub.r8", true, runtimeLoader)
+                    .getDeclaredField("OooO00o").set(null, SERVICE_AUTHORITY);
             runtimeMode = mode instanceof Number ? ((Number) mode).intValue() : -1;
             Log.i("RuntimeProvider", "Initialized authority=" + providerInfo.authority
                     + ", process=" + android.os.Process.myPid() + ", mode=" + mode);

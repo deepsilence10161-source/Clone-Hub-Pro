@@ -70,9 +70,10 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
     
-        <!-- Virtual-container runtime: original fixed authorities and 300 process slots. -->
+        <!-- Virtual-container runtime: Pro-owned server authority and 300 process slots.
+             This must never collide with the original Clone Hub installation. -->
         <provider android:name="com.multibox.clone.hub.Jrhl$Service"
-            android:authorities="com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service"
+            android:authorities="${applicationId}.virtual.container.server0001.Jrhl$Service"
             android:exported="true" android:process=":service" />
         <!-- Client/File authorities are derived from the actual host package. Keeping a
              second fixed-authority instance makes Android validate calls against the
