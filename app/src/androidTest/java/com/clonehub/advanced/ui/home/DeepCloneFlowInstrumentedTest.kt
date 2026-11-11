@@ -118,11 +118,12 @@ class DeepCloneFlowInstrumentedTest {
     }
 
     private fun nativeProcessSnapshot(pid: String): String = runCatching {
-        device.executeShellCommand(
-            "echo PID=$pid; grep -E 'libwnublp|libclonehub' /proc/$pid/maps; " +
-                "for task in /proc/$pid/task/*; do echo TASK=${'$'}task; " +
-                "cat ${'$'}task/comm ${'$'}task/wchan; done"
+        val names = device.executeShellCommand("cat /proc/$pid/task/*/comm")
+        val waits = device.executeShellCommand("cat /proc/$pid/task/*/wchan")
+        val maps = device.executeShellCommand(
+            "grep -E 'libwnublp|libclonehub' /proc/$pid/maps"
         )
+        "PID=$pid\nTHREADS:\n$names\nWAITS:\n$waits\nNATIVE MAPS:\n$maps"
     }.getOrElse { "Native process snapshot failed: $it" }
 
     private fun returnHome() {
