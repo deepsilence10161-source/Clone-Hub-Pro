@@ -249,7 +249,7 @@ improvement if the same file on the same image shows a better number.
 
 * `https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk`
 * SHA-256 `1a9ed7fafe3b598f281fff93d339024d30f960952a97e072cd338df3e04e524f`, 7,886,526 bytes
-* Built from `21f7934`; gates on that commit: `Real app compatibility smoke` (16 tests + backup job 4 tests),
+* Built from `21f7934` (superseded — see the artifact block at the end of §13); gates on that commit: `Real app compatibility smoke` (16 tests + backup job 4 tests),
   `Native ARM64 redroid strict E2E`, `Native ARM64 deep clone testing` — all SUCCESS.
 
 ---
@@ -286,3 +286,11 @@ cannot silently go stale.
 capacity one, which is exactly what it exists for. The `OK (21 tests)` case could not be attributed
 to app code from the artefacts (instrumentation passed, home screen rendered, no FATAL EXCEPTION),
 so the gate now records `topResumedActivity` and retries the launch once; the next runs were green.
+
+### Current verified artifact (after M4 + multi-instance)
+
+* `https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk`
+* SHA-256 `42e5a7a5e4a94babbdca72773a2611c2e97f4a65e05e7dc268b85364a6892f90`, 7,887,526 bytes
+* Built from `7482f7b`; that commit's gates: `Native ARM64 deep clone testing` `43031920978` **SUCCESS**,
+  `Native ARM64 redroid strict E2E` `43031920934` **SUCCESS**, and `8e6d59d`'s
+  `Real app compatibility smoke` `43030576699` **SUCCESS** (16 tests + backup job + multi-instance job).
