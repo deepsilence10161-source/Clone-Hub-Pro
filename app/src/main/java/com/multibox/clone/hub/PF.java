@@ -63,15 +63,6 @@ public abstract class PF extends ContentProvider {
     }
 
     @Override
-    public void onShutdown() {
-        if (stableSelfClient != null) {
-            stableSelfClient.close();
-            stableSelfClient = null;
-        }
-        super.onShutdown();
-    }
-
-    @Override
     public Bundle call(String method, String arg, Bundle extras) {
         try {
             Bundle result = AbstractC2211qP.c(method, arg, extras);
