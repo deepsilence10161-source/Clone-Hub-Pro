@@ -1,6 +1,10 @@
 name: Native ARM64 redroid strict E2E
 
 on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
   workflow_dispatch:
 
 jobs:

@@ -1,10 +1,8 @@
 name: Android CI & Live Emulator Test
 
 on:
-  push:
-    branches: ["main", "master"]
-  pull_request:
-    branches: ["main", "master"]
+  # Manual diagnostic only: the bundled original runtime also crashes under
+  # x86_64 ARM translation. Native ARM64 redroid is the default CI gate.
   workflow_dispatch:
 
 jobs:
