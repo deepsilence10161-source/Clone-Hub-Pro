@@ -112,7 +112,13 @@ class SpaceManager private constructor(private val context: Context) {
     @Synchronized
     private fun saveSpaces() {
         val json = gson.toJson(spaces)
-        prefs.edit().putString("spaces_json", json).apply()
+        // Clone launches can move immediately into another process. Apply-only writes
+        // can lose the model if that process is then force-stopped; make the durable
+        // commit part of the mutation itself so cold restarts see the same model.
+        val persisted = prefs.edit().putString("spaces_json", json).commit()
+        if (!persisted) {
+            android.util.Log.e("SpaceManager", "Could not persist clone spaces")
+        }
     }
 
     @Synchronized

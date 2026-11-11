@@ -87,6 +87,19 @@ public abstract class PF extends ContentProvider {
                 }
             });
         }
+        if (runtimeMode == 1) {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                Log.e("AgentDiagnostic", "Agent shutdown hook; pid=" + android.os.Process.myPid());
+                for (java.util.Map.Entry<Thread, StackTraceElement[]> entry
+                        : Thread.getAllStackTraces().entrySet()) {
+                    StringBuilder stack = new StringBuilder(entry.getKey().getName());
+                    for (StackTraceElement element : entry.getValue()) {
+                        stack.append("\n  at ").append(element);
+                    }
+                    Log.e("AgentDiagnostic", stack.toString());
+                }
+            }, "CloneHubAgentShutdown"));
+        }
         heartbeatHandler.postDelayed(runtimeHeartbeat, 5_000L);
         return true;
     }

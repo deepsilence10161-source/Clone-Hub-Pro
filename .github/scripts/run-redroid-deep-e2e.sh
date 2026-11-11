@@ -55,6 +55,8 @@ run_tests deep-suite -e class "$DEEP_CLASS" || deep_status=$?
 
 # Instrumentation has terminated the target process. Force-stop again explicitly,
 # then run only the persistence check in a genuinely fresh target process.
+adb shell run-as "$PACKAGE_ID" cat shared_prefs/clone_spaces_db.xml \
+  > "$OUT/model-before-cold-restart.xml" 2>&1 || true
 adb shell am force-stop "$PACKAGE_ID"
 cold_status=0
 run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
