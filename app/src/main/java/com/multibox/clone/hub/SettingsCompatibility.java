@@ -41,9 +41,11 @@ final class SettingsCompatibility {
             return;
         }
         disablePrivilegedMetrics(application);
-        installGuardedBinder("user", "android.os.IUserManager", SettingsCompatibility::guardUserRestrictions);
-        installGuardedBinder("usb", "android.hardware.usb.IUsbManager", SettingsCompatibility::guardUsbPorts);
-        patchApplicationUserManager(application);
+        Object guardedUserService = installGuardedBinder(
+                "user", "android.os.IUserManager", SettingsCompatibility::guardUserRestrictions);
+        installGuardedBinder(
+                "usb", "android.hardware.usb.IUsbManager", SettingsCompatibility::guardUsbPorts);
+        patchApplicationUserManager(application, guardedUserService);
     }
 
     private static void disablePrivilegedMetrics(Application application) {
@@ -102,7 +104,7 @@ final class SettingsCompatibility {
      * Replaces one cached system-service binder with a proxy that answers the guarded calls
      * locally and forwards everything else, including binder identity methods.
      */
-    private static void installGuardedBinder(String serviceName, String interfaceName,
+    private static Object installGuardedBinder(String serviceName, String interfaceName,
             CallOverride override) {
         try {
             Class<?> serviceManager = Class.forName("android.os.ServiceManager");
@@ -110,10 +112,10 @@ final class SettingsCompatibility {
                     .invoke(null, serviceName);
             if (original == null) {
                 Log.w(TAG, "No binder for " + serviceName);
-                return;
+                return null;
             }
             Class<?> iface = Class.forName(interfaceName);
-            Object descriptor = iface.getField("DESCRIPTOR").get(null);
+            String descriptor = interfaceDescriptor(iface, interfaceName);
             ClassLoader loader = iface.getClassLoader();
 
             Object interfaceProxy = Proxy.newProxyInstance(loader,
@@ -126,39 +128,55 @@ final class SettingsCompatibility {
                         return result == NOT_HANDLED ? forward(original, method, args) : result;
                     });
 
+            // Any AIDL Stub.asInterface() call in this process resolves to the guarded interface,
+            // including the ones made later by Activity contexts through SystemServiceRegistry.
             IBinder binderProxy = (IBinder) Proxy.newProxyInstance(loader,
                     new Class<?>[]{IBinder.class},
                     (proxy, method, args) -> {
-                        if ("queryLocalInterface".equals(method.getName()) && args != null
-                                && args.length == 1
-                                && (descriptor.equals(args[0]) || interfaceName.equals(args[0]))) {
+                        if ("queryLocalInterface".equals(method.getName())) {
                             return interfaceProxy;
                         }
                         return forward(original, method, args);
                     });
 
             serviceCache(serviceManager).put(serviceName, binderProxy);
-            Log.i(TAG, "Guarded " + serviceName + " for unprivileged Settings");
+            Log.i(TAG, "Guarded " + serviceName + " binder for unprivileged Settings ("
+                    + descriptor + ")");
+            return interfaceProxy;
         } catch (Throwable error) {
             Log.e(TAG, "Could not guard " + serviceName + " compatibility", error);
+            return null;
         }
     }
 
+    /** AIDL keeps DESCRIPTOR on Stub in some builds and on the interface in others. */
+    private static String interfaceDescriptor(Class<?> iface, String fallback) {
+        for (String holder : new String[]{iface.getName(), iface.getName() + "$Stub"}) {
+            try {
+                Object value = Class.forName(holder, false, iface.getClassLoader())
+                        .getField("DESCRIPTOR").get(null);
+                if (value instanceof String) {
+                    return (String) value;
+                }
+            } catch (Throwable ignored) {
+                // Try the next holder.
+            }
+        }
+        return fallback;
+    }
+
     /** Repoints the already created Application UserManager at the guarded binder. */
-    private static void patchApplicationUserManager(Application application) {
+    private static void patchApplicationUserManager(Application application,
+            Object guardedUserService) {
         try {
             UserManager userManager = application.getSystemService(UserManager.class);
-            Class<?> serviceManager = Class.forName("android.os.ServiceManager");
-            IBinder guarded = serviceCache(serviceManager).get("user");
-            if (userManager == null || guarded == null) {
+            if (userManager == null || guardedUserService == null) {
                 Log.w(TAG, "Nothing to repoint for user service");
                 return;
             }
-            Class<?> iface = Class.forName("android.os.IUserManager");
-            Object compatible = iface.cast(guarded.queryLocalInterface(iface.getName()));
             Field serviceField = UserManager.class.getDeclaredField("mService");
             serviceField.setAccessible(true);
-            serviceField.set(userManager, compatible);
+            serviceField.set(userManager, guardedUserService);
             Log.i(TAG, "Exposed unmanaged user restrictions to all cloned Settings contexts");
         } catch (Throwable error) {
             Log.e(TAG, "Could not apply Settings user restriction compatibility", error);
