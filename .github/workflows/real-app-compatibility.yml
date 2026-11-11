@@ -70,6 +70,11 @@ jobs:
             [ -f "$f" ] && cp "$f" "lint-$(basename "$f")" || true
           done
           head -n 80 compile-errors.txt || true
+          # GitHub annotations are readable through the checks API without admin rights,
+          # so the compiler error also travels this channel if the release upload fails.
+          while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error title=gradle::$line"
+          done < compile-errors.txt
           gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
             || gh release create ci-diagnostics --repo "${{ github.repository }}" \
                  --prerelease --title "CI diagnostics" --notes "Rolling build diagnostics"
