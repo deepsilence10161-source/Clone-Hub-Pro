@@ -54,6 +54,8 @@
     <string name="space_delete">Delete empty space</string>
     <string name="space_delete_blocked">Remove its clones first, or keep the space.</string>
     <string name="space_name_hint">Space name</string>
+    <string name="space_deleted">Deleted %1$s</string>
+    <string name="space_rename_failed">Could not rename the space</string>
     <string name="slot_limit_reached">Clone limit reached for this device.</string>
     <string name="action_remove_from_space">Remove from this space</string>
     <string name="clone_status_never_launched">Not opened yet</string>

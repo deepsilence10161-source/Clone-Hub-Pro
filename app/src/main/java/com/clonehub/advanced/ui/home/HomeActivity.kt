@@ -191,6 +191,9 @@ class HomeActivity : AppCompatActivity() {
     private fun refreshSpaces() {
         val spaces = spaceManager.getSpaces()
         spacePagerAdapter.submitSpaces(spaces)
+        if (viewPager.currentItem > spaces.lastIndex) {
+            viewPager.setCurrentItem(spaces.lastIndex.coerceAtLeast(0), false)
+        }
         updateSpaceIndicator(viewPager.currentItem)
         findViewById<View>(R.id.layoutEmpty).isVisible = spaces.all { it.apps.isEmpty() }
     }
@@ -205,13 +208,12 @@ class HomeActivity : AppCompatActivity() {
                     0 -> promptRenameSpace(space)
                     else -> {
                         val removed = spaceManager.removeSpace(space.spaceId)
-                        if (!removed) {
-                            Toast.makeText(
-                                this,
-                                getString(R.string.space_delete_blocked),
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+                        Toast.makeText(
+                            this,
+                            if (removed) getString(R.string.space_deleted, space.spaceName)
+                            else getString(R.string.space_delete_blocked),
+                            Toast.LENGTH_LONG
+                        ).show()
                         refreshSpaces()
                     }
                 }
@@ -228,7 +230,10 @@ class HomeActivity : AppCompatActivity() {
             .setTitle(R.string.space_rename)
             .setView(input)
             .setPositiveButton(R.string.positive) { _, _ ->
-                spaceManager.renameSpace(space.spaceId, input.text.toString().trim())
+                val renamed = spaceManager.renameSpace(space.spaceId, input.text.toString().trim())
+                if (!renamed) {
+                    Toast.makeText(this, R.string.space_rename_failed, Toast.LENGTH_LONG).show()
+                }
                 refreshSpaces()
             }
             .setNegativeButton(R.string.negative, null)

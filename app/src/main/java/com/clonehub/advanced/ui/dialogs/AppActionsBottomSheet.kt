@@ -48,7 +48,7 @@ class AppActionsBottomSheet(
         val tvSpace: TextView = view.findViewById(R.id.tvHeaderSpace)
 
         tvTitle.text = app.appName
-        val status = findViewById<TextView>(R.id.tvHeaderStatus)
+        val status: TextView = view.findViewById(R.id.tvHeaderStatus)
         tvSpace.text = "Space $spaceId"
         status.text = when (app.lastLaunchSucceeded) {
             null -> getString(R.string.clone_status_never_launched)
@@ -115,7 +115,9 @@ class AppActionsBottomSheet(
                 val installed = withContext(Dispatchers.IO) {
                     VirtualContainerEngine.installAppOutcome(requireContext(), app.packageName, targetSpaceId)
                 }
-                if (installed.isSuccess && manager.addAppToSpace(targetSpaceId, app.packageName, app.appName) != null) {
+                val added = installed.isSuccess &&
+                    manager.addAppToSpace(targetSpaceId, app.packageName, app.appName) != null
+                if (added) {
                     Toast.makeText(context, getString(R.string.cloned_to_space, targetSpace.spaceName), Toast.LENGTH_SHORT).show()
                     onAppUpdated()
                     dismiss()

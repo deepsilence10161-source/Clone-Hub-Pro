@@ -43,8 +43,7 @@ public abstract class PF extends ContentProvider {
             boolean healthy = false;
             if (context != null && runtimeMode == 1) {
                 try {
-                    if (heartbeatClient == null || !heartbeatClient.getBinder().isBinderAlive()) {
-                        closeHeartbeatClient();
+                    if (heartbeatClient == null) {
                         heartbeatClient = context.getContentResolver()
                                 .acquireUnstableContentProviderClient(SERVICE_AUTHORITY);
                     }
