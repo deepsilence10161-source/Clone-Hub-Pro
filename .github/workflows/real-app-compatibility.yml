@@ -54,13 +54,18 @@ jobs:
       # Diagnosis channel that does not need repository admin rights: on failure the build log
       # is attached to a rolling pre-release, so the compiler error is readable from the API.
       - name: Publish build log on failure
-        if: failure()
+        if: always()
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          grep -E "^e: |error:|Unresolved|cannot find symbol|FAILURE:" gradle-build.log > compile-errors.txt || true
-          head -n 60 compile-errors.txt
+          if grep -q "GRADLE_EXIT=0" gradle-build.log; then
+            echo "Build succeeded; nothing to publish."
+            exit 0
+          fi
+          grep -E "^e: |error:|Unresolved|cannot find symbol|FAILURE:|Lint found|> Task .* FAILED|warning:" gradle-build.log \
+            > compile-errors.txt || true
+          head -n 80 compile-errors.txt || true
           gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
             || gh release create ci-diagnostics --repo "${{ github.repository }}" \
                  --prerelease --title "CI diagnostics" --notes "Rolling build diagnostics"
