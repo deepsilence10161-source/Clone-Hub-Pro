@@ -71,6 +71,18 @@ for attempt in $(seq 1 90); do
   sleep 2
 done
 
+# Kernel side is the usual suspect when the emulator container dies immediately, so record it.
+{
+  echo "--- modules"
+  lsmod | grep -E "binder|ashmem" || true
+  echo "--- binderfs"
+  ls -l /dev/binderfs 2>&1 || true
+  mount | grep binder || true
+  echo "--- kernel log (binder/avc)"
+  sudo dmesg | grep -iE "binder|avc|seccomp" | tail -n 40 || true
+} > "$OUT/redroid-kernel.txt" 2>&1 || true
+docker logs redroid > "$OUT/redroid-docker.log" 2>&1 || true
+
 # Timeout: keep everything that explains why the emulator never became usable, because the job log
 # is the only other place and it needs repository admin rights to read.
 {
