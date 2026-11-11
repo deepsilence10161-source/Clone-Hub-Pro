@@ -23,7 +23,9 @@
     <application
         android:name=".CloneHubApplication"
         android:allowBackup="false"
+        android:allowNativeHeapPointerTagging="false"
         android:extractNativeLibs="true"
+        android:largeHeap="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
