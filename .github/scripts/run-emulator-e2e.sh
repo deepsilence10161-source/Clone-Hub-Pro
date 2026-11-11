@@ -89,7 +89,12 @@ adb exec-out screencap -p > "${EVIDENCE_DIR}/live_test_home_screen.png"
 echo "Installing and running instrumentation tests"
 adb install -r -t artifacts/app-debug-androidTest.apk
 set +e
+INSTRUMENTATION_ARGS=()
+if [ -n "${TEST_CLASS:-}" ]; then
+  INSTRUMENTATION_ARGS=(-e class "${TEST_CLASS}")
+fi
 adb shell am instrument -w -r --no-window-animation \
+  "${INSTRUMENTATION_ARGS[@]}" \
   "${TEST_PACKAGE_ID}/androidx.test.runner.AndroidJUnitRunner" \
   > "${EVIDENCE_DIR}/instrumentation-results.txt" 2>&1
 TEST_STATUS=$?
