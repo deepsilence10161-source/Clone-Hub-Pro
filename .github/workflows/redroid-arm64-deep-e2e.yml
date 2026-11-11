@@ -21,7 +21,39 @@ jobs:
           distribution: temurin
           cache: gradle
       - run: chmod +x gradlew
-      - run: ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest --stacktrace
+      - name: Build, lint and unit test
+        run: |
+          set +e
+          ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug assembleDebugAndroidTest --stacktrace > gradle-build.log 2>&1
+          echo "GRADLE_EXIT=$?" | tee -a gradle-build.log
+          tail -n 250 gradle-build.log
+      # Same public diagnosis channel as the other gates: a failing gradle step must leave a
+      # readable reason behind, because the job log stream needs repository admin rights.
+      - name: Publish build log on failure
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          [ -f gradle-build.log ] || exit 0
+          if grep -q "GRADLE_EXIT=0" gradle-build.log; then
+            echo "Build succeeded; nothing to publish."
+            exit 0
+          fi
+          grep -E "^e: |error:|Unresolved|cannot find symbol|FAILURE:|Lint found|> Task .* FAILED" \
+            gradle-build.log > compile-errors.txt || true
+          for f in app/build/reports/lint-results-debug.txt app/build/reports/lint-results-debug.xml; do
+            [ -f "$f" ] && cp "$f" "lint-$(basename "$f")" || true
+          done
+          gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
+            || gh release create ci-diagnostics --repo "${{ github.repository }}" \
+                 --prerelease --title "CI diagnostics" --notes "Rolling build diagnostics"
+          gh release upload ci-diagnostics gradle-build.log compile-errors.txt \
+            lint-lint-results-debug.txt lint-lint-results-debug.xml \
+            --repo "${{ github.repository }}" --clobber || true
+      # A silently non-zero gradle exit would let every later step run against a stale APK.
+      - name: Enforce build result
+        run: grep -q "GRADLE_EXIT=0" gradle-build.log
       - run: |
           mkdir -p staged-apks
           cp app/build/outputs/apk/debug/app-debug.apk staged-apks/app-debug.apk
