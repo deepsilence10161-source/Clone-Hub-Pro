@@ -90,7 +90,9 @@ echo "Installing and running instrumentation tests"
 adb install -r -t artifacts/app-debug-androidTest.apk
 set +e
 INSTRUMENTATION_ARGS=()
-if [ -n "${TEST_CLASS:-}" ]; then
+if [ "${TEST_CLASS:-}" = "ALL" ]; then
+  echo "Running the complete instrumentation suite"
+elif [ -n "${TEST_CLASS:-}" ]; then
   INSTRUMENTATION_ARGS=(-e class "${TEST_CLASS}")
 fi
 adb shell am instrument -w -r --no-window-animation \

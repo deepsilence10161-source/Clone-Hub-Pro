@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       test_class:
-        description: Fully qualified instrumentation test class
+        description: Fully qualified instrumentation test class, ALL for every test, empty for third-party twins
         required: true
         default: com.clonehub.advanced.ui.home.ThirdPartyCloneCompatibilityInstrumentedTest
         type: string
