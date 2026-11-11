@@ -187,7 +187,7 @@ evidence quoted. Nothing here is a claim without a run id.
 | 1 | Build gate made real: lint text report, failure diagnostics published as public release assets (artifact download needs account scope this token lacks) | `72f0b68`…`7ee7036` | run `42997893752` build job SUCCESS | PASS (infra) |
 | 1 | Lint error fixed by moving the API-27 `windowLightNavigationBar` attribute to `values-v27` instead of silencing the check | `ebcb65f` | `lintDebug` green, 16 unit tests green | PASS |
 | 1 | **Regression found and fixed:** removing the "diagnostic" host-record registration broke clone launching — runtime answered `code=0` while no agent process was forked. Registration restored as an explicit, idempotent `ensureHostProcessRecord()` with root-cause logging | `9ff1a64`, `0c459fe` | run `43008613638` deep **SUCCESS**, `43008613653` strict **SUCCESS**, `43008613706` smoke **SUCCESS** (`OK (16 tests)`, 0 FATAL EXCEPTION, `Host process record registered … registrySize=1`) | PASS |
-| 3 | **S1 fixed:** all 301 exported providers, 320 agent activities, the exported agent service and the `xf` alias are now guarded by a signature-level permission (`com.clonehub.pro.permission.VIRTUAL_CONTAINER`); third-party installs can no longer reach the virtual-container surface while clones keep working (they execute inside our own processes) | `85cc4c9`, `eb5439f` | runs `43011536379` smoke **SUCCESS**, `43011536388` strict **SUCCESS**, `43011536477` deep **SUCCESS** | PASS |
+| 3 | **S1 fixed:** all 301 exported providers, 320 agent activities, the exported agent service and the `xf` alias are now guarded by a signature-level permission (`com.clonehub.pro.permission.VIRTUAL_CONTAINER`); third-party installs can no longer reach the virtual-container surface while clones keep working (they execute inside our own processes) | `85cc4c9`, `eb5439f` | runs `43011536379`/`43011536388`/`43011536477` **SUCCESS**, repeated green in `43012532304`/`43012532536`/`43012532363` with deployed-manifest evidence (`container-permission.txt`: `prot=signature`) | PASS |
 | 1 | Build diagnosis channel made trustworthy: every gate enforces `GRADLE_EXIT=0`, publishes the log/compile errors to the diagnostics release, and mirrors errors as check-run annotations readable without repo admin | `d2dd8bf`, `98f3480`, `eb5439f` | annotation `> Task :app:processDebugMainManifest FAILED` led straight to the invalid manifest tag it was hiding | PASS (infra) |
 | 1 | Device-test evidence now published for deep E2E; shell-quoting bug in the publisher fixed; local `precheck.sh` catches Kotlin-in-Java and broken workflow shell | `e6baaf4`, `fa08645`, `0c459fe` | evidence asset `evidence-deep.tar.gz` present on release `ci-diagnostics` | PASS (infra) |
 
@@ -203,3 +203,19 @@ per space so this class of failure can never again be silent.
 
 Follow-up (next task, not done): make `launchApp` verify a real agent process (pid for the space)
 before returning `Success`, so a future regression fails in the engine instead of in a UI wait.
+
+### Verified artifact after Phase 1 + S1
+
+* `https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk`
+* SHA-256 `2c657512d7b668e11d9c54fa05ce166b7e3b8e35595718fba916086b9b1608ff`, 7,844,754 bytes
+* Built from `6410890`; same commit's device run: `Real app compatibility smoke` `43012532304` → `OK (16 tests)`, 0 `FATAL EXCEPTION`, deep `43012532363` SUCCESS, strict `43012532536` SUCCESS.
+
+### Next (queued, not started)
+
+1. R7 follow-up: `launchApp` must confirm a real agent process for the space before returning
+   `Success` (currently a code-0 answer is trusted).
+2. P1/P2: versioned, idempotent runtime extraction with an APK-hash marker.
+3. Measurement first: log cold-start and per-space clone-launch timings in the deep gate so the
+   Phase-2 optimisations have a before/after number from the same image.
+4. M4: A/B `allowNativeHeapPointerTagging`.
+5. Backup/restore (currently **FAIL — not implemented**), then multi-instance 1/2/5/10.
