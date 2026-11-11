@@ -32,8 +32,19 @@ class MultiInstanceStressInstrumentedTest {
             val outcome = runInstanceStep(count)
             android.util.Log.i(TAG, outcome)
         }
-        // A single clone must always work; higher counts are capacity information, not a promise.
+        // What this device/runtime actually does, encoded as a test so it cannot silently change:
+        // every requested clone launch is accepted and verified at that moment, but only one clone
+        // process stays alive at a time — a newer clone takes the display and the previous process
+        // is reaped. Publishing "10 clones running at once" would be a false claim.
         assertTrue("A single clone could not be verified", singleCloneVerified())
+        assertTrue(
+            "Runtime kept more than one clone process alive; the documented limit is stale",
+            maxAliveObserved <= 1
+        )
+        assertTrue(
+            "Not every requested clone could be launched",
+            launchesAccepted == requestedLaunches
+        )
     }
 
     private fun runInstanceStep(count: Int): String {
@@ -48,8 +59,14 @@ class MultiInstanceStressInstrumentedTest {
                 originalName = FIXTURE_PACKAGE,
                 spaceId = spaceId
             )
+            requestedLaunches++
             val result = VirtualContainerEngine.launchAppOutcome(context, app, spaceId)
-            if (result.isSuccess) launched++ else android.util.Log.w(TAG, "space=$spaceId ${result.describe()}")
+            if (result.isSuccess) {
+                launched++
+                launchesAccepted++
+            } else {
+                android.util.Log.w(TAG, "space=$spaceId ${result.describe()}")
+            }
         }
         // Let every agent process settle, then measure again: a clone that dies immediately would
         // otherwise be counted as a success.
@@ -59,6 +76,7 @@ class MultiInstanceStressInstrumentedTest {
         val averageKb = if (alive == 0) 0 else memoryKb / alive
         stopAll()
         lastSingleVerified = if (count == 1) alive >= 1 else lastSingleVerified
+        maxAliveObserved = maxOf(maxAliveObserved, alive)
         return "MULTI_INSTANCE requested=$count launched=$launched aliveAfter15s=$alive " +
             "totalPssKb=$memoryKb averagePssKbPerClone=$averageKb"
     }
@@ -93,5 +111,8 @@ class MultiInstanceStressInstrumentedTest {
         const val BASE_SPACE = 200
         const val SETTLE_MS = 15_000L
         var lastSingleVerified = false
+        var maxAliveObserved = 0
+        var requestedLaunches = 0
+        var launchesAccepted = 0
     }
 }

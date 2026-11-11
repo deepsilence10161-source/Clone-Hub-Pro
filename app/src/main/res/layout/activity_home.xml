@@ -86,7 +86,18 @@
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <!-- ViewPager2 for Swiping Between Spaces -->
-        <androidx.viewpager2.widget.ViewPager2
+        <TextView
+        android:id="@+id/tvCapacityNote"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="@dimen/margin_normal"
+        android:paddingVertical="@dimen/margin_small"
+        android:text="@string/clone_capacity_note"
+        android:textColor="@color/text_secondary_dark"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
+    <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewPagerSpaces"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

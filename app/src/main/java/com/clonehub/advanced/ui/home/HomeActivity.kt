@@ -50,6 +50,7 @@ class HomeActivity : AppCompatActivity() {
         spaceManager = SpaceManager.getInstance(this)
 
         initViews()
+        // The measured capacity note is driven by refreshSpaces(), so it always matches the model.
         findViewById<View>(R.id.btnBackup).setOnClickListener {
             startActivity(BackupActivity.intent(this))
         }
@@ -200,6 +201,7 @@ class HomeActivity : AppCompatActivity() {
         }
         updateSpaceIndicator(viewPager.currentItem)
         findViewById<View>(R.id.layoutEmpty).isVisible = spaces.all { it.apps.isEmpty() }
+        findViewById<View>(R.id.tvCapacityNote)?.isVisible = spaces.any { it.apps.isNotEmpty() }
     }
 
     /** Space management: rename, and delete only when the space holds no clones. */

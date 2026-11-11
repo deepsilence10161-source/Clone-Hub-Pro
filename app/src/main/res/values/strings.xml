@@ -57,6 +57,7 @@
     <string name="space_deleted">Deleted %1$s</string>
     <string name="space_rename_failed">Could not rename the space</string>
     <string name="slot_limit_reached">Clone limit reached for this device.</string>
+    <string name="clone_capacity_note">One clone runs at a time on this device: opening another clone in a different space closes the previous one. Switch back to it any time — its data is kept.</string>
     <string name="action_remove_from_space">Remove from this space</string>
     <string name="clone_status_never_launched">Not opened yet</string>
     <string name="clone_status_ok">Last launch succeeded</string>
