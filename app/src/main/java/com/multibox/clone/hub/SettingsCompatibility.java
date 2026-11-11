@@ -66,7 +66,9 @@ final class SettingsCompatibility {
                         return proxy;
                     }
                     if ("getUserRestrictionSources".equals(name)) {
-                        return 0; // UserManager.RESTRICTION_NOT_SET
+                        // Internal IUserManager returns EnforcingUser records; the public
+                        // UserManager facade converts an empty list to RESTRICTION_NOT_SET.
+                        return java.util.Collections.emptyList();
                     }
                     if (name.startsWith("hasUserRestriction")
                             || "hasBaseUserRestriction".equals(name)) {
