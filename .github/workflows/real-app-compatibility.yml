@@ -11,6 +11,8 @@ on:
     paths:
       - 'app/**'
       - '.github/**'
+  # The backup/restore tests are pure app-level work (no clone process needed): run them on every
+  # push as a separate job so a data-loss regression cannot slip through silently.
   workflow_dispatch:
     inputs:
       test_class:
@@ -93,6 +95,42 @@ jobs:
           name: real-app-compatibility-binaries
           path: staged-apks/*.apk
           if-no-files-found: error
+
+  backup-restore:
+    runs-on: ubuntu-24.04-arm
+    needs: build
+    timeout-minutes: 25
+    env:
+      PACKAGE_ID: com.clonehub.pro
+      TEST_PACKAGE_ID: com.clonehub.pro.test
+      MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
+      ANDROID_SERIAL: localhost:5555
+      TEST_CLASS: com.clonehub.advanced.core.backup.BackupRestoreInstrumentedTest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: real-app-compatibility-binaries
+          path: artifacts
+      - run: bash .github/scripts/start-redroid-arm64.sh
+      - run: bash .github/scripts/run-emulator-e2e.sh
+      - if: always()
+        run: |
+          mkdir -p evidence
+          adb -s localhost:5555 logcat -d -v threadtime > evidence/backup-logcat.txt 2>&1 || true
+      - name: Publish backup evidence to diagnostics release
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          archive="evidence-backup.tar.gz"
+          tar -czf "$archive" evidence 2>/dev/null || true
+          [ -s "$archive" ] || exit 0
+          gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
+            || gh release create ci-diagnostics --repo "${{ github.repository }}" \
+                 --prerelease --title "CI diagnostics" --notes "Rolling build and test diagnostics"
+          gh release upload ci-diagnostics "$archive" --repo "${{ github.repository }}" --clobber || true
 
   native-compatibility:
     runs-on: ubuntu-24.04-arm
