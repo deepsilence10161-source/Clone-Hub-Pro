@@ -219,3 +219,28 @@ before returning `Success`, so a future regression fails in the engine instead o
    Phase-2 optimisations have a before/after number from the same image.
 4. M4: A/B `allowNativeHeapPointerTagging`.
 5. Backup/restore (currently **FAIL — not implemented**), then multi-instance 1/2/5/10.
+
+---
+
+## 12. Phase 2/4 log — launch verification, extraction hardening, backup/restore
+
+| Area | Change | Commits | Evidence | Status |
+|---|---|---|---|---|
+| R7 (High) | A `code=0` launch answer is no longer treated as success: the engine waits for one of *our own* `:agentN` processes to become foreground and returns `NotVerified` with the observed process list otherwise | `1318b26` | deep run `43016023127` SUCCESS, `Launch verified in agent process` × 13, zero false successes | PASS |
+| Measurement | Per-launch timing (`Install step` + `Launch timing … ms`) and cold-start `am start -W` are captured by the deep gate; no invented numbers anywhere | `1318b26`, `ad4120f` | first real numbers below | PASS (baseline) |
+| P1/P2 | Runtime extraction is versioned and self-healing: SHA-256 + size + versionCode marker, `.part` write, directory replacement, marker written last, stale/partial extraction re-extracted | `872d426`, `20f8bd1`, `4b26a78` | build green; `Runtime extraction verified; extraction.ok=…` in logcat | PASS |
+| §11 backup/restore | Verified per-clone / per-space / full backup with checksum + version gate + safety copy + merge/replace + interruption cleanup, and a Material screen with the user-chosen location | `63c173a`, `f064471` | unit tests (`BackupDocumentTest`, 7 cases) + device run `43021399748` job `backup-restore` **SUCCESS**, `OK (4 tests)` | PASS (model layer) |
+| §11 scope (honest limit) | The cloned apps' *internal* data lives in the runtime's private storage and cannot be exported without root or a debuggable build. Backup covers the clone model; the UI says so explicitly instead of implying more | `63c173a` | `backup_scope_note` string, `CloneBackupManager` KDoc | PARTIAL by design |
+
+### Measured baseline (redroid ARM64 Android 14, same image for every row)
+
+| Metric | Value | Source |
+|---|---|---|
+| Host cold start (`HomeActivity`, `am start -W`) | **489 ms** | `cold-start.txt`, run `43016023127` |
+| First clone launch in a space (install + agent spawn) | **2 539–2 597 ms** | `launch-timings.txt` |
+| Warm clone launch, same space | **245–381 ms** (12 samples: 236, 245, 365–381) | `launch-timings.txt` |
+| Clone launches verified in a real agent process | 13 / 13 | `deep-logcat.txt` |
+| Instrumentation suite | `OK (16 tests)` + backup `OK (4 tests)` | runs `43021399748`, `43021399799` |
+
+These are the *before* numbers for every later performance claim. A change is only a performance
+improvement if the same file on the same image shows a better number.
