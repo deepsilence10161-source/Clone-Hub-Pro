@@ -55,33 +55,48 @@ class AppPickerActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         adapter = AppPickerAdapter { selectedApp ->
             if (isCloning) return@AppPickerAdapter
+            val manager = SpaceManager.getInstance(this@AppPickerActivity)
+            if (!manager.canAddClone()) {
+                Toast.makeText(
+                    this@AppPickerActivity,
+                    getString(R.string.slot_limit_reached),
+                    Toast.LENGTH_LONG
+                ).show()
+                return@AppPickerAdapter
+            }
             isCloning = true
             findViewById<ProgressBar>(R.id.progressBarPicker).isVisible = true
 
             lifecycleScope.launch {
-                val installed = withContext(Dispatchers.IO) {
-                    com.clonehub.advanced.core.container.VirtualContainerEngine.installApp(
+                val outcome = withContext(Dispatchers.IO) {
+                    com.clonehub.advanced.core.container.VirtualContainerEngine.installAppOutcome(
                         this@AppPickerActivity,
                         selectedApp.packageName,
                         targetSpaceId
                     )
                 }
 
-                if (installed) {
-                    // Update the visible model only after the runtime accepts the installation.
-                    SpaceManager.getInstance(this@AppPickerActivity).addAppToSpace(
-                        spaceId = targetSpaceId,
-                        packageName = selectedApp.packageName,
-                        appName = selectedApp.appName
-                    )
+                // Update the visible model only after the runtime confirms the installation.
+                val added = outcome.isSuccess && manager.addAppToSpace(
+                    spaceId = targetSpaceId,
+                    packageName = selectedApp.packageName,
+                    appName = selectedApp.appName
+                ) != null
+
+                if (added) {
                     setResult(Activity.RESULT_OK)
                     finish()
                 } else {
                     findViewById<ProgressBar>(R.id.progressBarPicker).isVisible = false
                     isCloning = false
+                    val reason = if (outcome.isSuccess) {
+                        getString(R.string.slot_limit_reached)
+                    } else {
+                        outcome.describe()
+                    }
                     Toast.makeText(
                         this@AppPickerActivity,
-                        getString(R.string.clone_failed, selectedApp.appName),
+                        getString(R.string.clone_failed_reason, selectedApp.appName, reason),
                         Toast.LENGTH_LONG
                     ).show()
                 }

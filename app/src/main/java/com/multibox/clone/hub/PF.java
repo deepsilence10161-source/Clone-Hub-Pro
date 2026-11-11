@@ -11,10 +11,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class PF extends ContentProvider {
+    /** Runtime service call that keeps the agent lifecycle alive. */
+    private static final String METHOD_SERVICE = "995";
+    private static final long HEARTBEAT_ACTIVE_MS = 10_000L;
+    private static final long HEARTBEAT_IDLE_MS = 60_000L;
+    private static final String TAG_DIAGNOSTIC = "AgentDiagnostic";
     private static final String SERVICE_AUTHORITY =
             "com.clonehub.pro.virtual.container.server0001.Jrhl$Service";
     private static final String LEGACY_RUNTIME_SERVER_AUTHORITY =
@@ -23,77 +27,52 @@ public abstract class PF extends ContentProvider {
     private ContentProviderClient stableSelfClient;
     private int runtimeMode = -1;
     private int heartbeatCount;
+    private ContentProviderClient heartbeatClient;
     private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
+    /**
+     * Keeps the agent process from being reaped by the platform.
+     *
+     * This used to run every 5 seconds, acquire a fresh provider client on every tick and dump
+     * /proc state each time. It now keeps one client, re-acquires only when the binder died, and
+     * backs off to [HEARTBEAT_IDLE_MS] while the engine is unreachable.
+     */
     private final Runnable runtimeHeartbeat = new Runnable() {
         @Override
         public void run() {
             Context context = getContext();
+            boolean healthy = false;
             if (context != null && runtimeMode == 1) {
-                ContentProviderClient client = null;
                 try {
-                    client = context.getContentResolver().acquireUnstableContentProviderClient(
-                            SERVICE_AUTHORITY);
-                    if (client != null) {
-                        Bundle heartbeat = client.call("995", null, Bundle.EMPTY);
-                        Log.d("AgentDiagnostic", "Runtime heartbeat; pid="
-                                + android.os.Process.myPid() + ", connected=" + (heartbeat != null));
+                    if (heartbeatClient == null || !heartbeatClient.getBinder().isBinderAlive()) {
+                        closeHeartbeatClient();
+                        heartbeatClient = context.getContentResolver()
+                                .acquireUnstableContentProviderClient(SERVICE_AUTHORITY);
+                    }
+                    if (heartbeatClient != null) {
+                        heartbeatClient.call(METHOD_SERVICE, null, Bundle.EMPTY);
+                        healthy = true;
                         heartbeatCount++;
-                        if (heartbeatCount == 2) {
-                            dumpAgentProcessDiagnostics();
-                        }
                     }
                 } catch (Throwable error) {
-                    Log.e("AgentDiagnostic", "Runtime heartbeat failed", error);
-                } finally {
-                    if (client != null) {
-                        client.close();
-                    }
+                    Log.e(TAG_DIAGNOSTIC, "Runtime heartbeat failed", error);
+                    closeHeartbeatClient();
                 }
             }
-            heartbeatHandler.postDelayed(this, 5_000L);
+            long nextDelay = healthy ? HEARTBEAT_ACTIVE_MS : HEARTBEAT_IDLE_MS;
+            heartbeatHandler.removeCallbacks(this);
+            heartbeatHandler.postDelayed(this, nextDelay);
         }
     };
 
-    private void dumpAgentProcessDiagnostics() {
-        try {
-            java.io.File taskDirectory = new java.io.File("/proc/self/task");
-            java.io.File[] tasks = taskDirectory.listFiles();
-            if (tasks != null) {
-                java.util.Arrays.sort(tasks, java.util.Comparator.comparing(java.io.File::getName));
-                for (java.io.File task : tasks) {
-                    String name = new String(java.nio.file.Files.readAllBytes(
-                            new java.io.File(task, "comm").toPath())).trim();
-                    String wait = new String(java.nio.file.Files.readAllBytes(
-                            new java.io.File(task, "wchan").toPath())).trim();
-                    String syscall;
-                    try {
-                        syscall = new String(java.nio.file.Files.readAllBytes(
-                                new java.io.File(task, "syscall").toPath())).trim();
-                    } catch (Throwable denied) {
-                        syscall = "denied";
-                    }
-                    Log.i("AgentNative", "task=" + task.getName() + ", name=" + name
-                            + ", wait=" + wait + ", syscall=" + syscall);
-                }
+    private void closeHeartbeatClient() {
+        ContentProviderClient client = heartbeatClient;
+        heartbeatClient = null;
+        if (client != null) {
+            try {
+                client.close();
+            } catch (Throwable ignored) {
+                // Nothing to recover; a new client is acquired on the next tick.
             }
-            String status = new String(java.nio.file.Files.readAllBytes(
-                    new java.io.File("/proc/self/status").toPath()));
-            for (String line : status.split("\\n")) {
-                if (line.startsWith("TracerPid:") || line.startsWith("State:")
-                        || line.startsWith("PPid:")) {
-                    Log.i("AgentNative", line);
-                }
-            }
-            String maps = new String(java.nio.file.Files.readAllBytes(
-                    new java.io.File("/proc/self/maps").toPath()));
-            for (String line : maps.split("\\n")) {
-                if (line.contains("libwnublp") || line.contains("libclonehub")
-                        || line.contains("libwnublpl")) {
-                    Log.i("AgentNative", line);
-                }
-            }
-        } catch (Throwable error) {
-            Log.e("AgentNative", "Could not read agent process diagnostics", error);
         }
     }
 
@@ -156,150 +135,19 @@ public abstract class PF extends ContentProvider {
                 }
             });
         }
-        if (runtimeMode == 1) {
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                Log.e("AgentDiagnostic", "Agent shutdown hook; pid=" + android.os.Process.myPid());
-                for (java.util.Map.Entry<Thread, StackTraceElement[]> entry
-                        : Thread.getAllStackTraces().entrySet()) {
-                    StringBuilder stack = new StringBuilder(entry.getKey().getName());
-                    for (StackTraceElement element : entry.getValue()) {
-                        stack.append("\n  at ").append(element);
-                    }
-                    Log.e("AgentDiagnostic", stack.toString());
-                }
-            }, "CloneHubAgentShutdown"));
-        }
-        heartbeatHandler.postDelayed(runtimeHeartbeat, 5_000L);
+        heartbeatHandler.postDelayed(runtimeHeartbeat, HEARTBEAT_ACTIVE_MS);
         return true;
     }
 
     @Override
     public Bundle call(String method, String arg, Bundle extras) {
         try {
-            Bundle result = AbstractC2211qP.c(method, arg, extras);
-            if ("995".equals(method)) {
-                inspectNativePackageManager(extras);
-            }
-            return result;
+            return AbstractC2211qP.c(method, arg, extras);
         } catch (Throwable th) {
-            th.printStackTrace();
+            // The runtime expects a Bundle, so an empty one stays the fallback; the failure is
+            // logged at error level instead of being silently swallowed.
+            Log.e(TAG_DIAGNOSTIC, "Runtime call failed: method=" + method, th);
             return Bundle.EMPTY;
-        }
-    }
-
-    private void inspectNativePackageManager(Bundle diagnostic) {
-        try {
-            Class<?> managerClass = Class.forName("com.multibox.clone.hub.qj", true,
-                    AbstractC2211qP.l);
-            Object manager = managerClass.getDeclaredMethod("o000o0oo").invoke(null);
-            Log.i("RuntimeProvider", "Native package manager=" + manager);
-            if (manager != null) {
-                Object spaces = managerClass.getDeclaredMethod("o000oOoo").invoke(manager);
-                Log.i("RuntimeProvider", "Native spaces=" + spaces);
-            }
-            if (diagnostic == null || !diagnostic.containsKey("diagnostic_package")) {
-                return;
-            }
-
-            Class<?> serviceClass = Class.forName("com.multibox.clone.hub.ni", true,
-                    AbstractC2211qP.l);
-            Object service = serviceClass.getDeclaredMethod("o000o0oO").invoke(null);
-            for (java.lang.reflect.Field field : serviceClass.getDeclaredFields()) {
-                if (field.getType().getName().startsWith("com.multibox.clone.hub.")) {
-                    field.setAccessible(true);
-                    Log.i("RuntimeProvider", "Service field " + field.getName()
-                            + "=" + field.get(service));
-                }
-            }
-
-            Class<?> processClass = Class.forName("com.multibox.clone.hub.o000OO0O", true,
-                    AbstractC2211qP.l);
-            String hostPackage = getContext().getPackageName();
-            android.content.pm.ApplicationInfo directHostInfo = getContext().getPackageManager()
-                    .getApplicationInfo(hostPackage, 0);
-            Log.i("RuntimeProvider", "Direct host ApplicationInfo=" + directHostInfo
-                    + ", uid=" + directHostInfo.uid + ", process=" + directHostInfo.processName
-                    + ", source=" + directHostInfo.sourceDir);
-            try {
-                Class<?> lookupClass = Class.forName("com.multibox.clone.hub.fb", true,
-                        AbstractC2211qP.l);
-                Object runtimeHostInfo = lookupClass.getDeclaredMethod("OooO00o",
-                        android.content.pm.PackageManager.class, String.class).invoke(null,
-                        getContext().getPackageManager(), hostPackage);
-                Log.i("RuntimeProvider", "Runtime fb host ApplicationInfo=" + runtimeHostInfo);
-            } catch (InvocationTargetException e) {
-                Log.e("RuntimeProvider", "Runtime fb host lookup failed", e.getTargetException());
-            }
-            try {
-                Object settings = managerClass.getDeclaredMethod("o000ooO", String.class)
-                        .invoke(manager, hostPackage);
-                Log.i("RuntimeProvider", "Runtime host package settings=" + settings);
-            } catch (InvocationTargetException e) {
-                Log.e("RuntimeProvider", "Runtime host package-settings lookup failed",
-                        e.getTargetException());
-            }
-
-            Object processes = processClass.getDeclaredMethod("OooO0Oo").invoke(null);
-            for (java.lang.reflect.Field field : processClass.getDeclaredFields()) {
-                if (!java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
-                    field.setAccessible(true);
-                    Object value = field.get(processes);
-                    String summary = String.valueOf(value);
-                    if (value instanceof java.util.Map) {
-                        java.util.Map<?, ?> map = (java.util.Map<?, ?>) value;
-                        summary = "size=" + map.size() + ", keys="
-                                + new java.util.ArrayList<>(map.keySet()).subList(0,
-                                        Math.min(8, map.size()));
-                    } else if (value instanceof android.util.SparseArray) {
-                        summary = "size=" + ((android.util.SparseArray<?>) value).size();
-                    }
-                    Log.i("RuntimeProvider", "Process field " + field.getName()
-                            + ": " + summary);
-                }
-            }
-
-            try {
-                Class<?> processServiceClass = Class.forName("com.multibox.clone.hub.qf", true,
-                        AbstractC2211qP.l);
-                Object holder = processServiceClass.getField("OooO00o").get(null);
-                Object processService = holder.getClass().getDeclaredMethod("OooO0O0").invoke(holder);
-                Class<?> hostRecordClass = Class.forName("com.multibox.clone.hub.o000O", true,
-                        AbstractC2211qP.l);
-                Object hostRecord = hostRecordClass.getDeclaredConstructor(
-                        android.os.IBinder.class, String.class)
-                        .newInstance(processService, hostPackage);
-                @SuppressWarnings("unchecked")
-                java.util.Map<String, Object> registry =
-                        (java.util.Map<String, Object>) processClass.getField("OooO00o").get(processes);
-                registry.put(hostPackage, hostRecord);
-                Log.i("RuntimeProvider", "Host process record constructed with "
-                        + processService.getClass().getName() + "; slots="
-                        + ((java.util.Map<?, ?>) hostRecord).size());
-            } catch (InvocationTargetException e) {
-                Log.e("RuntimeProvider", "Host process record construction failed",
-                        e.getTargetException());
-            }
-
-            String packageName = diagnostic.getString("diagnostic_package");
-            int spaceId = diagnostic.getInt("diagnostic_space");
-            Object activity = managerClass.getDeclaredMethod("o000oo0o",
-                    Integer.TYPE, String.class).invoke(manager, spaceId, packageName);
-            String processName = activity == null ? null
-                    : ((android.content.pm.ActivityInfo) activity).processName;
-            Log.i("RuntimeProvider", "Service ActivityInfo=" + activity
-                    + ", processName=" + processName + ", package=" + packageName);
-            try {
-                Object record = processClass.getDeclaredMethod("OooO0OO", String.class)
-                        .invoke(processes, processName);
-                Log.i("RuntimeProvider", "Service direct process lookup=" + record);
-            } catch (InvocationTargetException e) {
-                Log.e("RuntimeProvider", "Service direct process lookup failed for "
-                        + processName, e.getTargetException());
-            }
-        } catch (InvocationTargetException e) {
-            Log.e("RuntimeProvider", "Native package-manager diagnostic failed", e.getTargetException());
-        } catch (Throwable th) {
-            Log.e("RuntimeProvider", "Native package-manager reflection failed", th);
         }
     }
 

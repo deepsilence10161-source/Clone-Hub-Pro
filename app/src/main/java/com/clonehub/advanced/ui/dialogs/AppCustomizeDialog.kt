@@ -2,8 +2,6 @@ package com.clonehub.advanced.ui.dialogs
 
 import android.app.Dialog
 import android.content.Context
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.Window
 import android.widget.Button
@@ -13,7 +11,6 @@ import android.widget.TextView
 import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.data.model.ClonedApp
-import java.io.File
 
 class AppCustomizeDialog(
     context: Context,
@@ -35,19 +32,16 @@ class AppCustomizeDialog(
 
         etName.setText(app.appName)
 
-        // Load Icon
-        val pm = context.packageManager
-        val hostIcon = runCatching { pm.getApplicationIcon(app.packageName) }.getOrNull()
-        if (!app.customIconPath.isNullOrEmpty() && File(app.customIconPath!!).exists()) {
-            val bitmap = BitmapFactory.decodeFile(app.customIconPath)
-            ivPreview.setImageDrawable(BitmapDrawable(context.resources, bitmap))
-        } else {
-            ivPreview.setImageDrawable(hostIcon ?: context.getDrawable(R.drawable.ic_action_install))
-        }
+        // Shared cache: same drawable the grid shows, without re-decoding on the UI thread.
+        ivPreview.setImageDrawable(
+            com.clonehub.advanced.ui.home.IconLoader.load(context, app.packageName, app.customIconPath)
+        )
 
         btnReset.setOnClickListener {
             etName.setText(app.originalName)
-            ivPreview.setImageDrawable(hostIcon)
+            ivPreview.setImageDrawable(
+                com.clonehub.advanced.ui.home.IconLoader.load(context, app.packageName, null)
+            )
         }
 
         btnCancel.setOnClickListener { dismiss() }
@@ -60,6 +54,7 @@ class AppCustomizeDialog(
                 newName = newName,
                 customIconPath = app.customIconPath
             )
+            com.clonehub.advanced.ui.home.IconLoader.evict(app.packageName)
             onSaved()
             dismiss()
         }

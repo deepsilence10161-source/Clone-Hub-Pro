@@ -1,8 +1,6 @@
 package com.clonehub.advanced.ui.home
 
 import android.content.Context
-import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,7 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.clonehub.advanced.R
 import com.clonehub.advanced.data.model.ClonedApp
-import java.io.File
+import androidx.core.view.isVisible
 
 class AppGridAdapter(
     private val context: Context,
@@ -63,18 +61,21 @@ class AppGridAdapter(
     inner class AppViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val ivIcon: ImageView = itemView.findViewById(R.id.ivAppIcon)
         private val tvTitle: TextView = itemView.findViewById(R.id.tvAppTitle)
+        private val ivStatus: ImageView = itemView.findViewById(R.id.ivAppStatus)
 
         fun bind(app: ClonedApp) {
             tvTitle.text = app.appName
+            ivIcon.setImageDrawable(IconLoader.load(context, app.packageName, app.customIconPath))
 
-            // Load Custom Icon if set, else Host App Icon
-            if (!app.customIconPath.isNullOrEmpty() && File(app.customIconPath!!).exists()) {
-                val bitmap = BitmapFactory.decodeFile(app.customIconPath)
-                ivIcon.setImageDrawable(BitmapDrawable(context.resources, bitmap))
-            } else {
-                val pm = context.packageManager
-                val icon = runCatching { pm.getApplicationIcon(app.packageName) }.getOrNull()
-                ivIcon.setImageDrawable(icon ?: context.getDrawable(R.drawable.ic_action_install))
+            // Real clone health: only shown when the last launch actually failed.
+            val failed = app.lastLaunchSucceeded == false
+            ivStatus.isVisible = failed
+            if (failed) {
+                ivStatus.setImageResource(R.drawable.ic_status_failed)
+                ivStatus.contentDescription = context.getString(
+                    R.string.clone_status_failed,
+                    app.lastFailureReason ?: ""
+                )
             }
 
             itemView.setOnClickListener { onAppClick(app) }

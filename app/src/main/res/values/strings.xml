@@ -47,4 +47,23 @@
     <string name="empty_space_hint">Tap + to clone apps in this space</string>
     <string name="clone_failed">Could not clone %1$s. The virtual engine is unavailable on this device.</string>
     <string name="launch_failed">Could not open %1$s in this space.</string>
+    <string name="launch_failed_reason">Could not open %1$s\n%2$s</string>
+    <string name="clone_status_failed">Last launch failed: %1$s</string>
+    <string name="error_details_title">Details</string>
+    <string name="space_rename">Rename space</string>
+    <string name="space_delete">Delete empty space</string>
+    <string name="space_delete_blocked">Remove its clones first, or keep the space.</string>
+    <string name="space_name_hint">Space name</string>
+    <string name="slot_limit_reached">Clone limit reached for this device.</string>
+    <string name="action_remove_from_space">Remove from this space</string>
+    <string name="clone_status_never_launched">Not opened yet</string>
+    <string name="clone_status_ok">Last launch succeeded</string>
+    <string name="cloned_to_space">Cloned to %1$s</string>
+    <string name="clone_failed_reason">Could not clone %1$s\n%2$s</string>
+    <string name="stopped_ok">Stopped %1$s</string>
+    <string name="stop_failed_reason">Could not stop the clone\n%1$s</string>
+    <string name="clear_storage_unavailable_title">Clear data is not available for this clone</string>
+    <string name="clear_storage_unavailable_body">The bundled virtual engine does not expose a per-clone data deletion call. Removing data would have to be faked, so CloneHub Pro does not offer it. Remove the clone from this space to stop using it.</string>
+    <string name="removed_from_space">Removed %1$s from Space %2$d</string>
+    <string name="remove_failed">Could not remove %1$s</string>
 </resources>

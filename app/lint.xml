@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Treat these as build-breaking errors for the shipped build. -->
+    <issue id="NewApi" severity="error" />
+    <issue id="MissingPermission" severity="error" />
+    <issue id="WrongThread" severity="error" />
+    <issue id="RecyclerView" severity="error" />
+
+    <!-- The bundled runtime ships prebuilt native libraries for both ABIs; 32-bit is not dropped. -->
+    <issue id="UnusedResources" severity="ignore" />
+</lint>

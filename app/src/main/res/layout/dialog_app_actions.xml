@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/surface_dark"
@@ -43,6 +44,16 @@
                 android:text="Space 1"
                 android:textColor="@color/colorPrimary"
                 android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/tvHeaderStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:maxLines="2"
+                android:textColor="@color/text_secondary_dark"
+                android:textSize="11sp"
+                tools:text="Last launch failed" />
         </LinearLayout>
     </RelativeLayout>
 
@@ -151,7 +162,32 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- Action 5: Clear Storage / Cache -->
+    <!-- Action 5: Stop the running clone (the only data-affecting runtime call) -->
+    <LinearLayout
+        android:id="@+id/actionForceStop"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_action_force_stop"
+            app:tint="@color/colorPrimary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/action_force_stop"
+            android:textColor="@color/action_primary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Action 6: Clear Storage / Cache -->
     <LinearLayout
         android:id="@+id/actionClearStorage"
         android:layout_width="match_parent"
@@ -176,7 +212,7 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- Action 6: Uninstall -->
+    <!-- Action 7: Remove from space -->
     <LinearLayout
         android:id="@+id/actionUninstall"
         android:layout_width="match_parent"
@@ -196,7 +232,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:text="@string/action_uninstall"
+            android:text="@string/action_remove_from_space"
             android:textColor="@color/error_red"
             android:textSize="14sp" />
     </LinearLayout>

@@ -85,26 +85,14 @@ object VirtualContainerEngine {
     /**
      * Installs the app package into the specified virtual space sandbox.
      * Transaction 6 (INSTALL_PACKAGE).
+     *
+     * Success is reported only after the runtime's own package manager confirms the package.
      */
-    fun installApp(context: Context, packageName: String, spaceId: Int): Boolean {
+    fun installAppOutcome(context: Context, packageName: String, spaceId: Int): EngineOutcome {
         val binder = getRemoteBinder(context)
-        if (binder == null) {
-            Log.e(TAG, "Cannot install $packageName - RemoteBinder is null")
-            return false
-        }
-
+            ?: return EngineOutcome.RuntimeUnavailable("no binder from $SERVICE_PROVIDER_AUTHORITY")
         val descriptor = getInterfaceDescriptor(binder)
-        if (descriptor.isNullOrBlank()) {
-            Log.e(TAG, "Runtime did not expose its interface descriptor")
-            return false
-        }
-
-        Log.i(
-            TAG,
-            "Runtime descriptor=$descriptor, spaces=${queryRuntimeSpaces(binder, descriptor)?.joinToString()}, " +
-                "SettingsInSpace0=${queryInstalledPackage(binder, descriptor, packageName, 0) != null}, " +
-                "packagesInTargetSpace=${queryInstalledPackageNames(binder, descriptor, spaceId)?.size}"
-        )
+            ?: return EngineOutcome.RuntimeUnavailable("runtime exposed no interface descriptor")
 
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
@@ -121,35 +109,40 @@ object VirtualContainerEngine {
             }
             installOptions.writeToParcel(data, 0)
             if (!binder.transact(TRANSACTION_INSTALL_PACKAGE, data, reply, 0)) {
-                Log.e(TAG, "Runtime rejected install transaction for $packageName")
-                return false
+                return EngineOutcome.Rejected("install", -1, "transaction refused")
             }
             reply.readException()
-            // AIDL writes a presence int before a non-null Parcelable. readBundle()
-            // expects the Bundle length directly, so consume the presence int first.
+            // AIDL writes a presence int before a non-null Parcelable. readBundle() expects the
+            // Bundle length directly, so consume the presence int first.
             val result = if (reply.readInt() != 0) {
                 Bundle.CREATOR.createFromParcel(reply)
             } else {
                 null
             }
+            val resultCode = result?.getInt(INSTALL_RESULT_CODE, -1) ?: -1
 
             // A returned Bundle alone is not proof of success. Match the original client:
             // query the runtime package manager and require a real PackageInfo afterwards.
-            val installed = queryInstalledPackage(binder, descriptor, packageName, spaceId) != null
-            Log.i(
-                TAG,
-                "Package $packageName install verification in Space $spaceId: " +
-                    "installed=$installed, resultCode=${result?.getInt(INSTALL_RESULT_CODE, -1)}, result=$result"
-            )
-            installed
+            if (queryInstalledPackage(binder, descriptor, packageName, spaceId) != null) {
+                EngineOutcome.Success
+            } else {
+                EngineOutcome.NotVerified(
+                    "install",
+                    "resultCode=$resultCode but the runtime package manager does not list $packageName"
+                )
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to install package $packageName into Space $spaceId", e)
-            false
+            EngineOutcome.Rejected("install", -1, e.message ?: e.javaClass.simpleName)
         } finally {
             data.recycle()
             reply.recycle()
         }
     }
+
+    /** Backwards-compatible boolean view used by older call sites and tests. */
+    fun installApp(context: Context, packageName: String, spaceId: Int): Boolean =
+        installAppOutcome(context, packageName, spaceId).isSuccess
 
     private fun queryRuntimeSpaces(binder: IBinder, descriptor: String): IntArray? {
         val data = Parcel.obtain()
@@ -227,29 +220,23 @@ object VirtualContainerEngine {
      * Launches the cloned app inside the virtual process for the specified space.
      * Transaction 12 (START_ACTIVITY in agent process).
      */
-    fun launchApp(context: Context, app: ClonedApp, spaceId: Int): Boolean {
+    fun launchAppOutcome(context: Context, app: ClonedApp, spaceId: Int): EngineOutcome {
         Log.i(TAG, "Initiating virtual container launch for ${app.packageName} in Space $spaceId")
 
-        // 1. Ensure package is installed into virtual space. Never launch after a failed install.
-        if (!installApp(context, app.packageName, spaceId)) {
-            Log.e(TAG, "Cannot launch ${app.packageName} because installation failed")
-            return false
+        // 1. Ensure the package is installed into the virtual space; never launch after a failed install.
+        val installed = installAppOutcome(context, app.packageName, spaceId)
+        if (!installed.isSuccess) {
+            return when (installed) {
+                is EngineOutcome.NotVerified -> EngineOutcome.NotVerified("launch/install", installed.detail)
+                else -> installed
+            }
         }
 
-        // 2. Launch inside virtual agent process
+        // 2. Launch inside the virtual agent process.
         val binder = getRemoteBinder(context)
-        if (binder == null) {
-            Log.e(TAG, "Cannot launch ${app.packageName} - RemoteBinder is null")
-            return false
-        }
-
+            ?: return EngineOutcome.RuntimeUnavailable("binder disappeared before launch")
         val descriptor = getInterfaceDescriptor(binder)
-        if (descriptor.isNullOrBlank()) {
-            Log.e(TAG, "Runtime did not expose its interface descriptor")
-            return false
-        }
-
-        dumpRuntimeProcessState(context, app.packageName, spaceId)
+            ?: return EngineOutcome.RuntimeUnavailable("runtime exposed no interface descriptor")
 
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
@@ -259,58 +246,47 @@ object VirtualContainerEngine {
             data.writeInt(0) // flags
             data.writeInt(spaceId) // userId / spaceId
             if (!binder.transact(TRANSACTION_LAUNCH_PACKAGE, data, reply, 0)) {
-                Log.e(TAG, "Runtime rejected launch transaction for ${app.packageName}")
-                return false
+                return EngineOutcome.Rejected("launch", -1, "transaction refused")
             }
             reply.readException()
             val resultCode = reply.readInt()
-            val succeeded = isLaunchResultSuccessful(resultCode)
-            Log.i(TAG, "Virtual launch for ${app.packageName} returned code: $resultCode")
-            if (succeeded) {
-                app.launchCount++
+            if (isLaunchResultSuccessful(resultCode)) {
+                EngineOutcome.Success
+            } else {
+                EngineOutcome.Rejected("launch", resultCode, launchFailureHint(resultCode))
             }
-            succeeded
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch virtual app ${app.packageName} in Space $spaceId", e)
-            false
+            EngineOutcome.Rejected("launch", -1, e.message ?: e.javaClass.simpleName)
         } finally {
             data.recycle()
             reply.recycle()
         }
     }
 
-    /** Temporary read-only diagnostics inside the remote service process. */
-    private fun dumpRuntimeProcessState(context: Context, packageName: String, spaceId: Int) {
-        val diagnostic = Bundle().apply {
-            putString("diagnostic_package", packageName)
-            putInt("diagnostic_space", spaceId)
-        }
-        try {
-            val client = context.contentResolver.acquireUnstableContentProviderClient(
-                SERVICE_PROVIDER_AUTHORITY
-            )
-            if (client == null) {
-                Log.e(TAG, "Could not acquire service process for launch diagnostics")
-                return
-            }
-            try {
-                client.call(PROVIDER_METHOD_SERVICE, null, diagnostic)
-                Log.i(TAG, "Requested remote process-state diagnostics for $packageName")
-            } finally {
-                client.release()
-            }
-        } catch (e: Throwable) {
-            Log.e(TAG, "Remote process diagnostic failed", e)
-        }
+    /** Backwards-compatible boolean view. */
+    fun launchApp(context: Context, app: ClonedApp, spaceId: Int): Boolean =
+        launchAppOutcome(context, app, spaceId).isSuccess
+
+    /**
+     * Known non-zero launch results seen from this runtime. Unknown codes stay unknown on purpose;
+     * inventing an explanation would be worse than saying nothing.
+     */
+    private fun launchFailureHint(resultCode: Int): String? = when (resultCode) {
+        -96 -> "runtime could not start an agent process slot"
+        102 -> "target activity was not found inside the clone"
+        else -> null
     }
 
     /**
      * Force stops the virtual app process.
      * Transaction 15 (FORCE_STOP).
      */
-    fun forceStopApp(context: Context, packageName: String, spaceId: Int) {
-        val binder = getRemoteBinder(context) ?: return
-        val descriptor = getInterfaceDescriptor(binder) ?: return
+    fun forceStopApp(context: Context, packageName: String, spaceId: Int): EngineOutcome {
+        val binder = getRemoteBinder(context)
+            ?: return EngineOutcome.RuntimeUnavailable("binder unavailable")
+        val descriptor = getInterfaceDescriptor(binder)
+            ?: return EngineOutcome.RuntimeUnavailable("runtime exposed no interface descriptor")
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
         try {
@@ -321,11 +297,14 @@ object VirtualContainerEngine {
             if (binder.transact(TRANSACTION_FORCE_STOP, data, reply, 0)) {
                 reply.readException()
                 Log.i(TAG, "Force stopped $packageName in Space $spaceId")
+                EngineOutcome.Success
             } else {
                 Log.e(TAG, "Runtime rejected force-stop transaction for $packageName")
+                EngineOutcome.Rejected("force-stop", -1, "transaction refused")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error force stopping virtual app $packageName", e)
+            EngineOutcome.Rejected("force-stop", -1, e.message ?: e.javaClass.simpleName)
         } finally {
             data.recycle()
             reply.recycle()

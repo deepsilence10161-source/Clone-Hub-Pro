@@ -3,7 +3,6 @@ package com.clonehub.advanced.ui.dialogs
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -20,9 +19,9 @@ import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.core.container.VirtualContainerEngine
 import com.clonehub.advanced.data.model.ClonedApp
+import com.clonehub.advanced.ui.home.IconLoader
 import com.clonehub.advanced.ui.home.ShortcutLauncherActivity
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,31 +48,38 @@ class AppActionsBottomSheet(
         val tvSpace: TextView = view.findViewById(R.id.tvHeaderSpace)
 
         tvTitle.text = app.appName
+        val status = findViewById<TextView>(R.id.tvHeaderStatus)
         tvSpace.text = "Space $spaceId"
-
-        // Load Icon
-        if (!app.customIconPath.isNullOrEmpty() && File(app.customIconPath!!).exists()) {
-            val bitmap = BitmapFactory.decodeFile(app.customIconPath)
-            ivHeader.setImageDrawable(BitmapDrawable(resources, bitmap))
-        } else {
-            val icon = runCatching { requireContext().packageManager.getApplicationIcon(app.packageName) }.getOrNull()
-            ivHeader.setImageDrawable(icon ?: requireContext().getDrawable(R.drawable.ic_action_install))
+        status.text = when (app.lastLaunchSucceeded) {
+            null -> getString(R.string.clone_status_never_launched)
+            true -> getString(R.string.clone_status_ok)
+            false -> getString(R.string.clone_status_failed, app.lastFailureReason.orEmpty())
         }
+        status.setTextColor(
+            if (app.lastLaunchSucceeded == false) 0xFFFF5252.toInt() else 0xFFB0B0B0.toInt()
+        )
+        ivHeader.setImageDrawable(
+            IconLoader.load(requireContext(), app.packageName, app.customIconPath)
+        )
 
         // Action 1: Open / Launch
         view.findViewById<View>(R.id.actionLaunch).setOnClickListener {
             lifecycleScope.launch {
-                val launched = withContext(Dispatchers.IO) {
-                    VirtualContainerEngine.launchApp(requireContext(), app, spaceId)
+                val outcome = withContext(Dispatchers.IO) {
+                    VirtualContainerEngine.launchAppOutcome(requireContext(), app, spaceId)
                 }
-                if (launched) {
+                SpaceManager.getInstance(requireContext())
+                    .recordLaunch(spaceId, app.packageName, outcome.isSuccess, outcome.describe())
+                onAppUpdated()
+                if (outcome.isSuccess) {
                     dismiss()
                 } else {
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.launch_failed, app.appName),
+                        getString(R.string.launch_failed_reason, app.appName, outcome.describe()),
                         Toast.LENGTH_LONG
                     ).show()
+                    dismiss()
                 }
             }
         }
@@ -96,40 +102,69 @@ class AppActionsBottomSheet(
         view.findViewById<View>(R.id.actionCloneNext).setOnClickListener { action ->
             action.isEnabled = false
             val manager = SpaceManager.getInstance(requireContext())
-            val targetSpace = manager.getSpace(spaceId + 1) ?: manager.createNextSpace()
+            // Use real space ordering: spaceId + 1 skipped spaces and could write into the wrong one.
+            val targetSpace = manager.getNextSpaceAfter(spaceId) ?: manager.createNextSpace()
+            if (targetSpace == null) {
+                action.isEnabled = true
+                Toast.makeText(requireContext(), R.string.slot_limit_reached, Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             val targetSpaceId = targetSpace.spaceId
 
             lifecycleScope.launch {
                 val installed = withContext(Dispatchers.IO) {
-                    VirtualContainerEngine.installApp(requireContext(), app.packageName, targetSpaceId)
+                    VirtualContainerEngine.installAppOutcome(requireContext(), app.packageName, targetSpaceId)
                 }
-                if (installed) {
-                    manager.addAppToSpace(targetSpaceId, app.packageName, app.appName)
-                    Toast.makeText(context, "Cloned to Space $targetSpaceId", Toast.LENGTH_SHORT).show()
+                if (installed.isSuccess && manager.addAppToSpace(targetSpaceId, app.packageName, app.appName) != null) {
+                    Toast.makeText(context, getString(R.string.cloned_to_space, targetSpace.spaceName), Toast.LENGTH_SHORT).show()
                     onAppUpdated()
                     dismiss()
                 } else {
                     action.isEnabled = true
                     Toast.makeText(
                         requireContext(),
-                        getString(R.string.clone_failed, app.appName),
+                        getString(R.string.clone_failed_reason, app.appName, installed.describe()),
                         Toast.LENGTH_LONG
                     ).show()
                 }
             }
         }
 
-        // Action 5: Clear Storage
-        view.findViewById<View>(R.id.actionClearStorage).setOnClickListener {
-            SpaceManager.getInstance(requireContext()).clearAppStorage(spaceId, app.packageName)
-            Toast.makeText(context, "Storage cleared for ${app.appName}", Toast.LENGTH_SHORT).show()
-            dismiss()
+        // Action 5: Stop the running clone (this is the only data-affecting action the runtime exposes)
+        view.findViewById<View>(R.id.actionForceStop).setOnClickListener {
+            lifecycleScope.launch {
+                val outcome = withContext(Dispatchers.IO) {
+                    VirtualContainerEngine.forceStopApp(requireContext(), app.packageName, spaceId)
+                }
+                Toast.makeText(
+                    requireContext(),
+                    if (outcome.isSuccess) getString(R.string.stopped_ok, app.appName)
+                    else getString(R.string.stop_failed_reason, outcome.describe()),
+                    Toast.LENGTH_LONG
+                ).show()
+                dismiss()
+            }
         }
 
-        // Action 6: Uninstall
+        // Action 6: Clear Storage — the runtime has no per-clone data deletion call, so say so.
+        view.findViewById<View>(R.id.actionClearStorage).setOnClickListener {
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle(R.string.clear_storage_unavailable_title)
+                .setMessage(R.string.clear_storage_unavailable_body)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+        }
+
+        // Action 7: Remove from this space. Keeps the runtime package, so it is not an uninstall.
         view.findViewById<View>(R.id.actionUninstall).setOnClickListener {
-            SpaceManager.getInstance(requireContext()).removeAppFromSpace(spaceId, app.packageName)
-            Toast.makeText(context, "Removed ${app.appName} from Space $spaceId", Toast.LENGTH_SHORT).show()
+            val removed = SpaceManager.getInstance(requireContext())
+                .removeAppFromSpace(spaceId, app.packageName)
+            Toast.makeText(
+                requireContext(),
+                if (removed) getString(R.string.removed_from_space, app.appName, spaceId)
+                else getString(R.string.remove_failed, app.appName),
+                Toast.LENGTH_LONG
+            ).show()
             onAppUpdated()
             dismiss()
         }

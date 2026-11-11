@@ -29,13 +29,15 @@ class ShortcutLauncherActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            val launched = withContext(Dispatchers.IO) {
-                VirtualContainerEngine.launchApp(this@ShortcutLauncherActivity, app, spaceId)
+            val outcome = withContext(Dispatchers.IO) {
+                VirtualContainerEngine.launchAppOutcome(this@ShortcutLauncherActivity, app, spaceId)
             }
-            if (!launched) {
+            SpaceManager.getInstance(this@ShortcutLauncherActivity)
+                .recordLaunch(spaceId, app.packageName, outcome.isSuccess, outcome.describe())
+            if (!outcome.isSuccess) {
                 Toast.makeText(
                     this@ShortcutLauncherActivity,
-                    getString(R.string.launch_failed, app.appName),
+                    getString(R.string.launch_failed_reason, app.appName, outcome.describe()),
                     Toast.LENGTH_LONG
                 ).show()
             }

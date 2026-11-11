@@ -43,6 +43,15 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    lint {
+        // Errors that would ship a broken or unsafe build fail CI.
+        abortOnError true
+        checkReleaseBuilds true
+        lintConfig file("lint.xml")
+        // The bundled runtime is prebuilt and never minified away.
+        disable 'ExpiredTargetSdkVersion'
+    }
 }
 
 dependencies {

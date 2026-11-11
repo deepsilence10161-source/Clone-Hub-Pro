@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
@@ -12,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.core.view.isVisible
 import androidx.viewpager2.widget.ViewPager2
 import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
@@ -59,11 +59,6 @@ class HomeActivity : AppCompatActivity() {
         refreshSpaces()
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        Log.i("HomeActivity", "Dispatch touch: action=${event.action}, x=${event.x}, y=${event.y}")
-        return super.dispatchTouchEvent(event)
-    }
-
     private fun initViews() {
         viewPager = findViewById(R.id.viewPagerSpaces)
         tvSpaceIndicator = findViewById(R.id.tvSpaceIndicator)
@@ -93,7 +88,7 @@ class HomeActivity : AppCompatActivity() {
                 openAppPicker(spaceId)
             },
             onSpaceMenuClick = { space ->
-                // Space options menu
+                showSpaceActions(space)
             }
         )
 
@@ -122,6 +117,10 @@ class HomeActivity : AppCompatActivity() {
                 selectSpace(current + 1)
             } else {
                 val newSpace = spaceManager.createNextSpace()
+                if (newSpace == null) {
+                    Toast.makeText(this, R.string.slot_limit_reached, Toast.LENGTH_LONG).show()
+                    return@setOnClickListener
+                }
                 Log.i("HomeActivity", "Created Space ${newSpace.spaceId}; total=${spaceManager.getSpaces().size}")
                 refreshSpaces()
                 // Let ViewPager consume the adapter update before selecting the new page;
@@ -160,20 +159,25 @@ class HomeActivity : AppCompatActivity() {
         isLaunching = true
 
         lifecycleScope.launch {
-            val launched = withContext(Dispatchers.IO) {
-                VirtualContainerEngine.launchApp(this@HomeActivity, app, spaceId)
+            val outcome = withContext(Dispatchers.IO) {
+                VirtualContainerEngine.launchAppOutcome(this@HomeActivity, app, spaceId)
             }
             isLaunching = false
 
-            if (launched) {
+            // Record the real result so the grid can show clone health instead of a silent failure.
+            spaceManager.recordLaunch(spaceId, app.packageName, outcome.isSuccess, outcome.describe())
+            if (outcome.isSuccess) {
                 runCatching { ContainerForegroundService.start(this@HomeActivity, app.appName, spaceId) }
             } else {
+                val reason = outcome.describe()
+                Log.w("HomeActivity", "Launch failed for ${app.packageName}: $reason")
                 Toast.makeText(
                     this@HomeActivity,
-                    getString(R.string.launch_failed, app.appName),
+                    getString(R.string.launch_failed_reason, app.appName, reason),
                     Toast.LENGTH_LONG
                 ).show()
             }
+            refreshSpaces()
         }
     }
 
@@ -188,5 +192,46 @@ class HomeActivity : AppCompatActivity() {
         val spaces = spaceManager.getSpaces()
         spacePagerAdapter.submitSpaces(spaces)
         updateSpaceIndicator(viewPager.currentItem)
+        findViewById<View>(R.id.layoutEmpty).isVisible = spaces.all { it.apps.isEmpty() }
+    }
+
+    /** Space management: rename, and delete only when the space holds no clones. */
+    private fun showSpaceActions(space: com.clonehub.advanced.data.model.Space) {
+        val options = arrayOf(getString(R.string.space_rename), getString(R.string.space_delete))
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(space.spaceName)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> promptRenameSpace(space)
+                    else -> {
+                        val removed = spaceManager.removeSpace(space.spaceId)
+                        if (!removed) {
+                            Toast.makeText(
+                                this,
+                                getString(R.string.space_delete_blocked),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        refreshSpaces()
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun promptRenameSpace(space: com.clonehub.advanced.data.model.Space) {
+        val input = android.widget.EditText(this).apply {
+            setText(space.spaceName)
+            setHint(R.string.space_name_hint)
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.space_rename)
+            .setView(input)
+            .setPositiveButton(R.string.positive) { _, _ ->
+                spaceManager.renameSpace(space.spaceId, input.text.toString().trim())
+                refreshSpaces()
+            }
+            .setNegativeButton(R.string.negative, null)
+            .show()
     }
 }

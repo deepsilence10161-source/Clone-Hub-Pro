@@ -19,6 +19,17 @@
             android:layout_gravity="center"
             android:contentDescription="App Icon" />
 
+        <!-- Real clone health indicator: only visible when the last launch failed. -->
+        <ImageView
+            android:id="@+id/ivAppStatus"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="bottom|end"
+            android:background="@color/surface_dark"
+            android:contentDescription="@string/clone_status_failed"
+            android:src="@drawable/ic_status_failed"
+            android:visibility="gone" />
+
         <!-- Notification or Cloned Badge Indicator -->
         <TextView
             android:id="@+id/tvAppBadge"

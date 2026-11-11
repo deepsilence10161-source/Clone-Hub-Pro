@@ -21,7 +21,13 @@ jobs:
           distribution: temurin
           cache: gradle
       - run: chmod +x gradlew
-      - run: ./gradlew --no-daemon testDebugUnitTest assembleDebug assembleDebugAndroidTest --stacktrace
+      - run: ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug assembleDebugAndroidTest --stacktrace
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lint-report
+          path: app/build/reports/lint-results-debug.*
+          if-no-files-found: ignore
       - run: |
           mkdir -p staged-apks
           cp app/build/outputs/apk/debug/app-debug.apk staged-apks/app-debug.apk

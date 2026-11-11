@@ -30,4 +30,5 @@
     <color name="badge_space">#00C3CC</color>
     <color name="divider">#33FFFFFF</color>
     <color name="ripple_color">#3300C3CC</color>
+    <color name="action_primary">#00C3CC</color>
 </resources>

@@ -44,22 +44,32 @@ class SpacePagerAdapter(
         private val btnMenu: ImageButton = itemView.findViewById(R.id.btnSpaceMenu)
         private val recyclerApps: RecyclerView = itemView.findViewById(R.id.recyclerAppsGrid)
 
+        private var boundSpaceId: Int = -1
+        private var appAdapter: AppGridAdapter? = null
+
         fun bind(space: Space) {
-            tvBadge.text = "Space ${space.spaceId}"
+            tvBadge.text = if (space.spaceName == "Space ${space.spaceId}") {
+                "Space ${space.spaceId}"
+            } else {
+                space.spaceName
+            }
 
             btnMenu.setOnClickListener { onSpaceMenuClick(space) }
 
-            // 4 Column Grid matching Clone Hub
-            recyclerApps.layoutManager = GridLayoutManager(context, 4)
-            val adapter = AppGridAdapter(
-                context = context,
-                spaceId = space.spaceId,
-                onAppClick = { app -> onAppClick(app, space.spaceId) },
-                onAppLongClick = { app -> onAppLongClick(app, space.spaceId) },
-                onAddClick = { onAddClick(space.spaceId) }
-            )
-            recyclerApps.adapter = adapter
-            adapter.submitList(space.apps)
+            // The grid is reused across binds; recreating it on every update caused a full
+            // re-inflate of every icon whenever any space changed.
+            if (boundSpaceId != space.spaceId || appAdapter == null) {
+                boundSpaceId = space.spaceId
+                recyclerApps.layoutManager = GridLayoutManager(context, 4)
+                appAdapter = AppGridAdapter(
+                    context = context,
+                    spaceId = space.spaceId,
+                    onAppClick = { app -> onAppClick(app, space.spaceId) },
+                    onAppLongClick = { app -> onAppLongClick(app, space.spaceId) },
+                    onAddClick = { onAddClick(space.spaceId) }
+                ).also { recyclerApps.adapter = it }
+            }
+            appAdapter?.submitList(space.apps)
         }
     }
 }
