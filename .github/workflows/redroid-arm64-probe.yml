@@ -1,0 +1,20 @@
+name: Native ARM64 redroid probe
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start native ARM64 Android container
+        run: bash .github/scripts/probe-redroid-arm64.sh
+      - name: Upload redroid probe evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: redroid-arm64-probe-evidence
+          path: redroid-probe/
+          if-no-files-found: error
