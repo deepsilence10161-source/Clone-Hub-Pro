@@ -19,6 +19,7 @@ public abstract class PF extends ContentProvider {
     private static final long HEARTBEAT_ACTIVE_MS = 10_000L;
     private static final long HEARTBEAT_IDLE_MS = 60_000L;
     private static final String TAG_DIAGNOSTIC = "AgentDiagnostic";
+    private static final String TAG_RUNTIME = "RuntimeProvider";
     private static final String SERVICE_AUTHORITY =
             "com.clonehub.pro.virtual.container.server0001.Jrhl$Service";
     private static final String LEGACY_RUNTIME_SERVER_AUTHORITY =
@@ -27,6 +28,7 @@ public abstract class PF extends ContentProvider {
     private ContentProviderClient stableSelfClient;
     private int runtimeMode = -1;
     private int heartbeatCount;
+    private boolean hostProcessRegistered;
     private ContentProviderClient heartbeatClient;
     private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
     /**
@@ -141,12 +143,69 @@ public abstract class PF extends ContentProvider {
     @Override
     public Bundle call(String method, String arg, Bundle extras) {
         try {
-            return AbstractC2211qP.c(method, arg, extras);
+            Bundle result = AbstractC2211qP.c(method, arg, extras);
+            if (METHOD_SERVICE.equals(method)) {
+                ensureHostProcessRecord();
+            }
+            return result;
         } catch (Throwable th) {
             // The runtime expects a Bundle, so an empty one stays the fallback; the failure is
             // logged at error level instead of being silently swallowed.
             Log.e(TAG_DIAGNOSTIC, "Runtime call failed: method=" + method, th);
             return Bundle.EMPTY;
+        }
+    }
+
+    /**
+     * Registers this host package in the runtime's process registry.
+     *
+     * This is not a diagnostic: the bundled runtime looks the *host* package up in its process
+     * registry before it can create an agent process for a clone. Without the entry the launch
+     * transaction still answers "success" (code 0) while no cloned process is ever forked, so the
+     * host must publish the record once the runtime has handled its first service call.
+     *
+     * It used to run inside a large reflection dump; only the state-changing part is kept, it is
+     * idempotent, and a failure is reported with its root cause instead of being swallowed (the
+     * earlier dump hid an InvocationTargetException here, which then surfaced as an unexplained
+     * NullPointerException inside the runtime's launch path).
+     */
+    @Synchronized
+    @SuppressWarnings("unchecked")
+    private void ensureHostProcessRecord() {
+        if (hostProcessRegistered) {
+            return;
+        }
+        try {
+            Context context = getContext();
+            if (context == null) {
+                return;
+            }
+            ClassLoader loader = AbstractC2211qP.l;
+            Class<?> processClass = Class.forName("com.multibox.clone.hub.o000OO0O", true, loader);
+            Object processes = processClass.getDeclaredMethod("OooO0Oo").invoke(null);
+            Class<?> processServiceClass = Class.forName("com.multibox.clone.hub.qf", true, loader);
+            Object holder = processServiceClass.getField("OooO00o").get(null);
+            Object processService = holder.getClass().getDeclaredMethod("OooO0O0").invoke(holder);
+            Class<?> hostRecordClass = Class.forName("com.multibox.clone.hub.o000O", true, loader);
+            Object hostRecord = hostRecordClass
+                    .getDeclaredConstructor(android.os.IBinder.class, String.class)
+                    .newInstance(processService, context.getPackageName());
+            Object registry = processClass.getField("OooO00o").get(processes);
+            if (registry instanceof java.util.Map) {
+                java.util.Map<String, Object> map = (java.util.Map<String, Object>) registry;
+                map.put(context.getPackageName(), hostRecord);
+                hostProcessRegistered = true;
+                Log.i(TAG_RUNTIME, "Host process record registered for " + context.getPackageName()
+                        + "; registrySize=" + map.size());
+            } else {
+                Log.e(TAG_RUNTIME, "Runtime process registry has unexpected type: "
+                        + (registry == null ? "null" : registry.getClass().getName()));
+            }
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            Log.e(TAG_RUNTIME, "Host process registration failed inside the runtime",
+                    e.getTargetException());
+        } catch (Throwable th) {
+            Log.e(TAG_RUNTIME, "Host process registration failed", th);
         }
     }
 
