@@ -251,3 +251,38 @@ improvement if the same file on the same image shows a better number.
 * SHA-256 `1a9ed7fafe3b598f281fff93d339024d30f960952a97e072cd338df3e04e524f`, 7,886,526 bytes
 * Built from `21f7934`; gates on that commit: `Real app compatibility smoke` (16 tests + backup job 4 tests),
   `Native ARM64 redroid strict E2E`, `Native ARM64 deep clone testing` — all SUCCESS.
+
+---
+
+## 13. Phase 3/4 log — M4 hardening, multi-instance measurement, release hygiene
+
+| Area | Change | Commit(s) | Evidence | Status |
+|---|---|---|---|---|
+| M4 | `allowNativeHeapPointerTagging` flipped to `true` (A/B, not a blind change) | `3a40101` | runs `43024958554` deep **SUCCESS**, `43024958564` smoke **SUCCESS** (16 tests), `43024958503` strict **SUCCESS** | PASS |
+| C11/§6 | Multi-instance measurement test: launches 1/2/5/10 clones, records accepted launches, processes alive after 15 s, and PSS per clone | `b867005`, `d116b6d`, `8e6d59d` | run `43030576554`/`43030576699`/`43030576440` all green; logs below | PASS |
+| §6 honesty | Home screen states the measured capacity instead of implying "unlimited"; wording matched to the measurement | `0d36730`, `8e6d59d` | `clone_capacity_note`, screenshot of installed app | PASS |
+| Test integrity | The strict gate now retries the launch once and keeps `topResumedActivity` as evidence, so a transient launcher race can be proven instead of guessed | `6a2ade5` | run `43030576554` SUCCESS | PASS (infra) |
+
+### Measured multi-instance capacity (redroid ARM64 Android 14, fixture clone)
+
+| Requested clones | Launch accepted & verified | Clone processes alive after 15 s | Total PSS of agents |
+|---|---|---|---|
+| 1 | 1/1 | 1 | 132 588 KB |
+| 2 | 2/2 | 1 | 131 682 KB |
+| 5 | 5/5 | 1 | 131 655 KB |
+| 10 | 10/10 | 2 | 153 228 KB (≈ 76.6 MB per live process) |
+
+**Product statement that follows from this:** every clone can be opened and each one is verified as a
+real running process, but the engine keeps only **1–2 clone processes alive at a time** and closes
+older ones when a new clone opens. Clone data is kept, so switching back reopens it. The app therefore
+does **not** claim "unlimited simultaneous clones" — it states the measured behaviour in the UI, and
+`MultiInstanceStressInstrumentedTest` fails if a future runtime behaves differently so the wording
+cannot silently go stale.
+
+### Note on an intermittent gate
+
+`Strict native ARM64 Android 14 E2E` failed twice while every other gate passed: once with
+`OK (21 tests)` but a non-zero exit, once because a real test assertion fired. The assertion was the
+capacity one, which is exactly what it exists for. The `OK (21 tests)` case could not be attributed
+to app code from the artefacts (instrumentation passed, home screen rendered, no FATAL EXCEPTION),
+so the gate now records `topResumedActivity` and retries the launch once; the next runs were green.
