@@ -244,3 +244,10 @@ before returning `Success`, so a future regression fails in the engine instead o
 
 These are the *before* numbers for every later performance claim. A change is only a performance
 improvement if the same file on the same image shows a better number.
+
+### Current verified artifact (after §11 backup/restore)
+
+* `https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk`
+* SHA-256 `1a9ed7fafe3b598f281fff93d339024d30f960952a97e072cd338df3e04e524f`, 7,886,526 bytes
+* Built from `21f7934`; gates on that commit: `Real app compatibility smoke` (16 tests + backup job 4 tests),
+  `Native ARM64 redroid strict E2E`, `Native ARM64 deep clone testing` — all SUCCESS.
