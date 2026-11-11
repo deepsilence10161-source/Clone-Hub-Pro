@@ -13,6 +13,10 @@ cleanup() {
   adb exec-out screencap -p > "${EVIDENCE_DIR}/final-screen.png" 2>/dev/null || true
   adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/real-user-flow" \
     "${EVIDENCE_DIR}/real-user-flow" 2>/dev/null || true
+  adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/compatibility" \
+    "${EVIDENCE_DIR}/compatibility" 2>/dev/null || true
+  adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/settings-clone.png" \
+    "${EVIDENCE_DIR}/settings-clone.png" 2>/dev/null || true
   exit "${STATUS}"
 }
 trap cleanup EXIT
@@ -66,6 +70,13 @@ if [ "${REFERENCE_INSTALL_STATUS}" -ne 0 ]; then
   exit 1
 fi
 adb shell pm list packages | grep '^package:com.multibox.clone.hub$'
+
+echo "Installing pinned real third-party compatibility apps"
+for compatibility_apk in markor.apk calculator.apk aegis.apk; do
+  adb install -r -t "artifacts/${compatibility_apk}"
+done
+adb shell pm list packages | grep -E \
+  '^package:(net.gsantner.markor|com.simplemobiletools.calculator|com.beemdevelopment.aegis)$'
 
 echo "Launching HomeActivity and waiting for rendering"
 adb shell am start -W -S -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"

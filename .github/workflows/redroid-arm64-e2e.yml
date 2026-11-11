@@ -25,6 +25,8 @@ jobs:
           mkdir -p staged-apks
           cp app/build/outputs/apk/debug/app-debug.apk staged-apks/app-debug.apk
           cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk staged-apks/app-debug-androidTest.apk
+      - name: Download pinned real third-party compatibility apps
+        run: bash .github/scripts/download-compatibility-apps.sh staged-apks
       - uses: actions/upload-artifact@v4
         with:
           name: redroid-build-binaries
