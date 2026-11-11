@@ -159,7 +159,7 @@ public abstract class AbstractC2211qP {
      * invalid state that will be retried on the next start.
      */
     private static boolean extractRuntime(Context context, File apk, File libDir, File marker)
-            throws IOException {
+            throws IOException, android.content.pm.PackageManager.NameNotFoundException {
         if (marker.exists() && !marker.delete()) {
             android.util.Log.w("RuntimeExtraction", "Could not clear stale extraction marker");
         }
