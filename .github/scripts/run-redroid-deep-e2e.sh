@@ -48,13 +48,20 @@ adb install -r -t artifacts/app-debug-androidTest.apk
 adb shell pm clear "$PACKAGE_ID"
 adb shell pm clear "$TEST_PACKAGE_ID"
 
-# All deep tests, including an in-process persistence check.
-run_tests deep-suite -e class "$DEEP_CLASS"
+# All deep tests, including an in-process persistence check. Keep the independent
+# cold-restart gate runnable even when the first phase fails; both statuses remain fatal.
+deep_status=0
+run_tests deep-suite -e class "$DEEP_CLASS" || deep_status=$?
 
 # Instrumentation has terminated the target process. Force-stop again explicitly,
 # then run only the persistence check in a genuinely fresh target process.
 adb shell am force-stop "$PACKAGE_ID"
-run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData"
+cold_status=0
+run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
+if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ]; then
+  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status"
+  exit 1
+fi
 
 if grep -E 'Fatal signal 11|SIGSEGV|native crash' "$OUT/deep-logcat.txt"; then
   echo "Native crash detected during deep testing"

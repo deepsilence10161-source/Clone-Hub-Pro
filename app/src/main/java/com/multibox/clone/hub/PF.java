@@ -17,6 +17,33 @@ import java.lang.reflect.Method;
 public abstract class PF extends ContentProvider {
     private String providerAuthority;
     private ContentProviderClient stableSelfClient;
+    private int runtimeMode = -1;
+    private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
+    private final Runnable runtimeHeartbeat = new Runnable() {
+        @Override
+        public void run() {
+            Context context = getContext();
+            if (context != null && runtimeMode == 1) {
+                ContentProviderClient client = null;
+                try {
+                    client = context.getContentResolver().acquireUnstableContentProviderClient(
+                            "com.multibox.clone.hub.com.multibox.clone.hub.Jrhl$Service");
+                    if (client != null) {
+                        Bundle heartbeat = client.call("995", null, Bundle.EMPTY);
+                        Log.d("AgentDiagnostic", "Runtime heartbeat; pid="
+                                + android.os.Process.myPid() + ", connected=" + (heartbeat != null));
+                    }
+                } catch (Throwable error) {
+                    Log.e("AgentDiagnostic", "Runtime heartbeat failed", error);
+                } finally {
+                    if (client != null) {
+                        client.close();
+                    }
+                }
+            }
+            heartbeatHandler.postDelayed(this, 5_000L);
+        }
+    };
 
     @Override
     public void attachInfo(Context context, ProviderInfo providerInfo) {
@@ -30,6 +57,7 @@ public abstract class PF extends ContentProvider {
             AbstractC2211qP.k = declaredMethod;
             Object mode = declaredMethod.invoke(null, 1000, new Object[]{context, providerInfo, -1,
                     RuntimeCallbackHandler.INSTANCE, (byte) 0});
+            runtimeMode = mode instanceof Number ? ((Number) mode).intValue() : -1;
             Log.i("RuntimeProvider", "Initialized authority=" + providerInfo.authority
                     + ", process=" + android.os.Process.myPid() + ", mode=" + mode);
         } catch (Throwable th) {
@@ -59,6 +87,7 @@ public abstract class PF extends ContentProvider {
                 }
             });
         }
+        heartbeatHandler.postDelayed(runtimeHeartbeat, 5_000L);
         return true;
     }
 
