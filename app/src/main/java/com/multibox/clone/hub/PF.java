@@ -169,9 +169,8 @@ public abstract class PF extends ContentProvider {
      * earlier dump hid an InvocationTargetException here, which then surfaced as an unexplained
      * NullPointerException inside the runtime's launch path).
      */
-    @Synchronized
     @SuppressWarnings("unchecked")
-    private void ensureHostProcessRecord() {
+    private synchronized void ensureHostProcessRecord() {
         if (hostProcessRegistered) {
             return;
         }
