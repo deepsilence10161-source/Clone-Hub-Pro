@@ -23,6 +23,17 @@ for name in binder hwbinder vndbinder; do
 done
 ls -l /dev/binderfs /dev/binder /dev/hwbinder /dev/vndbinder > "$OUT/binder-devices.txt"
 
+# Production-like ro.debuggable=0 enables ADB authorization. Pre-authorize this
+# runner's throwaway key so the native watchdog A/B can still run unattended.
+adb start-server
+if [ ! -s "$HOME/.android/adbkey.pub" ]; then
+  mkdir -p "$HOME/.android"
+  adb keygen "$HOME/.android/adbkey"
+fi
+mkdir -p "$PWD/redroid-data/misc/adb"
+cp "$HOME/.android/adbkey.pub" "$PWD/redroid-data/misc/adb/adb_keys"
+chmod 0644 "$PWD/redroid-data/misc/adb/adb_keys"
+
 docker run -d --name redroid --privileged \
   -p 127.0.0.1:5555:5555 \
   -v "$PWD/redroid-data:/data" \
