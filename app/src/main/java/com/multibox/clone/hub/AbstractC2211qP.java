@@ -112,7 +112,8 @@ public abstract class AbstractC2211qP {
         }
     }
 
-    private static String expectedMarker(Context context, File apk) throws IOException {
+    private static String expectedMarker(Context context, File apk)
+            throws IOException, android.content.pm.PackageManager.NameNotFoundException {
         String cached = cachedExpectedMarker;
         if (cached != null) {
             return cached;
@@ -145,6 +146,9 @@ public abstract class AbstractC2211qP {
             return markerValue.equals(expectedMarker(context, apk));
         } catch (IOException e) {
             android.util.Log.w("RuntimeExtraction", "Could not verify extraction marker", e);
+            return false;
+        } catch (android.content.pm.PackageManager.NameNotFoundException e) {
+            android.util.Log.w("RuntimeExtraction", "Own package info unavailable", e);
             return false;
         }
     }
