@@ -49,6 +49,7 @@ android {
         abortOnError true
         checkReleaseBuilds true
         lintConfig file("lint.xml")
+        textReport true
         // The bundled runtime is prebuilt and never minified away.
         disable 'ExpiredTargetSdkVersion'
     }

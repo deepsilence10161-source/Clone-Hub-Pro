@@ -63,14 +63,19 @@ jobs:
             echo "Build succeeded; nothing to publish."
             exit 0
           fi
-          grep -E "^e: |error:|Unresolved|cannot find symbol|FAILURE:|Lint found|> Task .* FAILED|warning:" gradle-build.log \
+          grep -E "^e: |error:|Unresolved|cannot find symbol|FAILURE:|Lint found|> Task .* FAILED" gradle-build.log \
             > compile-errors.txt || true
+          # Lint findings live in the report, not the console summary.
+          for f in app/build/reports/lint-results-debug.txt app/build/reports/lint-results-debug.xml; do
+            [ -f "$f" ] && cp "$f" "lint-$(basename "$f")" || true
+          done
           head -n 80 compile-errors.txt || true
           gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
             || gh release create ci-diagnostics --repo "${{ github.repository }}" \
                  --prerelease --title "CI diagnostics" --notes "Rolling build diagnostics"
           gh release upload ci-diagnostics gradle-build.log compile-errors.txt \
-            --repo "${{ github.repository }}" --clobber
+            lint-lint-results-debug.txt lint-lint-results-debug.xml \
+            --repo "${{ github.repository }}" --clobber || true
       - name: Enforce build result
         run: grep -q "GRADLE_EXIT=0" gradle-build.log
       - run: |
