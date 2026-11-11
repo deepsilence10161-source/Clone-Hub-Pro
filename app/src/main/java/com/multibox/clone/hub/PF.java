@@ -18,6 +18,7 @@ public abstract class PF extends ContentProvider {
     private String providerAuthority;
     private ContentProviderClient stableSelfClient;
     private int runtimeMode = -1;
+    private int heartbeatCount;
     private final Handler heartbeatHandler = new Handler(Looper.getMainLooper());
     private final Runnable runtimeHeartbeat = new Runnable() {
         @Override
@@ -32,6 +33,10 @@ public abstract class PF extends ContentProvider {
                         Bundle heartbeat = client.call("995", null, Bundle.EMPTY);
                         Log.d("AgentDiagnostic", "Runtime heartbeat; pid="
                                 + android.os.Process.myPid() + ", connected=" + (heartbeat != null));
+                        heartbeatCount++;
+                        if (heartbeatCount == 2) {
+                            dumpAgentProcessDiagnostics();
+                        }
                     }
                 } catch (Throwable error) {
                     Log.e("AgentDiagnostic", "Runtime heartbeat failed", error);
@@ -44,6 +49,49 @@ public abstract class PF extends ContentProvider {
             heartbeatHandler.postDelayed(this, 5_000L);
         }
     };
+
+    private void dumpAgentProcessDiagnostics() {
+        try {
+            java.io.File taskDirectory = new java.io.File("/proc/self/task");
+            java.io.File[] tasks = taskDirectory.listFiles();
+            if (tasks != null) {
+                java.util.Arrays.sort(tasks, java.util.Comparator.comparing(java.io.File::getName));
+                for (java.io.File task : tasks) {
+                    String name = new String(java.nio.file.Files.readAllBytes(
+                            new java.io.File(task, "comm").toPath())).trim();
+                    String wait = new String(java.nio.file.Files.readAllBytes(
+                            new java.io.File(task, "wchan").toPath())).trim();
+                    String syscall;
+                    try {
+                        syscall = new String(java.nio.file.Files.readAllBytes(
+                                new java.io.File(task, "syscall").toPath())).trim();
+                    } catch (Throwable denied) {
+                        syscall = "denied";
+                    }
+                    Log.i("AgentNative", "task=" + task.getName() + ", name=" + name
+                            + ", wait=" + wait + ", syscall=" + syscall);
+                }
+            }
+            String status = new String(java.nio.file.Files.readAllBytes(
+                    new java.io.File("/proc/self/status").toPath()));
+            for (String line : status.split("\\n")) {
+                if (line.startsWith("TracerPid:") || line.startsWith("State:")
+                        || line.startsWith("PPid:")) {
+                    Log.i("AgentNative", line);
+                }
+            }
+            String maps = new String(java.nio.file.Files.readAllBytes(
+                    new java.io.File("/proc/self/maps").toPath()));
+            for (String line : maps.split("\\n")) {
+                if (line.contains("libwnublp") || line.contains("libclonehub")
+                        || line.contains("libwnublpl")) {
+                    Log.i("AgentNative", line);
+                }
+            }
+        } catch (Throwable error) {
+            Log.e("AgentNative", "Could not read agent process diagnostics", error);
+        }
+    }
 
     @Override
     public void attachInfo(Context context, ProviderInfo providerInfo) {
