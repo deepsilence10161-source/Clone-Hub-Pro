@@ -14,6 +14,7 @@ import androidx.viewpager2.widget.ViewPager2
 import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
 import org.junit.FixMethodOrder
 import org.junit.runner.RunWith
@@ -22,6 +23,8 @@ import org.junit.runners.MethodSorters
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class HomeActivityTest {
+    @get:Rule
+    val resetSpaces = ResetSpacesRule()
 
     @Test
     fun d_homeScreen_displaysFirstSpaceAndAddAction() {

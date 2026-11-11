@@ -1,20 +1,27 @@
 package com.multibox.clone.hub;
 
 import android.content.ContentProvider;
+import android.content.ContentProviderClient;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public abstract class PF extends ContentProvider {
+    private String providerAuthority;
+    private ContentProviderClient stableSelfClient;
+
     @Override
     public void attachInfo(Context context, ProviderInfo providerInfo) {
         tc.a = 0;
+        providerAuthority = providerInfo.authority;
         super.attachInfo(context, providerInfo);
         try {
             AbstractC2211qP.l = AbstractC2211qP.g(context);
@@ -33,9 +40,35 @@ public abstract class PF extends ContentProvider {
 
     @Override
     public boolean onCreate() {
+        Context context = getContext();
         Log.i("AgentDiagnostic", "Provider onCreate; authority="
-                + (getContext() == null ? null : getContext().getPackageName()));
+                + (context == null ? null : context.getPackageName()));
+        if (context != null && providerAuthority != null) {
+            // Android expires an otherwise idle published provider after roughly 20 seconds.
+            // Agent processes host the real cloned Activity, so allowing that expiry kills a
+            // foreground clone. Acquire after publication (the main loop runs after onCreate)
+            // and retain the stable client for the provider/process lifetime.
+            new Handler(Looper.getMainLooper()).post(() -> {
+                try {
+                    stableSelfClient = context.getContentResolver()
+                            .acquireContentProviderClient(providerAuthority);
+                    Log.i("AgentDiagnostic", "Stable provider client acquired; authority="
+                            + providerAuthority + ", client=" + stableSelfClient);
+                } catch (Throwable error) {
+                    Log.e("AgentDiagnostic", "Unable to retain agent provider", error);
+                }
+            });
+        }
         return true;
+    }
+
+    @Override
+    public void onShutdown() {
+        if (stableSelfClient != null) {
+            stableSelfClient.close();
+            stableSelfClient = null;
+        }
+        super.onShutdown();
     }
 
     @Override

@@ -8,6 +8,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.clonehub.advanced.core.container.SpaceManager
 import org.junit.Assert.assertTrue
+import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
@@ -16,6 +17,8 @@ import java.io.File
  * separate fixture app's own screen, not merely an install or launch result code.
  */
 class RealUserCloneFlowInstrumentedTest {
+    @get:Rule
+    val resetSpaces = ResetSpacesRule()
 
     @Test(timeout = 180_000)
     fun addCloneAndLaunch_thirdPartyAppShowsItsRealScreen() {
