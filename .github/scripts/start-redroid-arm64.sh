@@ -23,16 +23,35 @@ for name in binder hwbinder vndbinder; do
 done
 ls -l /dev/binderfs /dev/binder /dev/hwbinder /dev/vndbinder > "$OUT/binder-devices.txt"
 
-docker run -d --name redroid --privileged \
+IMAGE="redroid/redroid:14.0.0_64only-latest"
+# Registry pulls fail transiently (rate limits, DNS) and the failure used to leave no evidence at
+# all. Pull explicitly, retry, and keep the output.
+for attempt in 1 2 3; do
+  if docker pull "$IMAGE" > "$OUT/redroid-pull.txt" 2>&1; then
+    break
+  fi
+  echo "docker pull attempt $attempt failed"; tail -n 5 "$OUT/redroid-pull.txt" || true
+  sleep $((attempt * 5))
+done
+
+if ! docker run -d --name redroid --privileged \
   -p 127.0.0.1:5555:5555 \
   -v "$PWD/redroid-data:/data" \
-  redroid/redroid:14.0.0_64only-latest \
+  "$IMAGE" \
   androidboot.use_memfd=1 \
   androidboot.redroid_gpu_mode=guest \
   androidboot.redroid_width=1080 \
   androidboot.redroid_height=2400 \
   androidboot.redroid_dpi=420 \
-  androidboot.redroid_fps=30
+  androidboot.redroid_fps=30 > "$OUT/redroid-run.txt" 2>&1; then
+  echo "docker run failed"
+  cat "$OUT/redroid-run.txt" || true
+  docker ps -a > "$OUT/redroid-ps.txt" 2>&1 || true
+  docker images > "$OUT/redroid-images.txt" 2>&1 || true
+  jar_dir="$PWD/redroid-data"
+  ls -ld "$jar_dir" > "$OUT/redroid-data-dir.txt" 2>&1 || true
+  exit 1
+fi
 
 adb start-server
 for attempt in $(seq 1 90); do
