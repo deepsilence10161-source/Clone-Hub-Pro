@@ -59,7 +59,9 @@ class DeepCloneFlowInstrumentedTest {
     fun d_runningClone_hasStableProcessUnderContinuousUse() {
         val before = launchAndAssert(STABILITY_SPACE, 1)
         assertNotNull("Fixture must expose its cloned process PID", before)
-        SystemClock.sleep(20_000)
+        SystemClock.sleep(10_000)
+        android.util.Log.i("DeepCloneNative", nativeProcessSnapshot(before))
+        SystemClock.sleep(10_000)
         assertTrue(
             "Fixture disappeared during continuous use",
             device.wait(Until.hasObject(By.text(MARKER)), 5_000)
@@ -114,6 +116,14 @@ class DeepCloneFlowInstrumentedTest {
         return details.text.substringAfter("pid=", "").substringBefore(" ")
             .ifBlank { error("Fixture PID was blank") }
     }
+
+    private fun nativeProcessSnapshot(pid: String): String = runCatching {
+        device.executeShellCommand(
+            "echo PID=$pid; grep -E 'libwnublp|libclonehub' /proc/$pid/maps; " +
+                "for task in /proc/$pid/task/*; do echo TASK=${'$'}task; " +
+                "cat ${'$'}task/comm ${'$'}task/wchan; done"
+        )
+    }.getOrElse { "Native process snapshot failed: $it" }
 
     private fun returnHome() {
         VirtualContainerEngine.forceStopApp(context, FIXTURE_PACKAGE, CURRENT_SPACE)

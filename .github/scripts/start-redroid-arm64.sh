@@ -32,7 +32,8 @@ docker run -d --name redroid --privileged \
   androidboot.redroid_width=1080 \
   androidboot.redroid_height=2400 \
   androidboot.redroid_dpi=420 \
-  androidboot.redroid_fps=30
+  androidboot.redroid_fps=30 \
+  ro.debuggable=0
 
 adb start-server
 for attempt in $(seq 1 90); do
