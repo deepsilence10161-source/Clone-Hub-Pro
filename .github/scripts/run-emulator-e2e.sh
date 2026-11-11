@@ -78,6 +78,13 @@ done
 adb shell pm list packages | grep -E \
   '^package:(net.gsantner.markor|com.simplemobiletools.calculator|com.beemdevelopment.aegis)$'
 
+# Prove the deployed manifest actually carries the signature-level guard on the
+# virtual-container surface (a source-only check would not catch a packaging regression).
+adb shell dumpsys package "${PACKAGE_ID}" > "${EVIDENCE_DIR}/package-dump.txt" 2>&1 || true
+grep -A4 "com.clonehub.pro.permission.VIRTUAL_CONTAINER" "${EVIDENCE_DIR}/package-dump.txt" \
+  > "${EVIDENCE_DIR}/container-permission.txt" 2>&1 || true
+cat "${EVIDENCE_DIR}/container-permission.txt"
+
 echo "Launching HomeActivity and waiting for rendering"
 adb shell am start -W -S -n "${PACKAGE_ID}/${MAIN_ACTIVITY}"
 sleep 5
