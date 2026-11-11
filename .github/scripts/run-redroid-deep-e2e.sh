@@ -13,6 +13,13 @@ cleanup() {
   adb shell dumpsys activity activities > "$OUT/final-activity-stack.txt" 2>/dev/null || true
   adb shell ps -A > "$OUT/final-processes.txt" 2>/dev/null || true
   adb exec-out screencap -p > "$OUT/final-screen.png" 2>/dev/null || true
+  # Derived from the logcat written above, so it has to happen here and not earlier.
+  grep -h "Launch timing for" "$OUT/deep-logcat.txt" > "$OUT/launch-timings.txt" 2>/dev/null || true
+  # Facts needed to design backup/restore: where the runtime keeps clone data for real.
+  adb shell run-as "$PACKAGE_ID" sh -c 'ls -la files; ls -la files/wpsx 2>/dev/null; du -sk files/* files/wpsx/* 2>/dev/null' \
+    > "$OUT/data-layout.txt" 2>&1 || true
+  adb shell run-as "$PACKAGE_ID" sh -c 'find files -maxdepth 3 -type d 2>/dev/null | head -80' \
+    > "$OUT/data-dirs.txt" 2>&1 || true
   exit "$status"
 }
 trap cleanup EXIT
@@ -75,9 +82,6 @@ if grep -E 'Fatal signal 11|SIGSEGV|native crash' "$OUT/deep-logcat.txt"; then
   exit 1
 fi
 
-# Launch timings recorded by the engine during this run (one line per clone launch).
-grep -h "Launch timing for" "$OUT/deep-logcat.txt" > "$OUT/launch-timings.txt" 2>/dev/null || true
-cat "$OUT/launch-timings.txt" || true
 adb shell am start -W -S -n "$PACKAGE_ID/$MAIN_ACTIVITY"
 sleep 2
 adb shell pidof "$PACKAGE_ID" | grep -E '[0-9]+'
