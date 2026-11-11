@@ -59,7 +59,7 @@ class AppActionsBottomSheet(
             if (app.lastLaunchSucceeded == false) 0xFFFF5252.toInt() else 0xFFB0B0B0.toInt()
         )
         ivHeader.setImageDrawable(
-            IconLoader.load(requireContext(), app.packageName, app.customIconPath)
+            IconLoader.loadBlocking(requireContext(), app.packageName, app.customIconPath)
         )
 
         // Action 1: Open / Launch

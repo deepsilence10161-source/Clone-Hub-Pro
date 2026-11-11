@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.clonehub.advanced.R
@@ -22,10 +23,25 @@ class SpacePagerAdapter(
 
     private val spaces = mutableListOf<Space>()
 
+    /**
+     * Applies [newSpaces] with change notifications. A full `notifyDataSetChanged()` here rebuilt
+     * every space card, which in turn re-bound every grid of every visible space.
+     */
     fun submitSpaces(newSpaces: List<Space>) {
+        if (spaces == newSpaces) return
+        val old = spaces.toList()
+        DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize(): Int = old.size
+            override fun getNewListSize(): Int = newSpaces.size
+            override fun areItemsTheSame(oldPos: Int, newPos: Int): Boolean =
+                old[oldPos].spaceId == newSpaces[newPos].spaceId
+
+            override fun areContentsTheSame(oldPos: Int, newPos: Int): Boolean =
+                old[oldPos].spaceName == newSpaces[newPos].spaceName &&
+                    old[oldPos].apps == newSpaces[newPos].apps
+        }).dispatchUpdatesTo(this)
         spaces.clear()
         spaces.addAll(newSpaces)
-        notifyDataSetChanged()
     }
 
     override fun getItemCount(): Int = spaces.size

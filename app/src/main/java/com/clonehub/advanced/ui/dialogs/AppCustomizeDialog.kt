@@ -34,13 +34,13 @@ class AppCustomizeDialog(
 
         // Shared cache: same drawable the grid shows, without re-decoding on the UI thread.
         ivPreview.setImageDrawable(
-            com.clonehub.advanced.ui.home.IconLoader.load(context, app.packageName, app.customIconPath)
+            com.clonehub.advanced.ui.home.IconLoader.loadBlocking(context, app.packageName, app.customIconPath)
         )
 
         btnReset.setOnClickListener {
             etName.setText(app.originalName)
             ivPreview.setImageDrawable(
-                com.clonehub.advanced.ui.home.IconLoader.load(context, app.packageName, null)
+                com.clonehub.advanced.ui.home.IconLoader.loadBlocking(context, app.packageName, null)
             )
         }
 
