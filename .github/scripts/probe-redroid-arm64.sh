@@ -30,7 +30,14 @@ sudo apt-get install -y adb
 sudo apt-get install -y linux-modules-extra-$(uname -r) || true
 sudo modprobe binder_linux devices="binder,hwbinder,vndbinder"
 sudo modprobe ashmem_linux 2>/dev/null || true
-ls -l /dev/binder* | tee "$OUT/binder-devices.txt"
+sudo mkdir -p /dev/binderfs
+if ! mountpoint -q /dev/binderfs; then
+  sudo mount -t binder binder /dev/binderfs
+fi
+for name in binder hwbinder vndbinder; do
+  sudo ln -sfn "/dev/binderfs/$name" "/dev/$name"
+done
+ls -l /dev/binderfs /dev/binder /dev/hwbinder /dev/vndbinder | tee "$OUT/binder-devices.txt"
 
 docker run -d --name redroid --privileged \
   -p 127.0.0.1:5555:5555 \
