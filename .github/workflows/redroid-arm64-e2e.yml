@@ -36,6 +36,7 @@ jobs:
       PACKAGE_ID: com.clonehub.advanced.debug
       TEST_PACKAGE_ID: com.clonehub.advanced.debug.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
+      ANDROID_SERIAL: localhost:5555
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
