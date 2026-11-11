@@ -118,6 +118,7 @@ final class SettingsCompatibility {
             String descriptor = interfaceDescriptor(iface, interfaceName);
             ClassLoader loader = iface.getClassLoader();
 
+            Object originalInterface = asInterface(iface, original);
             Object interfaceProxy = Proxy.newProxyInstance(loader,
                     new Class<?>[]{iface, IBinder.class},
                     (proxy, method, args) -> {
@@ -125,7 +126,8 @@ final class SettingsCompatibility {
                             return forward(original, method, args);
                         }
                         Object result = override.handle(method.getName(), args);
-                        return result == NOT_HANDLED ? forward(original, method, args) : result;
+                        return result == NOT_HANDLED
+                                ? forward(originalInterface, method, args) : result;
                     });
 
             // Any AIDL Stub.asInterface() call in this process resolves to the guarded interface,
@@ -147,6 +149,17 @@ final class SettingsCompatibility {
             Log.e(TAG, "Could not guard " + serviceName + " compatibility", error);
             return null;
         }
+    }
+
+    /** The real AIDL interface instance backing the cached binder. */
+    private static Object asInterface(Class<?> iface, IBinder binder) throws Exception {
+        String descriptor = interfaceDescriptor(iface, iface.getName());
+        Object local = binder.queryLocalInterface(descriptor);
+        if (iface.isInstance(local)) {
+            return local;
+        }
+        return Class.forName(iface.getName() + "$Stub", false, iface.getClassLoader())
+                .getMethod("asInterface", IBinder.class).invoke(null, binder);
     }
 
     /** AIDL keeps DESCRIPTOR on Stub in some builds and on the interface in others. */
