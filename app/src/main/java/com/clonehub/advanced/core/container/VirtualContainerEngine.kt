@@ -33,7 +33,12 @@ object VirtualContainerEngine {
     private const val INSTALL_OPTION_FLAGS = "fohwt.GSHG"
     private const val INSTALL_RESULT_CODE = "fohwt.XTAEA_QMWG"
     private const val ANDROID_START_SUCCESS = 0
+    // The runtime answers the launch transaction before it attaches the proxied activity: measured
+    // on the ARM64 API 34 gate, `Launch result ... code=0` is logged ~1 ms after the transaction and
+    // the first agent process only becomes foreground ~0.3-1.2 s later. Sampling once for 3 s
+    // therefore reported failure for launches that opened normally a moment afterwards.
     private const val AGENT_VISIBLE_TIMEOUT_MS = 3_000L
+    private const val LAUNCH_CONFIRM_TIMEOUT_MS = 20_000L
     private const val AGENT_SUFFIX = ":agent"
     private const val AGENT_POLL_INTERVAL_MS = 250L
 
@@ -276,13 +281,21 @@ object VirtualContainerEngine {
             // Code 0 only means the runtime accepted the request. A clone is really running when
             // one of this app's own agent processes has become foreground; otherwise the user is
             // looking at a "started" clone that never drew anything (R7 in the audit).
-            val agent = awaitForegroundAgentProcess(context)
+            // The transaction returns before the proxied activity is attached, so this polls for the
+            // confirmation window instead of sampling once; the failure detail keeps the observed
+            // process state and the time that was actually allowed.
+            val agent = awaitForegroundAgentProcess(context, LAUNCH_CONFIRM_TIMEOUT_MS)
             if (agent == null) {
                 val seen = describeProcesses(context)
-                Log.e(TAG, "Launch code 0 but no agent process became foreground; processes=$seen")
+                Log.e(
+                    TAG,
+                    "Launch code 0 but no agent process became foreground within " +
+                        "${LAUNCH_CONFIRM_TIMEOUT_MS}ms; processes=$seen"
+                )
                 EngineOutcome.NotVerified(
                     "launch",
-                    "runtime answered code=0 but no cloned process became foreground (processes=$seen)"
+                    "runtime answered code=0 but no cloned process became foreground within " +
+                        "${LAUNCH_CONFIRM_TIMEOUT_MS}ms (processes=$seen)"
                 )
             } else {
                 Log.i(TAG, "Launch verified in agent process $agent")
