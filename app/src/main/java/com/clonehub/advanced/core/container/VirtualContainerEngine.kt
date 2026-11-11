@@ -289,7 +289,7 @@ object VirtualContainerEngine {
             ?: return EngineOutcome.RuntimeUnavailable("runtime exposed no interface descriptor")
         val data = Parcel.obtain()
         val reply = Parcel.obtain()
-        try {
+        return try {
             data.writeInterfaceToken(descriptor)
             data.writeString(packageName)
             data.writeInt(spaceId)

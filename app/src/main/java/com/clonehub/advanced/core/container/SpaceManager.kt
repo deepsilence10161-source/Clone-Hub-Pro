@@ -80,10 +80,13 @@ class SpaceManager private constructor(private val context: Context) {
         return ordered.getOrNull(index + 1)
     }
 
+    /** Renames a space. Space itself is immutable so the stored model is replaced atomically. */
     @Synchronized
     fun renameSpace(spaceId: Int, name: String): Boolean {
-        val space = getSpace(spaceId) ?: return false
-        space.spaceName = name.ifBlank { "Space $spaceId" }
+        val index = spaces.indexOfFirst { it.spaceId == spaceId }
+        if (index < 0) return false
+        val current = spaces[index]
+        spaces[index] = current.copy(spaceName = name.ifBlank { "Space $spaceId" })
         saveSpaces()
         return true
     }
