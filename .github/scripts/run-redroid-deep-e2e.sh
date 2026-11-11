@@ -51,6 +51,11 @@ adb shell pm clear "$TEST_PACKAGE_ID"
 # All deep tests, including an in-process persistence check. Keep the independent
 # cold-restart gate runnable even when the first phase fails; both statuses remain fatal.
 deep_status=0
+# Cold-start timing of the host UI, measured on the device the tests run on: this is the
+# baseline every later performance claim has to be compared against.
+adb shell am force-stop "$PACKAGE_ID"
+adb shell am start -W -n "$PACKAGE_ID/$MAIN_ACTIVITY" > "$OUT/cold-start.txt" 2>&1 || true
+grep -E "TotalTime|WaitTime" "$OUT/cold-start.txt" || true
 run_tests deep-suite -e class "$DEEP_CLASS" || deep_status=$?
 
 # Instrumentation has terminated the target process. Force-stop again explicitly,
@@ -70,6 +75,9 @@ if grep -E 'Fatal signal 11|SIGSEGV|native crash' "$OUT/deep-logcat.txt"; then
   exit 1
 fi
 
+# Launch timings recorded by the engine during this run (one line per clone launch).
+grep -h "Launch timing for" "$OUT/deep-logcat.txt" > "$OUT/launch-timings.txt" 2>/dev/null || true
+cat "$OUT/launch-timings.txt" || true
 adb shell am start -W -S -n "$PACKAGE_ID/$MAIN_ACTIVITY"
 sleep 2
 adb shell pidof "$PACKAGE_ID" | grep -E '[0-9]+'

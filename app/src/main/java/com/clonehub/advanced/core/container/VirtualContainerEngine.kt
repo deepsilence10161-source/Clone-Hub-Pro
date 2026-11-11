@@ -1,11 +1,13 @@
 package com.clonehub.advanced.core.container
 
+import android.app.ActivityManager
 import android.content.ContentResolver
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Parcel
+import android.os.SystemClock
 import android.util.Log
 import com.clonehub.advanced.data.model.ClonedApp
 
@@ -31,6 +33,9 @@ object VirtualContainerEngine {
     private const val INSTALL_OPTION_FLAGS = "fohwt.GSHG"
     private const val INSTALL_RESULT_CODE = "fohwt.XTAEA_QMWG"
     private const val ANDROID_START_SUCCESS = 0
+    private const val AGENT_VISIBLE_TIMEOUT_MS = 3_000L
+    private const val AGENT_SUFFIX = ":agent"
+    private const val AGENT_POLL_INTERVAL_MS = 250L
 
     private var remoteBinder: IBinder? = null
 
@@ -222,6 +227,16 @@ object VirtualContainerEngine {
      */
     fun launchAppOutcome(context: Context, app: ClonedApp, spaceId: Int): EngineOutcome {
         Log.i(TAG, "Initiating virtual container launch for ${app.packageName} in Space $spaceId")
+        val startedAt = SystemClock.elapsedRealtime()
+        val outcome = launchTransaction(context, app, spaceId)
+        val elapsed = SystemClock.elapsedRealtime() - startedAt
+        // Timing is logged instead of guessed: the deep E2E gate reads this line for the
+        // before/after numbers used in the performance report.
+        Log.i(TAG, "Launch timing for ${app.packageName} in Space $spaceId: ${elapsed}ms (${outcome.describe()})")
+        return outcome
+    }
+
+    private fun launchTransaction(context: Context, app: ClonedApp, spaceId: Int): EngineOutcome {
 
         // 1. Ensure the package is installed into the virtual space; never launch after a failed install.
         val installed = installAppOutcome(context, app.packageName, spaceId)
@@ -255,10 +270,23 @@ object VirtualContainerEngine {
             // 16-test compatibility suite and the native E2E gates read this line to distinguish
             // "runtime refused" from "app started but drew nothing".
             Log.i(TAG, "Launch result for ${app.packageName} in Space $spaceId: code=$resultCode")
-            if (isLaunchResultSuccessful(resultCode)) {
-                EngineOutcome.Success
+            if (!isLaunchResultSuccessful(resultCode)) {
+                return EngineOutcome.Rejected("launch", resultCode, launchFailureHint(resultCode))
+            }
+            // Code 0 only means the runtime accepted the request. A clone is really running when
+            // one of this app's own agent processes has become foreground; otherwise the user is
+            // looking at a "started" clone that never drew anything (R7 in the audit).
+            val agent = awaitForegroundAgentProcess(context)
+            if (agent == null) {
+                val seen = describeProcesses(context)
+                Log.e(TAG, "Launch code 0 but no agent process became foreground; processes=$seen")
+                EngineOutcome.NotVerified(
+                    "launch",
+                    "runtime answered code=0 but no cloned process became foreground (processes=$seen)"
+                )
             } else {
-                EngineOutcome.Rejected("launch", resultCode, launchFailureHint(resultCode))
+                Log.i(TAG, "Launch verified in agent process $agent")
+                EngineOutcome.Success
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to launch virtual app ${app.packageName} in Space $spaceId", e)
@@ -267,6 +295,37 @@ object VirtualContainerEngine {
             data.recycle()
             reply.recycle()
         }
+    }
+
+    /**
+     * Waits briefly for one of this application's clone agent processes (`<pkg>:agentN`) to reach
+     * foreground importance. Read-only observation of our own package — no other package's state is
+     * inspected.
+     */
+    private fun awaitForegroundAgentProcess(context: Context, timeoutMs: Long = AGENT_VISIBLE_TIMEOUT_MS): String? {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return null
+        // Agent processes are declared as "<pkg>:agent0", "<pkg>:agent1", ... in the manifest.
+        val agentPrefix = context.packageName + AGENT_SUFFIX
+        val deadline = SystemClock.elapsedRealtime() + timeoutMs
+        while (true) {
+            val foreground = runCatching { manager.runningAppProcesses }.getOrNull()
+                ?.firstOrNull {
+                    it.processName.startsWith(agentPrefix) &&
+                        it.importance <= ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                }
+            if (foreground != null) return foreground.processName
+            if (SystemClock.elapsedRealtime() >= deadline) return null
+            SystemClock.sleep(AGENT_POLL_INTERVAL_MS)
+        }
+    }
+
+    /** Short, log-safe summary of our own processes, used only in failure details. */
+    private fun describeProcesses(context: Context): String {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager ?: return "unavailable"
+        return runCatching { manager.runningAppProcesses }.getOrNull()
+            ?.filter { it.processName.startsWith(context.packageName) }
+            ?.joinToString(",") { "${it.processName}(${it.importance})" }
+            ?: "unavailable"
     }
 
     /** Backwards-compatible boolean view. */
