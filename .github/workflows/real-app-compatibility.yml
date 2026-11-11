@@ -1,6 +1,12 @@
 name: Real app compatibility smoke
 
 on:
+  # Every functional change to main must run the real-device suite, not just manual dispatches.
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/**'
   workflow_dispatch:
     inputs:
       test_class:
