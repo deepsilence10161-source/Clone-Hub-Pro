@@ -42,9 +42,11 @@ class ThirdPartyCloneCompatibilityInstrumentedTest {
     private fun verifyRealAppClone(packageName: String, label: String, spaceId: Int) {
         val slug = packageName.substringAfterLast('.')
         try {
-            device.executeShellCommand(
-                "monkey -p $packageName -c android.intent.category.LAUNCHER 1"
-            )
+            val launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
+            checkNotNull(launchIntent) { "$label has no launchable activity" }
+            context.startActivity(launchIntent.apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            })
             val markers = awaitOriginalMarkers(packageName)
             assertTrue(
                 "$label did not expose a real baseline UI before cloning",
@@ -72,6 +74,12 @@ class ThirdPartyCloneCompatibilityInstrumentedTest {
                 visibleMarkers(markers).isNotEmpty() && !homeIsVisible()
             )
             capture("${slug}-03-stable.png")
+        } catch (error: Throwable) {
+            capture("${slug}-99-failure.png")
+            runCatching {
+                device.dumpWindowHierarchy(File(evidenceDir, "${slug}-failure.xml"))
+            }
+            throw error
         } finally {
             capture("${slug}-04-final.png")
             VirtualContainerEngine.forceStopApp(context, packageName, spaceId)
