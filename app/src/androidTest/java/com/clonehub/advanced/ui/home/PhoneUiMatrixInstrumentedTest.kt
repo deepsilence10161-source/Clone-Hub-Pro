@@ -142,16 +142,24 @@ class PhoneUiMatrixInstrumentedTest {
      * Returns the bounds once they fit above [bottom], or the last measurement when the screen
      * refuses to scroll — the caller's assertion then reports the real numbers.
      */
-    private fun scrollIntoView(label: String, resourceId: String, bottom: Int): Rect? {
-        repeat(3) { attempt ->
+    private fun scrollIntoView(
+        label: String,
+        resourceId: String,
+        bottom: Int,
+        minHeightPx: Int = 0
+    ): Rect? {
+        repeat(4) { attempt ->
             val bounds = runCatching { boundsOf(resourceId = resourceId) }.getOrNull() ?: return null
-            if (bounds.bottom <= bottom) return bounds
-            val overflow = bounds.bottom - bottom
+            // Accessibility reports the *visible* part of a child inside a scroll container, so a
+            // button half below the fold looks 33px tall. Scroll until it is fully on screen, not
+            // merely until its clipped bottom edge is above the bar.
+            if (bounds.bottom <= bottom && bounds.height() >= minHeightPx) return bounds
+            val overflow = maxOf(bounds.bottom - bottom, minHeightPx - bounds.height(), 0)
             device.swipe(
                 device.displayWidth / 2,
                 (device.displayHeight * 3) / 4,
                 device.displayWidth / 2,
-                (device.displayHeight * 3) / 4 - overflow - 80,
+                (device.displayHeight * 3) / 4 - overflow - 120,
                 20
             )
             SystemClock.sleep(400)
@@ -428,7 +436,8 @@ class PhoneUiMatrixInstrumentedTest {
                 // reported as 1120x33px because it was clipped at the bottom edge.
                 listOf("btnCreateBackup", "btnPickRestore", "btnRestoreMerge", "btnRestoreReplace")
                     .forEach { id ->
-                        val b = scrollIntoView(label, id, bottomLimit) ?: run {
+                        val minPx = MIN_TOUCH_DP * densityDpi / 160
+                        val b = scrollIntoView(label, id, bottomLimit, minPx) ?: run {
                             Log.w(TAG, "PHONE_UI config=$label $id not found on the backup screen")
                             return@forEach
                         }
