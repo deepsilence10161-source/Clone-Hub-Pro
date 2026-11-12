@@ -18,18 +18,5 @@
             </intent-filter>
         </activity>
 
-        <!--
-          Answers the account/token probes from whatever process it runs in. The host suite
-          broadcasts to it directly for the un-cloned answer, and the virtual container delivers
-          the same broadcast to the cloned instance for the in-clone answer.
-        -->
-        <receiver
-            android:name="com.clonehub.advanced.fixture.AccountProbeReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.clonehub.advanced.GOOGLE_ACCOUNT_PROBE" />
-                <action android:name="com.clonehub.advanced.GOOGLE_TOKEN_PROBE" />
-            </intent-filter>
-        </receiver>
-    </application>
+</application>
 </manifest>

@@ -71,6 +71,10 @@ run_tests deep-suite -e class "$DEEP_CLASS" || deep_status=$?
 adb logcat -c
 run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 adb logcat -d -v threadtime > "$OUT/google-signin-logcat.txt" 2>/dev/null || true
+# The probe reports the clone wrote about Google sign-in.
+adb shell run-as "$PACKAGE_ID" sh -c 'cat files/account_probe-*.txt files/token_probe-*.txt' \
+  > "$OUT/google-signin-probes.txt" 2>&1 || true
+cat "$OUT/google-signin-probes.txt" || true
 # Platform answers about accounts, from the device's own point of view.
 adb shell dumpsys account > "$OUT/account-service.txt" 2>&1 || true
 adb shell pm list packages | grep -i "google\|gsf\|vending" > "$OUT/play-services-packages.txt" 2>&1 || true

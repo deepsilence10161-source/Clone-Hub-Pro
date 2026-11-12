@@ -38,6 +38,11 @@ public final class CloneFixtureActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Sign-in probe mode: the host suite asks this fixture to report what a Google sign-in
+        // call sees from inside whatever process it is running in — normally, and inside the
+        // virtual container after cloning. Reports are keyed by process kind so the two runs
+        // cannot overwrite each other.
+        AccountProbe.runIfRequested(this);
         android.content.SharedPreferences state = getSharedPreferences("fixture_state", MODE_PRIVATE);
         int launchCount = state.getInt("launch_count", 0) + 1;
         // Synchronous commit makes a force-stop/relaunch isolation check deterministic.
