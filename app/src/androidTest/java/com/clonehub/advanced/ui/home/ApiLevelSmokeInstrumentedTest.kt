@@ -2,6 +2,7 @@ package com.clonehub.advanced.ui.home
 
 import android.content.Intent
 import android.os.Build
+import android.os.SystemClock
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -123,12 +124,13 @@ class ApiLevelSmokeInstrumentedTest {
             addButton.click()
             // Detect the picker by anything the picker really shows: the SearchView may be missing
             // from the accessibility tree on some platforms, but its chips and list are not.
-            pickerOpen = device.wait(
-                Until.hasObject(By.res(appId, "searchView")) or
-                    Until.hasObject(By.res(appId, "chipGroup")) or
-                    Until.hasObject(By.res(appId, "recyclerInstalledApps")),
-                PICKER_TIMEOUT_MS
-            )
+            val deadline = SystemClock.elapsedRealtime() + PICKER_TIMEOUT_MS
+            while (!pickerOpen && SystemClock.elapsedRealtime() < deadline) {
+                pickerOpen = device.hasObject(By.res(appId, "searchView")) ||
+                    device.hasObject(By.res(appId, "chipGroup")) ||
+                    device.hasObject(By.res(appId, "recyclerInstalledApps"))
+                if (!pickerOpen) SystemClock.sleep(250)
+            }
             if (!pickerOpen && attempt < 2) {
                 Log.w(TAG, "API_SMOKE level=$api picker attempt ${attempt + 1} did not open; retrying")
                 device.waitForIdle()
