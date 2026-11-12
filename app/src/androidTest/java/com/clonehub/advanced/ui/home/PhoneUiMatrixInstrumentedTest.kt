@@ -233,6 +233,56 @@ class PhoneUiMatrixInstrumentedTest {
         return null
     }
 
+    /**
+     * On-screen bounds of a node, read from the live accessibility hierarchy.
+     *
+     * UiObject2 in this version only exposes `visibleBounds`, which is *clipped by the parent* —
+     * exactly the overflow this suite has to catch — and no accessor for the underlying node. So
+     * the hierarchy is walked directly: match by view id inside this app, or by exact text for the
+     * grid labels, and read the unclipped bounds the layout actually assigned.
+     */
+    private fun boundsOf(resourceId: String? = null, text: String? = null): Rect {
+        val root = instrumentation.uiAutomation.rootInActiveWindow
+            ?: throw AssertionError("No active window to measure")
+        try {
+            @Suppress("DEPRECATION")
+            val found = findNode(root, resourceId, text)
+            if (found == null) {
+                runCatching {
+                    device.dumpWindowHierarchy(File(evidenceDir, "hierarchy-failure.xml"))
+                }
+                throw AssertionError("Node not in the hierarchy: id=$resourceId text=$text")
+            }
+            try {
+                return Rect().also { found.getBoundsInScreen(it) }
+            } finally {
+                @Suppress("DEPRECATION")
+                found.recycle()
+            }
+        } finally {
+            @Suppress("DEPRECATION")
+            root.recycle()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun findNode(
+        node: AccessibilityNodeInfo,
+        resourceId: String?,
+        text: String?
+    ): AccessibilityNodeInfo? {
+        val idMatches = resourceId != null && node.viewIdResourceName == "$appId:id/$resourceId"
+        val textMatches = text != null && node.text?.toString() == text
+        if (idMatches || textMatches) return AccessibilityNodeInfo.obtain(node)
+        for (index in 0 until node.childCount) {
+            val child = node.getChild(index) ?: continue
+            val match = findNode(child, resourceId, text)
+            child.recycle()
+            if (match != null) return match
+        }
+        return null
+    }
+
     /** System-UI nodes live in another package, so they are matched by full resource name. */
     @Suppress("DEPRECATION")
     private fun systemUiBounds(resourceId: String): Rect? {
