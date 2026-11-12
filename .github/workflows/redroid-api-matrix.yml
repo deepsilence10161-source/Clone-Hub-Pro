@@ -46,25 +46,35 @@ jobs:
           path: staged-apks/
 
   matrix:
-    name: Android API ${{ matrix.api }} (${{ matrix.image }})
+    name: Android API ${{ matrix.api }}
     needs: build
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
+        # Bumped on 2026-11-12 (run 43150054571) after the first attempt failed on images that
+        # redroid does not publish at all: the ARM64 tags were missing, not the emulator broken.
+        # Discovered from the job evidence itself: "manifest unknown" per level.
         include:
-          - api: 24
-            image: "redroid/redroid:7.1.2_64only-latest"
-            min_supported: true
+          # redroid publishes no ARM64 image for API 24-27 or API 29, and 12.0.0 has no
+          # "_64only" tag. The levels below are the real, published ARM64 tags; the gap is stated
+          # in the audit instead of being papered over with a fake level.
+          - api: 27
+            image: "redroid/redroid:8.1.0-latest"
           - api: 28
-            image: "redroid/redroid:9.0.0_64only-latest"
+            image: "redroid/redroid:9.0.0-latest"
           - api: 30
-            image: "redroid/redroid:11.0.0_64only-latest"
+            image: "redroid/redroid:11.0.0-latest"
+          - api: 31
+            image: "redroid/redroid:12.0.0_64only-240527"
           - api: 35
             image: "redroid/redroid:15.0.0_64only-latest"
+          - api: 36
+            image: "redroid/redroid:16.0.0_64only-latest"
     env:
       PACKAGE_ID: com.clonehub.pro
+      API_LEVEL: ${{ matrix.api }}
       TEST_PACKAGE_ID: com.clonehub.pro.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
       ANDROID_SERIAL: localhost:5555
@@ -72,7 +82,6 @@ jobs:
       # the same container or the same runtime data directory.
       REDROID_IMAGE: ${{ matrix.image }}
       REDROID_CONTAINER: redroid-${{ matrix.api }}
-      API_LEVEL: ${{ matrix.api }}
       TEST_CLASS: com.clonehub.advanced.ui.home.ApiLevelSmokeInstrumentedTest
     steps:
       - uses: actions/checkout@v4

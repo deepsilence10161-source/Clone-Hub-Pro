@@ -54,7 +54,15 @@ class ApiLevelSmokeInstrumentedTest {
     @Test(timeout = 120_000)
     fun b_cloneCanBeAddedThroughTheVisibleUi() {
         val appId = context.packageName
-        device.findObject(By.res(appId, "fabAdd"))?.click()
+        // Instrumentation finishes each test's activities, so this test must bring up the home
+        // screen itself instead of relying on the previous test having left it on screen.
+        device.wakeUp()
+        context.startActivity(Intent(context, HomeActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        })
+        val addButton = device.wait(Until.findObject(By.res(appId, "fabAdd")), UI_TIMEOUT_MS)
+        checkNotNull(addButton) { "Home Add action never appeared on API $api" }
+        addButton.click()
         val pickerOpen = device.wait(Until.hasObject(By.res(appId, "searchView")), UI_TIMEOUT_MS)
         capture("api-$api-picker.png")
         assertTrue("App picker did not open on API $api", pickerOpen)
@@ -113,7 +121,7 @@ class ApiLevelSmokeInstrumentedTest {
         const val FIXTURE_PACKAGE = "com.clonehub.pro.test"
         const val FIXTURE_LABEL = "Clone Hub Fixture"
         const val MARKER = "CLONE_FIXTURE_RUNNING"
-        const val SPACE_ID = 120
+        const val SPACE_ID = 121
         const val UI_TIMEOUT_MS = 20_000L
         const val LAUNCH_TIMEOUT_MS = 60_000L
     }
