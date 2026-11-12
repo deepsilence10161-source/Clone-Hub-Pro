@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
+import android.view.accessibility.AccessibilityNodeInfo
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -106,17 +107,16 @@ class PhoneUiMatrixInstrumentedTest {
             )
 
             // 1. The Add action: on screen, above the navigation bar, and a real touch target.
-            val fab = waitFor(By.res(appId, "fabAdd"), label, "fabAdd")
-            val fabBounds = boundsOf(fab)
+            waitFor(By.res(appId, "fabAdd"), label, "fabAdd")
+            val fabBounds = boundsOf(resourceId = "fabAdd")
             assertInside("fabAdd", fabBounds, screenWidth, safeTop, safeBottom)
             assertTouchTarget("fabAdd", fabBounds, densityDpi)
             logBounds(label, "fabAdd", fabBounds)
 
             // 2. The space controls in the toolbar: reachable and not overlapping the title.
             listOf("btnPrevSpace", "btnNextSpace", "btnSettings", "btnBackup").forEach { id ->
-                val node = device.findObject(By.res(appId, id))
-                if (node != null) {
-                    val nodeBounds = boundsOf(node)
+                val nodeBounds = runCatching { boundsOf(resourceId = id) }.getOrNull()
+                if (nodeBounds != null) {
                     logBounds(label, id, nodeBounds)
                     assertInside(id, nodeBounds, screenWidth, safeTop, safeBottom)
                     assertTouchTarget(id, nodeBounds, densityDpi)
@@ -126,23 +126,17 @@ class PhoneUiMatrixInstrumentedTest {
             }
 
             // 3. The grid: a clone tile is square-ish, fully visible and tappable.
-            val addTile = device.findObject(By.text(context.getString(R.string.action_add)))
-            assertNotNull("The empty space no longer offers an Add tile on $label", addTile)
-            addTile?.let { tile ->
-                val tileBounds = boundsOf(tile)
-                logBounds(label, "gridAddTile", tileBounds)
-                // A clipped label is reported as a zero-height or off-screen node.
-                assertTrue(
-                    "gridAddTile label is clipped on $label: $tileBounds",
-                    tileBounds.height() > 0 && tileBounds.width() > 0
-                )
-                assertInside("gridAddTile", tileBounds, screenWidth, safeTop, safeBottom)
-            }
+            val tileBounds = boundsOf(text = context.getString(R.string.action_add))
+            logBounds(label, "gridAddTile", tileBounds)
+            assertTrue(
+                "gridAddTile label is clipped on $label: $tileBounds",
+                tileBounds.height() > 0 && tileBounds.width() > 0
+            )
+            assertInside("gridAddTile", tileBounds, screenWidth, safeTop, safeBottom)
 
             // 4. The space card must not be wider than the screen (a clipped card hides clones).
-            val card = device.findObject(By.res(appId, "cardSpace"))
-            if (card != null) {
-                val cardBounds = boundsOf(card)
+            val cardBounds = runCatching { boundsOf(resourceId = "cardSpace") }.getOrNull()
+            if (cardBounds != null) {
                 logBounds(label, "cardSpace", cardBounds)
                 assertTrue(
                     "Space card overflows the ${widthDp}dp screen on $label: $cardBounds",
@@ -158,15 +152,14 @@ class PhoneUiMatrixInstrumentedTest {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 putExtra("target_space_id", 1)
             })
-            val installButton = waitFor(By.res(appId, "btnClone"), label, "btnClone")
-            val installBounds = boundsOf(installButton)
+            waitFor(By.res(appId, "btnClone"), label, "btnClone")
+            val installBounds = boundsOf(resourceId = "btnClone")
             assertInside("btnClone", installBounds, screenWidth, safeTop, safeBottom)
             assertTouchTarget("btnClone", installBounds, densityDpi)
-            val row = device.findObject(By.res(appId, "tvAppName"))
-            if (row != null) logBounds(label, "pickerRowTitle", boundsOf(row))
-            val search = device.findObject(By.clazz("android.widget.EditText"))
-            assertNotNull("Search field missing on $label", search)
-            assertInside("pickerSearch", boundsOf(search!!), screenWidth, safeTop, safeBottom)
+            runCatching { boundsOf(resourceId = "tvAppName") }
+                .onSuccess { logBounds(label, "pickerRowTitle", it) }
+            val searchBounds = boundsOf(resourceId = "search_src_text")
+            assertInside("pickerSearch", searchBounds, screenWidth, safeTop, safeBottom)
             capture(label, "picker")
 
             Log.i(TAG, "PHONE_UI_RESULT config=$label outcome=PASS")
@@ -233,10 +226,41 @@ class PhoneUiMatrixInstrumentedTest {
             listOf("status_bar", "statusBarBackground", "status_bar_container")
         }
         for (id in candidates) {
-            val node = device.findObject(By.res("com.android.systemui", id)) ?: continue
-            val bounds = runCatching { boundsOf(node) }.getOrNull() ?: continue
+            val bounds = runCatching { systemUiBounds(id) }.getOrNull() ?: continue
             Log.i(TAG, "PHONE_UI config=$label systemui:$id=$bounds")
             return if (bottom) bounds.top else bounds.bottom
+        }
+        return null
+    }
+
+    /** System-UI nodes live in another package, so they are matched by full resource name. */
+    @Suppress("DEPRECATION")
+    private fun systemUiBounds(resourceId: String): Rect? {
+        val root = instrumentation.uiAutomation.rootInActiveWindow ?: return null
+        try {
+            return findSystemUiNode(root, "com.android.systemui:id/$resourceId")?.let { found ->
+                try {
+                    Rect().also { found.getBoundsInScreen(it) }
+                } finally {
+                    found.recycle()
+                }
+            }
+        } finally {
+            root.recycle()
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun findSystemUiNode(
+        node: AccessibilityNodeInfo,
+        fullId: String
+    ): AccessibilityNodeInfo? {
+        if (node.viewIdResourceName == fullId) return AccessibilityNodeInfo.obtain(node)
+        for (index in 0 until node.childCount) {
+            val child = node.getChild(index) ?: continue
+            val match = findSystemUiNode(child, fullId)
+            child.recycle()
+            if (match != null) return match
         }
         return null
     }
@@ -254,13 +278,4 @@ class PhoneUiMatrixInstrumentedTest {
 
     private fun Int?.orZero(): Int = this ?: 0
 
-    /**
-     * Full on-screen bounds of a node. `visibleBounds` is clipped by the parent, which would hide
-     * exactly the overflow this suite exists to catch, so the accessibility bounds are preferred and
-     * the clipped ones are only a fallback when the node goes stale.
-     */
-    private fun boundsOf(node: UiObject2): Rect =
-        runCatching {
-            Rect().also { node.accessibilityNodeInfo.getBoundsInScreen(it) }
-        }.getOrNull() ?: node.visibleBounds
 }
