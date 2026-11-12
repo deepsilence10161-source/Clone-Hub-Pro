@@ -453,3 +453,97 @@ Honest gaps, unchanged by a green run: API 36 (redroid image does not boot), phy
 background-kill behaviour, and real-app cloning beyond the three pinned third-party APKs. The
 multi-instance measurement shows a maximum of one *visible* app activity per instance on this image —
 that is what was measured, and it is reported as measured, not extrapolated to real devices.
+
+## 17. Mobile-size UI: measured on real phone geometries, not eyeballed
+
+### What the gate does
+
+`PhoneUiMatrixInstrumentedTest` no longer looks at whatever window the emulator happens to provide.
+It sets the display itself and then measures the layout:
+
+| Configuration | Why it is there |
+|---|---|
+| 320 x 640 dp @2x | narrowest Android phone still in the field |
+| 360 x 720 dp @2x | the reference phone the layout is designed for |
+| 411 x 891 dp @3x | modern tall phone, where a bottom-anchored FAB is most at risk |
+| 720 x 360 dp (landscape) | the state where a fixed grid gets clipped |
+
+On each one it asserts, from the live accessibility hierarchy: every named control is inside the
+app's own window, the Add action sits above the navigation bar, every tappable control meets the
+48dp minimum, the space card cannot overflow the screen, and the picker keeps its install button
+reachable with a long package name. A failure dumps the hierarchy and a screenshot.
+
+### The layout changes it justified
+
+- The home screen is a real vertical column now. The capacity note used to be absolutely positioned
+  over the pager, so the two overlapped on a phone.
+- The space card fills its page instead of a fixed size; the grid is the part that scrolls.
+- Tiles: 52dp icons, two-line titles, 48dp touch targets; the grid derives its column count from the
+  screen width (72dp minimum tile) instead of assuming four columns.
+- The picker row is one line: icon, weighted text (package name ellipsised in the middle), then the
+  install button — a long package name can no longer push the button off a 360dp screen.
+- The toolbar's decorative gear and loose save icon became one overflow menu (backup, new space), and
+  the dead absolute-positioned empty state is gone: the grid already shows a working Add tile.
+
+### Numbers from the passing run (`43203694595`, API 34)
+
+`PHONE_UI_RESULT` PASS on all four configurations, for example
+`fabAdd=Rect(576, 896 - 688, 1008)` inside a 720x1280 window at 320dpi and
+`cardSpace=Rect(20, 196 - 700, 996)` at 360dp — both fully inside their screens, both with 112px
+touch targets. Screenshots per configuration are archived in `ui-matrix/`.
+
+Two harness bugs were found and fixed by the same evidence, and they are worth recording because both
+produced convincing false failures:
+
+1. The test looked for `com.clonehub.advanced:id/...` (the code namespace) while the installed package
+   is `com.clonehub.pro`. Every control was reported missing although the hierarchy contained it.
+2. The first revision measured the physical display (1080x2340 on that image) while the app is laid
+   out inside its own 1080x2136 window with the system bars drawn on top, so every control looked
+   "under the navigation bar". Bounds now come from the app's window.
+
+## 18. Google sign-in inside a cloned app: what is proven, what is not
+
+### The mechanism that was broken
+
+A "Sign in with Google" button does three things a clone can break: it asks the account service for
+the account list (`AccountManager.getAccountsByType("com.google")`), it requests an auth token, and it
+expects an account the user added earlier to still be there. On an image without Play Services the
+third-party Google flow cannot be reproduced end to end, so the gate tests the contract those three
+steps rely on, from inside the clone.
+
+### How it is proven
+
+`GoogleSignInCloneInstrumentedTest` starts one fixture twice — once normally, once as a clone — and
+the *same* code answers from whichever process it lands in:
+`account_probe`/`token_probe` report the Google account count, the account names, and the real outcome
+of a token request (`TOKEN`, `NO_ACCOUNT`, `CONSENT_REQUIRED`, or the exception), one key per log line.
+
+Proving *which* process answered took three attempts and is the interesting part: inside the container
+both `Application.getProcessName()` and `/proc/self/cmdline` report the cloned package, and even
+`ps -A` shows `com.clonehub.pro.test` for a process that ActivityManager records as
+`com.clonehub.pro:agent0`. The test therefore resolves the answering pid from the platform's own
+`Start proc <pid>:<name>` record, outside the container.
+
+Passing run `43203694482`: `OK (3 tests)`, with
+`GOOGLE_SIGNIN_PROBE kind=clone pid=3221 realProcess=com.clonehub.pro:agent0` and identical answers
+inside and outside the clone (`google_accounts=0`, token `NO_ACCOUNT` on both sides) — the image has no
+Google account signed in and no Play Services.
+
+### Honest scope
+
+- ASSERTED: the clone sees the same account list as the un-cloned app, name for name; a token request
+  produces the same outcome in both; the clone answer provably comes from an `:agent` process.
+- ASSERTED: an account visible to the platform is visible inside the clone (guarded, see below).
+- NOT TESTED, and not claimed: the Google consent/account-picker screen, a real OAuth token from
+  Google's servers, and a signed-in Google account — this image has Play Services absent and no
+  account, and a com.google account cannot be created programmatically (`SecurityException: uid 10087
+  cannot explicitly add accounts of type: com.google`). Testing those needs a Play-services image or a
+  real device, which is stated here instead of being simulated.
+
+## 18b. Gate state for commit `55b909b`
+
+- `Native ARM64 API compatibility matrix` — `43203694595` green (API 27/28/30/31/35 smoke, API 34 phone-UI matrix)
+- `Native ARM64 redroid strict E2E` — `43203694642` green
+- `Native ARM64 deep clone testing` — `43203694482` green (deep suite `OK (5 tests)` + Google sign-in `OK (3 tests)`)
+- `Real app compatibility smoke` — `43203694484` green (now scoped to the three pinned third-party apps)
+- `Publish latest verified APK` — `43205089212` green (`CloneHub-Pro.apk`, 7,894,182 bytes)
