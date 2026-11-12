@@ -84,7 +84,7 @@ class ThirdPartyCloneCompatibilityInstrumentedTest {
                 TAG,
                 "COMPAT_VISUAL app=$slug original=${originalStats?.describe() ?: "unreadable"} " +
                     "cloned=${clonedStats?.describe() ?: "unreadable"} " +
-                    "frameDiff=${VisualEvidence.frameDifference(originalShot, clonedShot).orZero()}"
+                    "frameDiff=${clonedShot?.let { VisualEvidence.frameDifference(originalShot, it) }.orZero()}"
             )
             // The original screen is the reference: if the real app painted something, the clone
             // must paint something too. A blank clone frame is the classic clone failure and is
