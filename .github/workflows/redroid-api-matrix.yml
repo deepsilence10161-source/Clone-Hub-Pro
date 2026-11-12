@@ -91,6 +91,10 @@ jobs:
       REDROID_IMAGE: ${{ matrix.image }}
       REDROID_CONTAINER: redroid-${{ matrix.api }}
       TEST_CLASS: ${{ matrix.test_class || 'com.clonehub.advanced.ui.home.ApiLevelSmokeInstrumentedTest' }}
+      # One automatic retry for a level whose Android runtime died (API 27: system_server SIGABRT in
+      # Binder during boot, measured on runs 43252415602 and 43257236404). The entry is marked as a
+      # retry in the evidence so a pass on the second attempt can never read like a clean first run.
+      MATRIX_ATTEMPT: ${{ github.run_attempt }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -101,6 +105,23 @@ jobs:
         run: bash .github/scripts/start-redroid-arm64.sh
       - name: Run API ${{ matrix.api }} smoke suite
         run: bash .github/scripts/run-emulator-e2e.sh
+      - name: Retry API ${{ matrix.api }} once if the Android runtime died
+        if: failure() && github.run_attempt < 3
+        id: runtime_retry
+        run: |
+          # Re-run the whole level only when the evidence says the *platform* failed, not the app:
+          # a system_server crash, a dead emulator connection, or no instrumentation result at all.
+          if bash .github/scripts/should-retry-level.sh evidence; then
+            echo "retrying=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "retrying=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Re-boot and re-run API ${{ matrix.api }}
+        if: failure() && steps.runtime_retry.outputs.retrying == 'true'
+        run: |
+          echo "level=API $API_LEVEL retry=attempt ${{ github.run_attempt }}" >> evidence/retry.txt
+          bash .github/scripts/start-redroid-arm64.sh
+          bash .github/scripts/run-emulator-e2e.sh
       - name: Collect evidence for API ${{ matrix.api }}
         if: always()
         run: |
