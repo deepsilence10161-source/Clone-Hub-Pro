@@ -66,6 +66,10 @@ jobs:
       # A silently non-zero gradle exit would let every later step run against a stale APK.
       - name: Enforce build result
         run: grep -q "GRADLE_EXIT=0" gradle-build.log
+      # Catches "exported without permission" regressions in the artifact itself; the allowlist in
+      # tools/security/security_gate.py documents the two components that must stay reachable.
+      - name: Security gate on the built APK
+        run: python3 tools/security/security_gate.py app/build/outputs/apk/debug/app-debug.apk
       - name: Download pinned real third-party compatibility apps
         run: bash .github/scripts/download-compatibility-apps.sh staged-apks
       - uses: actions/upload-artifact@v4

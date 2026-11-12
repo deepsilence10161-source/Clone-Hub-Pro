@@ -338,3 +338,57 @@ succeeded. Polling removes the race instead of loosening the assertion.
   only UI-level third-party cloning (Markor, Calculator, Aegis) and the fixture clone are proven.
 * Measured engine capacity remains 1–2 simultaneously live clone processes (see §13); clone data is
   never lost and reopening is fast, but the app must not and does not claim otherwise.
+
+---
+
+## 15. Artifact forensics — the shipped APK audited byte-level, and what it changed
+
+The §11–§14 findings were taken from the source tree. This section inspects the **published
+artifact** with `tools/apk_manifest.py` (binary AXML parser, no Android SDK needed), because the APK
+is what a user can download.
+
+| Fact (read from `CloneHub-Pro.apk`, `75f9069` build) | Value |
+|---|---|
+| package / version | `com.clonehub.pro`, versionCode 2001, versionName 2.0.1 |
+| minSdk / targetSdk | **24** / **35** |
+| application flags | `debuggable` **absent**, `allowBackup=false`, `usesCleartextTraffic=false` |
+| permissions | INTERNET, ACCESS_NETWORK_STATE, POST_NOTIFICATIONS, FOREGROUND_SERVICE, FOREGROUND_SERVICE_SPECIAL_USE, INSTALL_SHORTCUT, `com.clonehub.pro.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` |
+| dex | 2 files, 9 695 112 bytes uncompressed |
+| native ABIs | arm64-v8a, armeabi-v7a |
+| signing | APK Signing Block present (v2/v3); no v1 JAR signature |
+| components | 323 activities, 3 services, 2 receivers, **305 providers** |
+| runtime guard | `com.clonehub.pro.permission.VIRTUAL_CONTAINER`, `protectionLevel=signature`, carried by every runtime trampoline |
+
+### What the byte-level read proved (and what it did not)
+
+* **Proved:** the published build is not debuggable, cannot be backed up wholesale, refuses
+  cleartext traffic, and every one of the 305 provider/323 activity components that the virtual
+  runtime ships is behind the signature-level permission. Only two components are reachable without
+  it: `HomeActivity` (it is the launcher) and `ShortcutLauncherActivity` (pinned-shortcut
+  trampoline, which only launches an app that already exists in the space store).
+* **Proved:** the fix from §14 is inside the shipped build — the dex contains the new failure
+  message `no cloned process became foreground within`, and the Phase 5 icon loader
+  (`CloneIconLoader`).
+* **Not proved here:** DEX-level behaviour (needs a device; that is what the §14 gates are for) and
+  the Aegis visual comparison (see below).
+
+### New gate: `tools/security/security_gate.py`
+
+Wired into the strict workflow right after the build, before any device job. It re-parses the built
+APK and fails when a component would be reachable without the signature permission — including the
+pre-API-31 "exported defaults to true" case, which a source-only review cannot see. A negative
+control (an artifact with one unprotected exported activity) must make it fail before it is trusted;
+that run is pending a push.
+
+### Screenshot evidence made into an assertion
+
+While reviewing the mixed-suite screenshots, `aegis-02-cloned.png` and `aegis-03-stable.png` are
+**completely black** — and so is `aegis-01-original.png`, the *un-cloned* app on the same emulator.
+Aegis therefore renders nothing in this headless image, which is a rendering property of the
+environment, not a clone regression; Markor and Calculator clones show real UI. The important
+finding is the gate weakness: the suite asserted accessibility markers and only archived
+screenshots, so a clone that paints nothing could still pass. `ThirdPartyCloneCompatibilityInstrumentedTest`
+now measures each capture (`VisualEvidence`: standard deviation, mean luma, frame difference) and
+fails when the original rendered content but the clone produced a blank frame; the home screen in the
+real-user-flow suite is checked the same way. Runs emit `COMPAT_VISUAL` / `VISUAL` lines so the
+numbers are in the evidence, not in a screenshot nobody opens.

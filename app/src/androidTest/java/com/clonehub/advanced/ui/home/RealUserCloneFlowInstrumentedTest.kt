@@ -37,7 +37,14 @@ class RealUserCloneFlowInstrumentedTest {
         assertTrue("Home Add action was not visible", device.wait(
             Until.hasObject(By.res(appId, "fabAdd")), UI_TIMEOUT_MS
         ))
-        capture(device, screenshotDir, "01-home.png")
+        // A crash-on-launch can still leave the accessibility tree intact on slow emulators, so
+        // treat the app's own screenshots as assertions: the home screen must not be a blank frame.
+        val homeStats = capture(device, screenshotDir, "01-home.png")?.let { VisualEvidence.analyse(it) }
+        assertTrue(
+            "Home screen rendered a blank frame (${homeStats?.describe() ?: "screenshot unreadable"})",
+            homeStats != null && !homeStats.isBlank
+        )
+        Log.i(TAG, "VISUAL home ${homeStats!!.describe()}")
         device.findObject(By.res(appId, "fabAdd")).click()
 
         assertTrue("App picker did not open", device.wait(
@@ -81,10 +88,9 @@ class RealUserCloneFlowInstrumentedTest {
         )
     }
 
-    private fun capture(device: UiDevice, directory: File, name: String) {
-        runCatching { device.takeScreenshot(File(directory, name)) }
-            .onFailure { Log.w(TAG, "Could not capture $name", it) }
-    }
+    private fun capture(device: UiDevice, directory: File, name: String): File? = runCatching {
+        File(directory, name).also { device.takeScreenshot(it) }
+    }.onFailure { Log.w(TAG, "Could not capture $name", it) }.getOrNull()
 
     private companion object {
         const val TAG = "RealUserCloneFlowE2E"

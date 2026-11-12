@@ -2,6 +2,7 @@ package com.clonehub.advanced.ui.home
 
 import android.content.Intent
 import android.os.SystemClock
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
@@ -22,6 +23,16 @@ class ThirdPartyCloneCompatibilityInstrumentedTest {
     private val device = UiDevice.getInstance(instrumentation)
     private val evidenceDir = File(context.getExternalFilesDir(null), "compatibility").apply {
         mkdirs()
+    }
+
+    private companion object {
+        const val TAG = "CompatibilityVisual"
+        const val BASELINE_TIMEOUT_MS = 45_000L
+        const val CLONE_TIMEOUT_MS = 60_000L
+        val IGNORED_MARKERS = setOf(
+            "Allow", "Deny", "Don't allow", "Not now", "Cancel", "OK", "Next",
+            "Skip", "Continue", "Settings", "Clone Hub Pro"
+        )
     }
 
     @Test(timeout = 210_000)
@@ -65,7 +76,33 @@ class ThirdPartyCloneCompatibilityInstrumentedTest {
                 "$label did not reproduce its original visible UI after cloning",
                 awaitClonedMarkers(markers)
             )
-            capture("${slug}-02-cloned.png")
+            val clonedShot = capture("${slug}-02-cloned.png")
+            val originalShot = File(evidenceDir, "${slug}-01-original.png")
+            val originalStats = VisualEvidence.analyse(originalShot)
+            val clonedStats = clonedShot?.let { VisualEvidence.analyse(it) }
+            Log.i(
+                TAG,
+                "COMPAT_VISUAL app=$slug original=${originalStats?.describe() ?: "unreadable"} " +
+                    "cloned=${clonedStats?.describe() ?: "unreadable"} " +
+                    "frameDiff=${VisualEvidence.frameDifference(originalShot, clonedShot).orZero()}"
+            )
+            // The original screen is the reference: if the real app painted something, the clone
+            // must paint something too. A blank clone frame is the classic clone failure and is
+            // now a hard assertion instead of an archived screenshot nobody looked at.
+            if (originalStats != null && !originalStats.isBlank) {
+                assertTrue(
+                    "$label cloned window rendered a blank frame (" +
+                        "${clonedStats?.describe() ?: "screenshot unreadable"}) while the original " +
+                        "app rendered content",
+                    clonedStats != null && !clonedStats.isBlank
+                )
+            } else {
+                Log.w(
+                    TAG,
+                    "COMPAT_VISUAL_SKIPPED app=$slug reference frame is blank on this emulator; " +
+                        "blankness cannot be judged from it"
+                )
+            }
 
             SystemClock.sleep(30_000)
             dismissPermissionPrompt()
@@ -139,16 +176,10 @@ class ThirdPartyCloneCompatibilityInstrumentedTest {
         device.wait(Until.hasObject(By.res(context.packageName, "fabAdd")), 10_000)
     }
 
-    private fun capture(name: String) {
-        runCatching { device.takeScreenshot(File(evidenceDir, name)) }
-    }
+    private fun capture(name: String): File? = runCatching {
+        File(evidenceDir, name).also { device.takeScreenshot(it) }
+    }.getOrNull()
 
-    private companion object {
-        const val BASELINE_TIMEOUT_MS = 45_000L
-        const val CLONE_TIMEOUT_MS = 60_000L
-        val IGNORED_MARKERS = setOf(
-            "Allow", "Deny", "Don't allow", "Not now", "Cancel", "OK", "Next",
-            "Skip", "Continue", "Settings", "Clone Hub Pro"
-        )
-    }
+    private fun Double?.orZero() = this?.let { "%.1f".format(it) } ?: "unknown"
+
 }
