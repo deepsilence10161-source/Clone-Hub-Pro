@@ -392,3 +392,64 @@ now measures each capture (`VisualEvidence`: standard deviation, mean luma, fram
 fails when the original rendered content but the clone produced a blank frame; the home screen in the
 real-user-flow suite is checked the same way. Runs emit `COMPAT_VISUAL` / `VISUAL` lines so the
 numbers are in the evidence, not in a screenshot nobody opens.
+
+## 16. Support matrix actually run, and the one product bug it exposed
+
+### Which Android levels are real
+
+The matrix used to list levels that could never execute: the app and its instrumentation APK have
+`minSdk 32`, so API 27/28/30/31 refuse the install outright, and redroid `16.0.0` (API 36) never
+finishes booting (`zygote` restart loop). What the matrix can honestly cover is what redroid
+publishes an arm64 image for inside the app's own range:
+
+| Level | redroid image | State |
+|---|---|---|
+| API 33 | `13.0.0_64only-latest` | tested, green (strict E2E, API 33) |
+| API 34 | `14.0.0_64only-latest` | tested, green (strict E2E, API 34) |
+| API 35 | `15.0.0_64only-latest` | tested, green (API smoke, edge-to-edge regression covered) |
+| API 36 | `16.0.0_64only-latest` | **image does not boot** — removed from the matrix, reason recorded in the workflow |
+| API 27/28/30/31 | published, but **below the app's `minSdk 32`** | run to prove the claim, not to test the app: the real Clone Hub reference APK is itself API 32+ |
+
+The levels below the app's minimum are no longer silently asserted-or-failed. The runner installs
+the pinned reference Clone Hub next to Pro and, when Android itself answers
+`INSTALL_FAILED_OLDER_SDK`, records the coexistence check as **not applicable on that level** and
+carries on, while still asserting that `com.clonehub.pro` itself is installed. A genuine
+package/authority collision still fails the run — that is the case the check exists for.
+
+### The regression the matrix caught
+
+On API 35 the visible-UI test could not add a clone: the accessibility hierarchy had
+`fabAdd [891,2211][1038,2358]` completely underneath `navigation_bar_frame [0,2274][1080,2400]`,
+so the tap landed on the system bar. That is a real user-facing defect (Android 15 enforces
+edge-to-edge; every device with gesture navigation had an unreachable Add button), not a flaky
+harness. Fix: `Theme.CloneHub` opts out of edge-to-edge enforcement, `HomeActivity.applySystemBarInsets()`
+pads the coordinator and offsets the FAB by the system-bar and cutout insets, and the smoke test now
+asserts the geometry — `fabBottom <= navBarTop` — instead of trusting a tap to work.
+`API_SMOKE level=35 fab=Rect(891, 2085 - 1038, 2232) navBarTop=2274` is the fix, in the evidence.
+The harness needed the same rigour: Home is restarted when the FAB is not drawn yet, a node that goes
+stale mid-assert is re-read, and the picker is recognised by its chips or list, not only by its
+search field.
+
+### Final gate state for commit `1a2cb47`
+
+All four gates green on the same commit, with the evidence archives attached to the `ci-diagnostics`
+release:
+
+- `Native ARM64 API compatibility matrix` — `43162208370` ✅ (API 27/28/30/31/35)
+- `Native ARM64 redroid strict E2E` — `43162208362` ✅ (`OK (24 tests)`, API 33 + 34, clones render:
+  `COMPAT_VISUAL` frameDiff 0.0 / 1.6 / 0.0)
+- `Native ARM64 deep clone testing` — `43162208387` ✅ (`OK (5 tests)`)
+- `Real app compatibility smoke` — `43162208625` ✅ (native compatibility, multi-instance
+  `MULTI_INSTANCE_SUMMARY maxAlive=1 counts=1->12->15->110->1`, backup/restore `OK (4 tests)`)
+- `Publish latest verified APK` — `43163242588` ✅ (`CloneHub-Pro.apk`, 7,890,970 bytes)
+
+Per-level smoke evidence: `API_SMOKE level=27 cloneAddedThroughUi=true`, `level=28/30/31/35` the same
+with `fab=Rect(891, 2085 - 1038, 2232) navBarTop=2274`.
+
+### What is still not tested
+
+Honest gaps, unchanged by a green run: API 36 (redroid image does not boot), physical hardware
+(everything here is an emulated ARM64 redroid container), OEM skins (MIUI/OneUI/ColorOS) and their
+background-kill behaviour, and real-app cloning beyond the three pinned third-party APKs. The
+multi-instance measurement shows a maximum of one *visible* app activity per instance on this image —
+that is what was measured, and it is reported as measured, not extrapolated to real devices.
