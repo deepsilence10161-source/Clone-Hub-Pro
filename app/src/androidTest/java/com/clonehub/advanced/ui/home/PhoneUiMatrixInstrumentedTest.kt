@@ -136,6 +136,33 @@ class PhoneUiMatrixInstrumentedTest {
         }.getOrNull()
     }
 
+    /**
+     * Brings a control fully inside the screen before it is measured.
+     *
+     * Returns the bounds once they fit above [bottom], or the last measurement when the screen
+     * refuses to scroll — the caller's assertion then reports the real numbers.
+     */
+    private fun scrollIntoView(label: String, resourceId: String, bottom: Int): Rect? {
+        repeat(3) { attempt ->
+            val bounds = runCatching { boundsOf(resourceId = resourceId) }.getOrNull() ?: return null
+            if (bounds.bottom <= bottom) return bounds
+            val overflow = bounds.bottom - bottom
+            device.swipe(
+                device.displayWidth / 2,
+                (device.displayHeight * 3) / 4,
+                device.displayWidth / 2,
+                (device.displayHeight * 3) / 4 - overflow - 80,
+                20
+            )
+            SystemClock.sleep(400)
+            Log.i(
+                TAG,
+                "PHONE_UI config=$label scrolled to $resourceId (attempt ${attempt + 1}, was $bounds)"
+            )
+        }
+        return runCatching { boundsOf(resourceId = resourceId) }.getOrNull()
+    }
+
     /** Home screen with one installed clone, so the grid state a user keeps is what gets measured. */
     private fun showHomeWithFixtureClone(label: String) {
         val manager = SpaceManager.getInstance(context)
