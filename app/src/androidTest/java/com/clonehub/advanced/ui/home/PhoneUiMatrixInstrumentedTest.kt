@@ -84,24 +84,36 @@ class PhoneUiMatrixInstrumentedTest {
      */
     private fun measureSystemBars(label: String): SystemBars {
         val displayHeight = device.displayHeight
+        val displayWidth = device.displayWidth
         var statusBarBottom: Int? = null
         var navigationBarTop: Int? = null
+        var navigationBarSide: Int? = null
         val found = StringBuilder()
         for (windowInfo in instrumentation.uiAutomation.windows) {
             val geometry = WindowGeometry.of(windowInfo) ?: continue
             val rootName = runCatching {
                 windowInfo.root?.packageName?.toString()
             }.getOrNull().orEmpty()
-            val isBarWindow = rootName.contains("systemui") || rootName.contains("navigationbar") ||
-                (windowInfo.type != AccessibilityWindowInfo.TYPE_APPLICATION && geometry.height() < displayHeight / 4)
+            if (!rootName.contains("systemui") && !rootName.contains("navigationbar")) continue
             found.append(rootName.ifEmpty { "window${windowInfo.id}" })
                 .append('(').append(geometry).append(") ")
-            if (!isBarWindow) continue
-            if (geometry.top <= displayHeight / 8) {
-                statusBarBottom = maxOf(statusBarBottom ?: 0, geometry.bottom)
-            } else if (geometry.bottom >= displayHeight - displayHeight / 8) {
-                navigationBarTop = minOf(navigationBarTop ?: Int.MAX_VALUE, geometry.top)
+            // Orientation-aware classification, because the previous fixed guess read a side
+            // navigation bar (landscape, top=0, identical bounds at different widths) as a second
+            // status bar and then failed the landscape configuration for a bar it never looked for
+            // in the right place.
+            val spansWidth = geometry.width() >= displayWidth * 3 / 4
+            val spansHeight = geometry.height() >= displayHeight * 3 / 4
+            when {
+                spansWidth && geometry.top <= displayHeight / 4 ->
+                    statusBarBottom = maxOf(statusBarBottom ?: 0, geometry.bottom)
+                spansHeight && geometry.left >= displayWidth / 2 ->
+                    navigationBarSide = minOf(navigationBarSide ?: Int.MAX_VALUE, geometry.left)
+                spansHeight && geometry.top >= displayHeight / 2 ->
+                    navigationBarTop = minOf(navigationBarTop ?: Int.MAX_VALUE, geometry.top)
             }
+        }
+        navigationBarSide?.let {
+            Log.i(TAG, "PHONE_UI config=$label navigationBarOnSide left=$it")
         }
         Log.i(TAG, "PHONE_UI config=$label windows=[$found]")
         return SystemBars(
@@ -213,9 +225,10 @@ class PhoneUiMatrixInstrumentedTest {
             val bars = measureSystemBars(label)
             val safeTop = bars.statusBarBottom
             val safeBottom = bars.navigationBarTop
+            val safeEnd = bars.navigationBarSide
             Log.i(
                 TAG,
-                "PHONE_UI config=$label safeArea top=$safeTop bottom=$safeBottom " +
+                "PHONE_UI config=$label safeArea top=$safeTop bottom=$safeBottom side=$safeEnd " +
                     "source=${bars.describe()}"
             )
 
@@ -224,24 +237,34 @@ class PhoneUiMatrixInstrumentedTest {
                 "The status bar window was not measurable on $label, so the safe area is unknown",
                 safeTop
             )
-            assertNotNull(
-                "The navigation bar window was not measurable on $label, so the safe area is unknown",
-                safeBottom
+            // A portrait phone must have a bottom navigation bar window; in landscape the bar is on
+            // the side, and the reachable bottom edge is the display edge.
+            assertTrue(
+                "No navigation bar was located on $label (neither at the bottom nor on a side)",
+                safeBottom != null || safeEnd != null
             )
+            val bottomLimit = safeBottom ?: device.displayHeight
 
             // 1. The Add action: on screen, above the navigation bar, and a real touch target.
             waitFor(By.res(appId, "fabAdd"), label, "fabAdd")
             val fabBounds = boundsOf(resourceId = "fabAdd")
-            assertInside("fabAdd", fabBounds, screenWidth, safeTop!!, safeBottom!!)
+            assertInside("fabAdd", fabBounds, screenWidth, safeTop!!, bottomLimit)
             assertTouchTarget("fabAdd", fabBounds, densityDpi)
             logBounds(label, "fabAdd", fabBounds)
+            if (safeEnd != null) {
+                assertTrue(
+                    "The Add action is under the side navigation bar on $label: fab=$fabBounds " +
+                        "side bar left=$safeEnd",
+                    fabBounds.right <= safeEnd
+                )
+            }
 
             // 2. The space controls in the toolbar: reachable and not overlapping the title.
             listOf("btnPrevSpace", "btnNextSpace", "btnOverflow").forEach { id ->
                 val nodeBounds = runCatching { boundsOf(resourceId = id) }.getOrNull()
                 if (nodeBounds != null) {
                     logBounds(label, id, nodeBounds)
-                    assertInside(id, nodeBounds, screenWidth, safeTop, safeBottom)
+                    assertInside(id, nodeBounds, screenWidth, safeTop, bottomLimit)
                     assertTouchTarget(id, nodeBounds, densityDpi)
                 } else {
                     Log.i(TAG, "PHONE_UI config=$label $id hidden (single space / no action)")
@@ -255,7 +278,7 @@ class PhoneUiMatrixInstrumentedTest {
                 "gridAddTile label is clipped on $label: $tileBounds",
                 tileBounds.height() > 0 && tileBounds.width() > 0
             )
-            assertInside("gridAddTile", tileBounds, screenWidth, safeTop, safeBottom)
+            assertInside("gridAddTile", tileBounds, screenWidth, safeTop, bottomLimit)
 
             // 4. The space card must not be wider than the screen (a clipped card hides clones).
             val cardBounds = runCatching { boundsOf(resourceId = "cardSpace") }.getOrNull()
@@ -299,7 +322,7 @@ class PhoneUiMatrixInstrumentedTest {
             }.getOrDefault(false)
             if (menuOpened) {
                 val backupItem = boundsOf(text = context.getString(R.string.action_backup))
-                assertInside("overflowBackupItem", backupItem, screenWidth, safeTop, safeBottom)
+                assertInside("overflowBackupItem", backupItem, screenWidth, safeTop, bottomLimit)
                 capture(label, "overflow")
                 device.pressBack()
                 SystemClock.sleep(SETTLE_MS)
@@ -322,7 +345,7 @@ class PhoneUiMatrixInstrumentedTest {
             if (tilePresent) {
             val cloneTileBounds = boundsOf(text = FIXTURE_LABEL)
             logBounds(label, "cloneTile", cloneTileBounds)
-            assertInside("cloneTile", cloneTileBounds, screenWidth, safeTop, safeBottom)
+            assertInside("cloneTile", cloneTileBounds, screenWidth, safeTop, bottomLimit)
             val cardWithTile = runCatching { boundsOf(resourceId = "cardSpace") }.getOrNull()
             if (cardWithTile != null) {
                 assertTrue(
@@ -344,13 +367,13 @@ class PhoneUiMatrixInstrumentedTest {
                 val statusBounds = runCatching { boundsOf(resourceId = "tvHeaderStatus") }.getOrNull()
                 if (statusBounds != null) {
                     logBounds(label, "sheetStatus", statusBounds)
-                    assertInside("sheetStatus", statusBounds, screenWidth, safeTop, safeBottom)
+                    assertInside("sheetStatus", statusBounds, screenWidth, safeTop, bottomLimit)
                 }
                 listOf("actionLaunch", "actionFakeIcon", "actionCreateShortcut", "actionForceStop")
                     .forEach { id ->
                         val b = runCatching { boundsOf(resourceId = id) }.getOrNull() ?: return@forEach
                         logBounds(label, id, b)
-                        assertInside(id, b, screenWidth, safeTop, safeBottom)
+                        assertInside(id, b, screenWidth, safeTop, bottomLimit)
                         assertTouchTarget(id, b, densityDpi)
                     }
                 capture(label, "sheet")
@@ -369,7 +392,7 @@ class PhoneUiMatrixInstrumentedTest {
                     .forEach { id ->
                         val b = runCatching { boundsOf(resourceId = id) }.getOrNull() ?: return@forEach
                         logBounds(label, id, b)
-                        assertInside(id, b, screenWidth, safeTop, safeBottom)
+                        assertInside(id, b, screenWidth, safeTop, bottomLimit)
                         assertTouchTarget(id, b, densityDpi)
                     }
                 capture(label, "backup")
@@ -397,7 +420,7 @@ class PhoneUiMatrixInstrumentedTest {
             if (device.hasObject(By.res(appId, "pickerEmptyState"))) {
                 val emptyTitle = boundsOf(resourceId = "tvEmptyTitle")
                 logBounds(label, "pickerEmptyTitle", emptyTitle)
-                assertInside("pickerEmptyTitle", emptyTitle, screenWidth, safeTop, safeBottom)
+                assertInside("pickerEmptyTitle", emptyTitle, screenWidth, safeTop, bottomLimit)
                 Log.i(TAG, "PHONE_UI config=$label picker empty state shown (no apps to clone)")
             }
             assertTrue("The picker showed neither a list nor an empty state on $label", pickerReady)
@@ -406,12 +429,12 @@ class PhoneUiMatrixInstrumentedTest {
                 return
             }
             val installBounds = boundsOf(resourceId = "btnClone")
-            assertInside("btnClone", installBounds, screenWidth, safeTop, safeBottom)
+            assertInside("btnClone", installBounds, screenWidth, safeTop, bottomLimit)
             assertTouchTarget("btnClone", installBounds, densityDpi)
             runCatching { boundsOf(resourceId = "tvAppName") }
                 .onSuccess { logBounds(label, "pickerRowTitle", it) }
             val searchBounds = boundsOf(resourceId = "search_src_text")
-            assertInside("pickerSearch", searchBounds, screenWidth, safeTop, safeBottom)
+            assertInside("pickerSearch", searchBounds, screenWidth, safeTop, bottomLimit)
             // The picker title must clear the status bar. Measured on the title text itself: the
             // toolbar is full width, so its own bounds say nothing about the title.
             val pickerTitle = boundsOf(text = context.getString(R.string.action_install_app))

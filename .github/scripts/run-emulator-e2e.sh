@@ -45,8 +45,9 @@ adb shell getprop ro.product.cpu.abilist | tee "${EVIDENCE_DIR}/emulator-abis.tx
 # No test needs a home screen, so remove that source of system UI interference.
 adb shell settings put global anr_show_background 0
 adb shell settings put secure anr_show_first_instance 0 || true
-adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || \
-  echo "WARNING: Pixel Launcher could not be disabled in this test image"
+# The launcher is deliberately left ENABLED: the API smoke test leaves the clone and returns to the
+# home screen between attempts, and with no launcher there is nothing to return to. Only the
+# background-noise apps below are disabled.
 adb shell pm disable-user --user 0 com.google.android.apps.wellbeing || \
   echo "WARNING: Digital Wellbeing could not be disabled in this test image"
 
