@@ -9,10 +9,13 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.BySelector
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityWindowInfo
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import com.clonehub.advanced.R
+import com.clonehub.advanced.core.container.SpaceManager
+import com.clonehub.advanced.ui.backup.BackupActivity
 import com.clonehub.advanced.ui.picker.AppPickerActivity
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -45,12 +48,104 @@ class PhoneUiMatrixInstrumentedTest {
     private val evidenceDir = File(context.getExternalFilesDir(null), "ui-matrix").apply { mkdirs() }
     // The installed package is the applicationId, not the code namespace.
     private val appId = context.packageName
+    // The fixture app ships in the instrumentation APK, so its package is the target's with .test.
+    private val fixturePackage = "$appId.test"
 
     private companion object {
         const val TAG = "PHONE_UI"
         const val SETTLE_MS = 900L
         const val FIND_TIMEOUT_MS = 20_000L
         const val MIN_TOUCH_DP = 48
+        // A deliberately long label: the grid gives it two lines, so this is where a tile name
+        // would push the layout around if it could.
+        const val FIXTURE_PACKAGE = "com.clonehub.pro.test"
+        const val FIXTURE_LABEL = "Clone Hub Fixture With A Deliberately Long Name"
+        const val FIXTURE_SPACE = 77
+    }
+
+    /** Bottom of the status bar and top of the navigation bar, read from the platform windows. */
+    private data class SystemBars(
+        val statusBarBottom: Int?,
+        val navigationBarTop: Int?,
+        val source: String
+    ) {
+        fun describe(): String =
+            "statusBarBottom=$statusBarBottom navigationBarTop=$navigationBarTop via=$source"
+    }
+
+    /**
+     * Measures the real system bars.
+     *
+     * In this image the status and navigation bars are *separate windows* owned by the system UI,
+     * not nodes inside the app's hierarchy — which is why walking the app's accessibility tree for
+     * `com.android.systemui:id/navigation_bar_frame` returned null and the earlier revision fell
+     * back to the app window edges and measured nothing. `AccessibilityWindowInfo` is the platform
+     * reporting where those windows actually are.
+     */
+    private fun measureSystemBars(label: String): SystemBars {
+        val displayHeight = device.displayHeight
+        var statusBarBottom: Int? = null
+        var navigationBarTop: Int? = null
+        val found = StringBuilder()
+        for (windowInfo in instrumentation.uiAutomation.windows) {
+            val geometry = WindowGeometry.of(windowInfo) ?: continue
+            val rootName = runCatching {
+                windowInfo.root?.packageName?.toString()
+            }.getOrNull().orEmpty()
+            val isBarWindow = rootName.contains("systemui") || rootName.contains("navigationbar") ||
+                (windowInfo.type != AccessibilityWindowInfo.TYPE_APPLICATION && geometry.height() < displayHeight / 4)
+            found.append(rootName.ifEmpty { "window${windowInfo.id}" })
+                .append('(').append(geometry).append(") ")
+            if (!isBarWindow) continue
+            if (geometry.top <= displayHeight / 8) {
+                statusBarBottom = maxOf(statusBarBottom ?: 0, geometry.bottom)
+            } else if (geometry.bottom >= displayHeight - displayHeight / 8) {
+                navigationBarTop = minOf(navigationBarTop ?: Int.MAX_VALUE, geometry.top)
+            }
+        }
+        Log.i(TAG, "PHONE_UI config=$label windows=[$found]")
+        return SystemBars(
+            statusBarBottom = statusBarBottom,
+            navigationBarTop = navigationBarTop,
+            source = if (found.isEmpty()) "windows:none" else "windows"
+        )
+    }
+
+    private object WindowGeometry {
+        fun of(window: AccessibilityWindowInfo): Rect? = runCatching {
+            Rect().also { window.getBoundsInScreen(it) }
+        }.getOrNull()
+    }
+
+    /** Home screen with one installed clone, so the grid state a user keeps is what gets measured. */
+    private fun showHomeWithFixtureClone(label: String) {
+        val manager = SpaceManager.getInstance(context)
+        // The fixture has to be installed as a real app before it can appear in a grid: the
+        // instrumentation APK is not installed by the runner script on the phone-UI level.
+        val installed = device.executeShellCommand("pm list packages $fixturePackage")
+            .contains(fixturePackage)
+        if (!installed) {
+            // The test APK is in the app's private code path, which the shell cannot read: stage a
+            // copy the platform can install from.
+            val staged = File(context.getExternalFilesDir(null), "fixture-app.apk")
+            val source = File(instrumentation.context.applicationInfo.sourceDir)
+            runCatching {
+                if (!staged.exists() || staged.length() != source.length()) {
+                    source.inputStream().use { input ->
+                        staged.outputStream().use { output -> input.copyTo(output) }
+                    }
+                }
+                device.executeShellCommand("pm install -r -t ${staged.absolutePath}").trim().let {
+                    Log.i(TAG, "PHONE_UI config=$label fixture install: $it")
+                }
+            }.onFailure { Log.w(TAG, "Could not stage the fixture APK on $label", it) }
+        }
+        // addAppToSpace creates the space when it does not exist, so one call is enough.
+        val added = runCatching {
+            manager.addAppToSpace(FIXTURE_SPACE, FIXTURE_PACKAGE, FIXTURE_LABEL)
+        }.getOrNull()
+        if (added == null) Log.w(TAG, "Could not add the fixture clone on $label")
+        showHome(label)
     }
 
     /** 360dp x 720dp @2x — the reference Android phone the layout was designed for. */
@@ -109,18 +204,35 @@ class PhoneUiMatrixInstrumentedTest {
                 maxOf(screenWidth, screenHeight) == expectedLong &&
                     minOf(screenWidth, screenHeight) == expectedShort
             )
-            val safeTop = window.top
-            val safeBottom = window.bottom
+            // Real system-bar geometry, measured from the platform's own windows.
+            //
+            // This used to be the app window's own top/bottom, which is the whole display on this
+            // image — so every "inside the safe area" assertion below passed without ever looking at
+            // the status or navigation bar (evidence of run 43203694595 logged safeArea top=0
+            // bottom=2340 navBarTop=null). The bars are separate windows; they are read as such.
+            val bars = measureSystemBars(label)
+            val safeTop = bars.statusBarBottom
+            val safeBottom = bars.navigationBarTop
             Log.i(
                 TAG,
                 "PHONE_UI config=$label safeArea top=$safeTop bottom=$safeBottom " +
-                    "systemBars=${systemBarSummary(label)}"
+                    "source=${bars.describe()}"
+            )
+
+            // A gate that cannot see the system bars cannot claim a control clears them.
+            assertNotNull(
+                "The status bar window was not measurable on $label, so the safe area is unknown",
+                safeTop
+            )
+            assertNotNull(
+                "The navigation bar window was not measurable on $label, so the safe area is unknown",
+                safeBottom
             )
 
             // 1. The Add action: on screen, above the navigation bar, and a real touch target.
             waitFor(By.res(appId, "fabAdd"), label, "fabAdd")
             val fabBounds = boundsOf(resourceId = "fabAdd")
-            assertInside("fabAdd", fabBounds, screenWidth, safeTop, safeBottom)
+            assertInside("fabAdd", fabBounds, screenWidth, safeTop!!, safeBottom!!)
             assertTouchTarget("fabAdd", fabBounds, densityDpi)
             logBounds(label, "fabAdd", fabBounds)
 
@@ -132,7 +244,7 @@ class PhoneUiMatrixInstrumentedTest {
                     assertInside(id, nodeBounds, screenWidth, safeTop, safeBottom)
                     assertTouchTarget(id, nodeBounds, densityDpi)
                 } else {
-                    Log.w(TAG, "PHONE_UI config=$label $id not found in the hierarchy")
+                    Log.i(TAG, "PHONE_UI config=$label $id hidden (single space / no action)")
                 }
             }
 
@@ -155,6 +267,105 @@ class PhoneUiMatrixInstrumentedTest {
                 )
             }
 
+            // 4b. Ordering and clipping between the header, the card and the Add action.
+            listOf("btnPrevSpace", "btnNextSpace", "btnOverflow").forEach { id ->
+                val b = runCatching { boundsOf(resourceId = id) }.getOrNull() ?: return@forEach
+                val title = runCatching { boundsOf(resourceId = "tvSpaceIndicator") }.getOrNull()
+                if (title != null) {
+                    assertTrue(
+                        "$id overlaps the space indicator on $label: $b vs $title",
+                        b.right <= title.left || b.left >= title.right ||
+                            b.bottom <= title.top || b.top >= title.bottom
+                    )
+                }
+            }
+            val cardForFab = runCatching { boundsOf(resourceId = "cardSpace") }.getOrNull()
+            if (cardForFab != null) {
+                assertTrue(
+                    "The Add action is drawn on top of the space card content on $label: " +
+                        "fab=$fabBounds card=$cardForFab",
+                    fabBounds.top >= cardForFab.top
+                )
+            }
+
+            // 4c. The overflow menu opens, its items are on screen, and it can be dismissed —
+            //     a menu nobody can reach is the same as no menu.
+            runCatching { device.findObject(By.res(appId, "btnOverflow"))?.click() }
+            val menuOpened = device.wait(
+                Until.hasObject(By.text(context.getString(R.string.action_backup))),
+                FIND_TIMEOUT_MS
+            )
+            if (menuOpened) {
+                val backupItem = boundsOf(text = context.getString(R.string.action_backup))
+                assertInside("overflowBackupItem", backupItem, screenWidth, safeTop, safeBottom)
+                capture(label, "overflow")
+                device.pressBack()
+                SystemClock.sleep(SETTLE_MS)
+            } else {
+                Log.w(TAG, "PHONE_UI config=$label overflow menu did not open")
+            }
+
+            // 4d. A grid tile with a real clone in it: this is the state a user actually keeps the
+            //     app in, and the one the single "Add App" label never exercised. The name is long
+            //     on purpose — two lines, ellipsised, both inside the card.
+            showHomeWithFixtureClone(label)
+            waitFor(By.text(FIXTURE_LABEL), label, "cloneTile")
+            val cloneTileBounds = boundsOf(text = FIXTURE_LABEL)
+            logBounds(label, "cloneTile", cloneTileBounds)
+            assertInside("cloneTile", cloneTileBounds, screenWidth, safeTop, safeBottom)
+            val cardWithTile = runCatching { boundsOf(resourceId = "cardSpace") }.getOrNull()
+            if (cardWithTile != null) {
+                assertTrue(
+                    "Clone tile is outside the space card on $label: tile=$cloneTileBounds " +
+                        "card=$cardWithTile",
+                    cloneTileBounds.top >= cardWithTile.top &&
+                        cloneTileBounds.bottom <= cardWithTile.bottom
+                )
+            }
+
+            // 4e. Long-press actions: the sheet fits, its rows meet the touch target, and the
+            //     status line that reports a broken clone is readable instead of running off screen.
+            runCatching {
+                device.findObject(By.text(FIXTURE_LABEL))?.longClick()
+            }
+            if (device.wait(Until.hasObject(By.res(appId, "actionLaunch")), FIND_TIMEOUT_MS)) {
+                val statusBounds = runCatching { boundsOf(resourceId = "tvHeaderStatus") }.getOrNull()
+                if (statusBounds != null) {
+                    logBounds(label, "sheetStatus", statusBounds)
+                    assertInside("sheetStatus", statusBounds, screenWidth, safeTop, safeBottom)
+                }
+                listOf("actionLaunch", "actionFakeIcon", "actionCreateShortcut", "actionForceStop")
+                    .forEach { id ->
+                        val b = runCatching { boundsOf(resourceId = id) }.getOrNull() ?: return@forEach
+                        logBounds(label, id, b)
+                        assertInside(id, b, screenWidth, safeTop, safeBottom)
+                        assertTouchTarget(id, b, densityDpi)
+                    }
+                capture(label, "sheet")
+                device.pressBack()
+                SystemClock.sleep(SETTLE_MS)
+            } else {
+                Log.w(TAG, "PHONE_UI config=$label long-press sheet did not open")
+            }
+
+            // 4f. Backup & restore: every button reachable, nothing under the system bars.
+            context.startActivity(BackupActivity.intent(context).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            })
+            if (device.wait(Until.hasObject(By.res(appId, "btnCreateBackup")), FIND_TIMEOUT_MS)) {
+                listOf("btnCreateBackup", "btnPickRestore", "btnRestoreMerge", "btnRestoreReplace")
+                    .forEach { id ->
+                        val b = runCatching { boundsOf(resourceId = id) }.getOrNull() ?: return@forEach
+                        logBounds(label, id, b)
+                        assertInside(id, b, screenWidth, safeTop, safeBottom)
+                        assertTouchTarget(id, b, densityDpi)
+                    }
+                capture(label, "backup")
+            } else {
+                Log.w(TAG, "PHONE_UI config=$label backup screen did not open")
+            }
+
+            showHome(label)
             capture(label, "home")
 
             // 5. The App Picker: header + list, install button reachable, long names truncate
@@ -163,7 +374,23 @@ class PhoneUiMatrixInstrumentedTest {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                 putExtra("target_space_id", 1)
             })
-            waitFor(By.res(appId, "btnClone"), label, "btnClone")
+            // A picker with nothing to clone must say so, instead of blaming OEM permissions.
+            val pickerReady = device.wait(
+                Until.hasObject(By.res(appId, "btnClone")) or
+                    Until.hasObject(By.res(appId, "pickerEmptyState")),
+                FIND_TIMEOUT_MS
+            )
+            if (device.hasObject(By.res(appId, "pickerEmptyState"))) {
+                val emptyTitle = boundsOf(resourceId = "tvEmptyTitle")
+                logBounds(label, "pickerEmptyTitle", emptyTitle)
+                assertInside("pickerEmptyTitle", emptyTitle, screenWidth, safeTop, safeBottom)
+                Log.i(TAG, "PHONE_UI config=$label picker empty state shown (no apps to clone)")
+            }
+            assertTrue("The picker showed neither a list nor an empty state on $label", pickerReady)
+            if (!device.hasObject(By.res(appId, "btnClone"))) {
+                Log.i(TAG, "PHONE_UI_RESULT config=$label picker=EMPTY (list assertions skipped)")
+                return
+            }
             val installBounds = boundsOf(resourceId = "btnClone")
             assertInside("btnClone", installBounds, screenWidth, safeTop, safeBottom)
             assertTouchTarget("btnClone", installBounds, densityDpi)
@@ -171,6 +398,15 @@ class PhoneUiMatrixInstrumentedTest {
                 .onSuccess { logBounds(label, "pickerRowTitle", it) }
             val searchBounds = boundsOf(resourceId = "search_src_text")
             assertInside("pickerSearch", searchBounds, screenWidth, safeTop, safeBottom)
+            // The picker title must clear the status bar. Measured on the title text itself: the
+            // toolbar is full width, so its own bounds say nothing about the title.
+            val pickerTitle = boundsOf(text = context.getString(R.string.action_install_app))
+            logBounds(label, "pickerTitle", pickerTitle)
+            assertTrue(
+                "The picker title is under the status bar on $label: $pickerTitle " +
+                    "(status bar bottom=$safeTop)",
+                pickerTitle.top >= safeTop
+            )
             // The active filter has to be visible, otherwise the user cannot tell whether they are
             // looking at user apps or system apps.
             val userChip = device.findObject(By.res(appId, "chipUser"))
@@ -280,24 +516,6 @@ class PhoneUiMatrixInstrumentedTest {
     }
 
     /**
-     * Finds the system bar that overlays the app: the status bar at the top, or the navigation bar
-     * at the bottom. Returned in pixels so every other measurement can be compared directly.
-     */
-    private fun systemBarTop(label: String, bottom: Boolean): Int? {
-        val candidates = if (bottom) {
-            listOf("navigation_bar_frame", "navigationBarBackground", "navigation_bar_container")
-        } else {
-            listOf("status_bar", "statusBarBackground", "status_bar_container")
-        }
-        for (id in candidates) {
-            val bounds = runCatching { systemUiBounds(id) }.getOrNull() ?: continue
-            Log.i(TAG, "PHONE_UI config=$label systemui:$id=$bounds")
-            return if (bottom) bounds.top else bounds.bottom
-        }
-        return null
-    }
-
-    /**
      * On-screen bounds of a node, read from the live accessibility hierarchy.
      *
      * UiObject2 in this version only exposes `visibleBounds`, which is *clipped by the parent* —
@@ -361,38 +579,6 @@ class PhoneUiMatrixInstrumentedTest {
         }
     }
 
-    /** System-UI nodes live in another package, so they are matched by full resource name. */
-    @Suppress("DEPRECATION")
-    private fun systemUiBounds(resourceId: String): Rect? {
-        val root = instrumentation.uiAutomation.rootInActiveWindow ?: return null
-        try {
-            return findSystemUiNode(root, "com.android.systemui:id/$resourceId")?.let { found ->
-                try {
-                    Rect().also { found.getBoundsInScreen(it) }
-                } finally {
-                    found.recycle()
-                }
-            }
-        } finally {
-            root.recycle()
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun findSystemUiNode(
-        node: AccessibilityNodeInfo,
-        fullId: String
-    ): AccessibilityNodeInfo? {
-        if (node.viewIdResourceName == fullId) return AccessibilityNodeInfo.obtain(node)
-        for (index in 0 until node.childCount) {
-            val child = node.getChild(index) ?: continue
-            val match = findSystemUiNode(child, fullId)
-            child.recycle()
-            if (match != null) return match
-        }
-        return null
-    }
-
     private fun capture(label: String, state: String) {
         try {
             val bitmap: Bitmap = instrumentation.uiAutomation.takeScreenshot()
@@ -405,10 +591,6 @@ class PhoneUiMatrixInstrumentedTest {
     }
 
     /** Diagnostics: where the system bars are, so a failure report says what the app was up against. */
-    private fun systemBarSummary(label: String): String {
-        val top = systemBarTop(label, bottom = false)
-        val bottom = systemBarTop(label, bottom = true)
-        return "statusBarBottom=$top navBarTop=$bottom"
-    }
+    private fun systemBarSummary(label: String): String = measureSystemBars(label).describe()
 
 }

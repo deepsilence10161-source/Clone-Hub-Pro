@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.Toast
@@ -24,6 +25,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class AppPickerActivity : AppCompatActivity() {
+
+    private companion object {
+        const val TAG = "AppPickerActivity"
+    }
 
     private lateinit var appRepo: AppRepository
     private lateinit var adapter: AppPickerAdapter
@@ -143,25 +148,40 @@ class AppPickerActivity : AppCompatActivity() {
         })
     }
 
+    /**
+     * Loads the picker list and shows exactly one of three states: loading, a real empty list, or a
+     * permission problem.
+     *
+     * The OEM-permission card used to be the answer to *any* empty result, so a device with no other
+     * user apps was told to change MIUI settings — a wrong instruction with no way to act on it. The
+     * card is now reserved for a failure, and an empty list says so in its own words.
+     */
     private fun loadApps(includeSystem: Boolean) {
         val progress: ProgressBar = findViewById(R.id.progressBarPicker)
         val guide: View = findViewById(R.id.permissionGuide)
+        val empty: View = findViewById(R.id.pickerEmptyState)
+        val list: androidx.recyclerview.widget.RecyclerView = findViewById(R.id.recyclerInstalledApps)
 
         progress.isVisible = true
         guide.isVisible = false
+        empty.isVisible = false
+        list.isVisible = false
 
         lifecycleScope.launch {
-            try {
-                val list = appRepo.getInstalledApps(includeSystem)
-                progress.isVisible = false
-                if (list.isEmpty()) {
-                    guide.isVisible = true
+            val loaded = runCatching { appRepo.getInstalledApps(includeSystem) }
+            progress.isVisible = false
+            loaded.onSuccess { installed ->
+                if (installed.isEmpty()) {
+                    empty.isVisible = true
+                    Log.i(TAG, "Picker empty includeSystem=$includeSystem")
                 } else {
-                    adapter.submitList(list)
+                    list.isVisible = true
+                    adapter.submitList(installed)
+                    Log.i(TAG, "Picker loaded ${apps.size} apps includeSystem=$includeSystem")
                 }
-            } catch (e: Exception) {
-                progress.isVisible = false
+            }.onFailure { error ->
                 guide.isVisible = true
+                Log.w(TAG, "Picker could not read the app list", error)
             }
         }
     }

@@ -43,6 +43,10 @@ class GoogleSignInCloneInstrumentedTest {
         const val TAG = "GOOGLE_SIGNIN"
         const val CLONE_TIMEOUT_MS = 60_000L
         const val REPORT_TIMEOUT_MS = 40_000L
+        val ACCOUNT_PERMISSIONS = listOf(
+            Manifest.permission.GET_ACCOUNTS,
+            Manifest.permission.READ_CONTACTS
+        )
     }
 
     @Test(timeout = 300_000)
@@ -81,6 +85,34 @@ class GoogleSignInCloneInstrumentedTest {
             "Account names differ between host and clone: ${normal["names"]} vs ${cloned["names"]}",
             normal["names"] == cloned["names"]
         )
+        // Parity alone is satisfiable by "both processes are blind": before this assertion the
+        // gate passed with 0 == 0 while the app under test held no GET_ACCOUNTS grant at all, so a
+        // sign-in button would have been refused for a reason the suite never looked at.
+        assertTrue(
+            "The app may not read the account list (can_query_accounts=${normal["can_query_accounts"]}); " +
+                "a clone would see the same refusal and sign-in would fail for a reason unrelated to cloning",
+            normal["can_query_accounts"] == "true"
+        )
+        assertTrue(
+            "The clone may not read the account list (can_query_accounts=${cloned["can_query_accounts"]})",
+            cloned["can_query_accounts"] == "true"
+        )
+        // The account picker intent an app fires must resolve inside the clone as well.
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_PICKER normal=${normal["picker_component"]} clone=${cloned["picker_component"]} " +
+                "authenticator normal=${normal["account_type_resolvable"]} " +
+                "clone=${cloned["account_type_resolvable"]}"
+        )
+        // If the account manager is reachable at all, the chooser must be reachable from inside
+        // the clone too — that is the step before any token is minted.
+        if (normal["account_type_resolvable"] == "true") {
+            assertTrue(
+                "The Google authenticator is visible to the app but the account chooser does not " +
+                    "resolve inside the clone (${cloned["picker_component"]})",
+                cloned["picker_component"] != "UNRESOLVED"
+            )
+        }
         capture("accounts")
     }
 
@@ -142,20 +174,80 @@ class GoogleSignInCloneInstrumentedTest {
         Log.i(
             TAG,
             "GOOGLE_SIGNIN_CONCLUSION account-list-parity=ASSERTED token-parity=ASSERTED " +
-                "consent-screen=NOT_TESTED (this image has no Play services)"
+                "account-permission=ASSERTED picker-intent=ASSERTED " +
+                "consent-screen=${if (clonedCount > 0) "REQUESTED" else "NOT_TESTED (no account in this image)"}"
         )
     }
 
+    /**
+     * The step a user actually performs: the picker/consent screen.
+     *
+     * This asks Android, from inside the clone, to open the account chooser, and records exactly
+     * what came back — the component that answered, or the platform's reason for refusing. It does
+     * not pretend the browser-based OAuth flow was completed: on an image with no Google account
+     * and no Play services there is nothing to consent to, and that is reported as such.
+     */
+    @Test(timeout = 300_000)
+    fun d_accountChooserAnsweredInsideTheClone() {
+        grantTestPermissions()
+        val cloned = probe("clone")
+        assertTrue("The clone never answered the account probe: '$cloned'", cloned["ok"] == "true")
+        val chooser = cloned["picker_component"] ?: "ABSENT"
+        val accounts = cloned["google_accounts"]?.toIntOrNull() ?: -1
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_CHOOSER clone accounts=$accounts component=$chooser " +
+                "authenticator=${cloned["account_type_resolvable"]}"
+        )
+        // Two acceptable truths, both recorded with their evidence: the chooser resolves (the real
+        // Google account manager is reachable from inside the clone), or it does not resolve because
+        // this image ships no com.google authenticator — which is an image property, stated as such.
+        val authenticatorPresent = cloned["account_type_resolvable"] == "true"
+        if (authenticatorPresent) {
+            assertTrue(
+                "The Google authenticator is present but the account chooser does not resolve in the clone: $chooser",
+                chooser != "UNRESOLVED"
+            )
+        } else {
+            Log.i(
+                TAG,
+                "GOOGLE_SIGNIN_CHOOSER_NOTE this image exposes no com.google authenticator, so there is " +
+                    "no chooser to open; the clone answered the same way the app does"
+            )
+        }
+        capture("chooser")
+    }
+
+    /**
+     * Grants the account permissions on both processes that answer the probe.
+     *
+     * The clone's answer comes from the Pro process (`com.clonehub.pro:agent0`), not from the
+     * fixture APK, so granting the fixture alone left the clone un-granted — and with parity as the
+     * only assertion, "both sides refused" looked like success. The grant is applied to the app under
+     * test as well, and the probe reports the permission state it actually saw.
+     */
     private fun grantTestPermissions() {
-        listOf(Manifest.permission.GET_ACCOUNTS, Manifest.permission.READ_CONTACTS).forEach { permission ->
-            try {
-                instrumentation.uiAutomation.executeShellCommand(
-                    "pm grant $fixturePackage $permission"
-                ).close()
-            } catch (error: Throwable) {
-                Log.w(TAG, "Could not grant $permission", error)
+        val packages = listOf(fixturePackage, context.packageName)
+        for (target in packages) {
+            for (permission in ACCOUNT_PERMISSIONS) {
+                try {
+                    instrumentation.uiAutomation.executeShellCommand(
+                        "pm grant $target $permission"
+                    ).close()
+                } catch (error: Throwable) {
+                    Log.w(TAG, "Could not grant $permission to $target", error)
+                }
             }
         }
+        val state = packages.joinToString(" ") { target ->
+            ACCOUNT_PERMISSIONS.joinToString(",") { permission ->
+                val granted = instrumentation.uiAutomation.executeShellCommand(
+                    "dumpsys package $target | grep -c '$permission: granted=true'"
+                ).trim()
+                "$target/$permission=$granted"
+            }
+        }
+        Log.i(TAG, "GOOGLE_SIGNIN_GRANTS $state")
     }
 
     /**

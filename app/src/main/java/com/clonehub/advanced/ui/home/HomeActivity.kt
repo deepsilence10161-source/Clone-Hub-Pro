@@ -182,11 +182,24 @@ class HomeActivity : AppCompatActivity() {
         updateSpaceIndicator(position)
     }
 
+    /**
+     * Keeps the toolbar answering the question the user is looking at: which space is this, can I
+     * go left, can I go right. A chevron that leads nowhere is hidden instead of staying enabled and
+     * doing nothing on tap (seen on the single-space 320dp phone screenshot of run 43203694595).
+     */
     private fun updateSpaceIndicator(position: Int) {
         val spaces = spaceManager.getSpaces()
-        if (position in spaces.indices) {
-            tvSpaceIndicator.text = "${spaces[position].spaceId}"
-        }
+        if (position !in spaces.indices) return
+        val space = spaces[position]
+        tvSpaceIndicator.text = "${space.spaceId}"
+        val pager = findViewById<ViewPager2>(R.id.viewPagerSpaces)
+        val currentLabel = getString(R.string.space_current, space.spaceName)
+        if (pager.contentDescription != currentLabel) pager.contentDescription = currentLabel
+        btnPrevSpace.isVisible = position > 0
+        // The next chevron also creates a space when there is none to the right, so it only
+        // disappears when every space slot is already used.
+        btnNextSpace.isVisible = position < spaces.lastIndex ||
+            spaces.size < SpaceManager.MAX_CLONE_SLOTS
     }
 
     private fun getCurrentSpaceId(): Int {

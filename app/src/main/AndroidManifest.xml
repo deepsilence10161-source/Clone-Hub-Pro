@@ -15,6 +15,11 @@
         android:protectionLevel="signature" />
 
     <!-- Essential Android 14/15 Permissions -->
+    <!-- A cloned app that offers "Sign in with Google" asks AccountManager for the com.google
+         account list. Inside the container that query is answered for the agent process, so the
+         Pro manifest declares the same permission the cloned app declares; without it the answer
+         was an empty list and sign-in looked broken (see the sign-in gate). -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

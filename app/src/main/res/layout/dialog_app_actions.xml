@@ -9,53 +9,63 @@
     android:paddingBottom="24dp">
 
     <!-- Header with App Icon, Name, and Space -->
-    <RelativeLayout
+    <!--
+      Header as a row: icon, then the text block taking the remaining width. With a wrap_content
+      text block a long app name (and the failure reason under it) simply ran past the right edge on
+      a 320dp phone — the status line is the one that reports a broken clone, so it must wrap.
+    -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:padding="16dp">
 
         <ImageView
             android:id="@+id/ivHeaderIcon"
             android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_centerVertical="true" />
+            android:layout_height="48dp" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
             android:layout_marginStart="14dp"
-            android:layout_toEndOf="@+id/ivHeaderIcon"
+            android:layout_weight="1"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/tvHeaderTitle"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="2"
                 android:textColor="@color/white"
                 android:textSize="16sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvHeaderSpace"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
                 android:text="Space 1"
                 android:textColor="@color/colorPrimary"
                 android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tvHeaderStatus"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
+                android:ellipsize="end"
                 android:maxLines="2"
                 android:textColor="@color/text_secondary_dark"
                 android:textSize="11sp"
                 tools:text="Last launch failed" />
         </LinearLayout>
-    </RelativeLayout>
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"

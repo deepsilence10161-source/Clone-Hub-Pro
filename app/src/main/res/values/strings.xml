@@ -61,7 +61,12 @@
     <string name="space_deleted">Deleted %1$s</string>
     <string name="space_rename_failed">Could not rename the space</string>
     <string name="slot_limit_reached">Clone limit reached for this device.</string>
-    <string name="clone_capacity_note">Clones run in the foreground one at a time. When you open another clone the engine may close the previous one to free memory (measured on this build: 1–2 stay running). Its data is kept, so switching back reopens it.</string>
+    <string name="clone_capacity_note">One clone runs at a time; its data is kept.</string>
+    <string name="space_current">%1$s</string>
+    <string name="picker_empty_title">No apps to clone</string>
+    <string name="picker_empty_message">No other user apps are installed on this device. Install the app you want to clone, then open this screen again.</string>
+    <string name="action_previous_space">Previous space</string>
+    <string name="action_next_space">Next space</string>
     <string name="action_remove_from_space">Remove from this space</string>
     <string name="clone_status_never_launched">Not opened yet</string>
     <string name="clone_status_ok">Last launch succeeded</string>

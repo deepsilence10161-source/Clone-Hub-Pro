@@ -62,6 +62,8 @@ class BackupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_backup)
+        findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbarBackup)
+            .setNavigationOnClickListener { finish() }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         manager = CloneBackupManager.getInstance(this)
 

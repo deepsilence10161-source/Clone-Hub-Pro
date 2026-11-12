@@ -78,6 +78,16 @@ cat "$OUT/google-signin-probes.txt" || true
 # Platform answers about accounts, from the device's own point of view.
 adb shell dumpsys account > "$OUT/account-service.txt" 2>&1 || true
 adb shell pm list packages | grep -i "google\|gsf\|vending" > "$OUT/play-services-packages.txt" 2>&1 || true
+# The permission that decides whether a cloned app can read the account list at all, in the
+# platform's own words, plus the clone UI on screen. Without these two files a sign-in failure
+# cannot be told apart from a layout that hides the button.
+adb shell dumpsys package "$PACKAGE_ID" | grep -A2 "GET_ACCOUNTS" \
+  > "$OUT/account-permission.txt" 2>&1 || true
+mkdir -p "$OUT/google-signin"
+adb pull "/sdcard/Android/data/$PACKAGE_ID/files/google-signin" "$OUT/google-signin" \
+  > /dev/null 2>&1 || adb pull "$(adb shell run-as "$PACKAGE_ID" pwd | tr -d '\r')/app_external/files/google-signin" \
+  "$OUT/google-signin" > /dev/null 2>&1 || true
+ls -l "$OUT/google-signin" 2>/dev/null || true
 echo "Sign-in evidence captured; packages: $(cat "$OUT/play-services-packages.txt" | tr '\n' ' ')"
 
 # Instrumentation has terminated the target process. Force-stop again explicitly,

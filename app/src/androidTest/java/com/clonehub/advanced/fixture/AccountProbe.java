@@ -96,6 +96,11 @@ final class AccountProbe {
             out.put("google_accounts", String.valueOf(google.length));
             out.put("all_accounts", String.valueOf(all.length));
             out.put("names", join(names(google)));
+            // Why the list is empty matters: "no account exists" and "this process may not read
+            // accounts" are different user-visible failures, and both used to look like 0.
+            out.put("can_query_accounts", String.valueOf(canQueryAccounts(context)));
+            out.put("account_type_resolvable", String.valueOf(accountTypeResolvable(context)));
+            out.put("picker_component", pickerComponent(context));
         } catch (Throwable error) {
             // This is what a user experiences as "the sign-in button does nothing": the call itself
             // throws inside the clone. The reason is recorded, never an empty list.
@@ -172,6 +177,52 @@ final class AccountProbe {
             out.put("detail", result[2].replace('\n', ' '));
         }
         return out;
+    }
+
+    /** Whether this process may read the account list at all. */
+    private static boolean canQueryAccounts(Context context) {
+        try {
+            return context.checkCallingOrSelfPermission("android.permission.GET_ACCOUNTS")
+                    == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        } catch (Throwable error) {
+            return false;
+        }
+    }
+
+    /**
+     * The component that would show the account picker for a com.google account, i.e. the real
+     * Google account manager. Reporting it proves the intent an app fires for "choose an account"
+     * resolves inside the clone, which is the step before any token is minted.
+     */
+    private static String pickerComponent(Context context) {
+        try {
+            Intent intent = AccountManager.newChooseAccountIntent(
+                    null, null, new String[]{GOOGLE_ACCOUNT_TYPE}, null, null, null, null);
+            android.content.pm.ResolveInfo resolved = context.getPackageManager()
+                    .resolveActivity(intent, 0);
+            if (resolved == null || resolved.activityInfo == null) {
+                return "UNRESOLVED";
+            }
+            return resolved.activityInfo.packageName + "/" + resolved.activityInfo.name;
+        } catch (Throwable error) {
+            return "ERROR:" + error.getClass().getSimpleName();
+        }
+    }
+
+    /** Is the com.google authenticator itself visible to this process? */
+    private static boolean accountTypeResolvable(Context context) {
+        try {
+            AccountManager manager = AccountManager.get(context);
+            for (android.accounts.AuthenticatorDescription description
+                    : manager.getAuthenticatorTypes()) {
+                if (GOOGLE_ACCOUNT_TYPE.equals(description.type)) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (Throwable error) {
+            return false;
+        }
     }
 
     private static String[] names(Account[] accounts) {

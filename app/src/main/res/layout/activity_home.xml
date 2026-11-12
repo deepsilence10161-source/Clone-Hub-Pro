@@ -23,7 +23,13 @@
             app:titleMarginStart="0dp"
             app:titleTextColor="@color/white">
 
-            <!-- Space Selector in Toolbar (< 1 >) -->
+            <!--
+              Space selector: "< 1 >" on a phone. The left chevron is hidden on the first space
+              and the right one on the last space, and both are hidden when there is only one
+              space — arrows that cannot do anything read as broken controls (measured on the
+              320dp screenshot of the UI matrix, run 43203694595). The menu is a compact icon,
+              and the subtitle keeps the "which space" answer in words.
+            -->
             <LinearLayout
                 android:id="@+id/spaceContainer"
                 android:layout_width="wrap_content"
@@ -37,8 +43,9 @@
                     android:id="@+id/btnPrevSpace"
                     android:layout_width="@dimen/touch_target"
                     android:layout_height="@dimen/touch_target"
-                    android:padding="10dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/action_previous_space"
+                    android:padding="10dp"
                     android:src="@drawable/baseline_arrow_left_24"
                     app:tint="@color/colorPrimary" />
 
@@ -46,8 +53,8 @@
                     android:id="@+id/tvSpaceIndicator"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:minWidth="32dp"
                     android:gravity="center"
+                    android:minWidth="24dp"
                     android:text="1"
                     android:textColor="@color/white"
                     android:textSize="16sp"
@@ -57,16 +64,23 @@
                     android:id="@+id/btnNextSpace"
                     android:layout_width="@dimen/touch_target"
                     android:layout_height="@dimen/touch_target"
-                    android:padding="10dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/action_next_space"
+                    android:padding="10dp"
                     android:src="@drawable/baseline_arrow_right_24"
                     app:tint="@color/colorPrimary" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="20dp"
+                    android:layout_marginStart="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@color/divider" />
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/btnOverflow"
                     android:layout_width="@dimen/touch_target"
                     android:layout_height="@dimen/touch_target"
-                    android:layout_marginStart="4dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/action_more_options"
                     android:padding="12dp"
@@ -83,18 +97,23 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- ViewPager2 for Swiping Between Spaces -->
+        <!--
+          One short line, only while a space holds clones: the long paragraph pushed the space card
+          down on a 320dp phone and said more than a user needs in a hint.
+        -->
         <TextView
             android:id="@+id/tvCapacityNote"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="2"
             android:paddingStart="@dimen/margin_normal"
             android:paddingEnd="@dimen/margin_normal"
-            android:paddingTop="@dimen/margin_small"
+            android:paddingTop="4dp"
             android:paddingBottom="0dp"
             android:text="@string/clone_capacity_note"
             android:textColor="@color/text_secondary_dark"
-            android:textSize="12sp"
+            android:textSize="11sp"
             android:visibility="gone" />
 
         <androidx.viewpager2.widget.ViewPager2

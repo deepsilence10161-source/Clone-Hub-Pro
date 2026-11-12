@@ -7,11 +7,18 @@
     android:orientation="vertical">
 
     <!-- Toolbar -->
+    <!--
+      fitsSystemWindows keeps the title below the status bar on every level, including API 35 where
+      edge-to-edge is enforced: the screenshot of the 360dp run had the title flush against the
+      system bar.
+    -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbarPicker"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dp_56"
+        android:layout_height="wrap_content"
         android:background="@color/surface_dark"
+        android:fitsSystemWindows="true"
+        android:minHeight="@dimen/dp_56"
         app:navigationIcon="?attr/homeAsUpIndicator"
         app:navigationIconTint="@color/white"
         app:title="@string/action_install_app"
@@ -81,6 +88,38 @@
             android:paddingBottom="24dp"
             android:scrollbars="vertical" />
 
+        <!-- Shown only when the app list really is empty: it used to be reachable by any failure
+             and blamed the OEM permission, which was wrong for an honest empty list. -->
+        <LinearLayout
+            android:id="@+id/pickerEmptyState"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="@dimen/margin_large"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvEmptyTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/picker_empty_title"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvEmptyMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center"
+                android:text="@string/picker_empty_message"
+                android:textColor="@color/text_secondary_dark"
+                android:textSize="13sp" />
+        </LinearLayout>
+
         <!-- MIUI / HyperOS Permission Card if blocked -->
         <ScrollView
             android:id="@+id/permissionGuide"
@@ -146,6 +185,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:indeterminateTint="@color/colorPrimary" />
+            android:indeterminateTint="@color/colorPrimary"
+            android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>
