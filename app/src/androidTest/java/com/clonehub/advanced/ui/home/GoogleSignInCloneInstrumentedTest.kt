@@ -168,6 +168,11 @@ class GoogleSignInCloneInstrumentedTest {
      */
     private fun probe(kind: String, token: Boolean = false): Map<String, String> {
         val fileName = if (token) "token_probe.txt" else "account_probe.txt"
+        // The answer is published from onCreate, so a fixture that is already running would stay
+        // silent. Both the plain fixture and the clone are stopped first.
+        runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
+        device.executeShellCommand("am force-stop $fixturePackage")
+        SystemClock.sleep(500)
         device.executeShellCommand("logcat -c")
         if (kind == "clone") {
             val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
@@ -201,11 +206,7 @@ class GoogleSignInCloneInstrumentedTest {
         }
 
         val pid = answer["pid"]
-        val realProcess = if (pid != null) {
-            device.executeShellCommand("cat /proc/$pid/cmdline | tr -d '\\000'").trim()
-        } else {
-            ""
-        }
+        val realProcess = pid?.let { resolveProcessName(it) } ?: ""
         val expected = if (kind == "clone") ":agent" else fixturePackage
         val labelled = LinkedHashMap(answer)
         labelled["answer_process"] = realProcess
@@ -217,6 +218,28 @@ class GoogleSignInCloneInstrumentedTest {
         )
         writeEvidence("$kind-answer.txt", labelled.entries.joinToString("\n") { "${it.key}=${it.value}" })
         return labelled
+    }
+
+    /**
+     * Real process name of a pid, read from the shell's own process list. Inside the container the
+     * process cannot name itself truthfully, but `ps -A` outside it shows
+     * `com.clonehub.pro:agent0` — which is what makes a "clone" answer provably a clone answer.
+     */
+    private fun resolveProcessName(pid: String): String {
+        for (attempt in 1..3) {
+            val line = device.executeShellCommand("ps -A")
+                .lineSequence()
+                .firstOrNull { row ->
+                    row.split(Regex("\\s+")).getOrNull(1) == pid ||
+                        row.split(Regex("\\s+")).any { it == pid }
+                }
+            if (line != null) {
+                Log.i(TAG, "GOOGLE_SIGNIN_PS pid=$pid line=${line.trim()}")
+                return line.trim().split(Regex("\\s+")).last()
+            }
+            SystemClock.sleep(300)
+        }
+        return ""
     }
 
     /** Reads the key=value answer the probe published for one file from the device log. */
@@ -248,8 +271,8 @@ class GoogleSignInCloneInstrumentedTest {
     private fun waitForCloneProcess() {
         val deadline = SystemClock.elapsedRealtime() + CLONE_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
-            val processes = device.executeShellCommand("ps -A | grep ':agent' || true")
-            if (processes.contains(":agent")) {
+            val processes = device.executeShellCommand("ps -A | grep -i agent || true")
+            if (processes.contains("agent", ignoreCase = true)) {
                 Log.i(TAG, "GOOGLE_SIGNIN_CLONE_PROCESS ${processes.trim().replace('\n', ' ')}")
                 return
             }
