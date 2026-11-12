@@ -196,29 +196,50 @@ class PhoneUiMatrixInstrumentedTest {
         // dialog was on top and the hierarchy it searched belonged to the dialog.
         val ready = device.wait(Until.hasObject(By.res(appId, "fabAdd")), FIND_TIMEOUT_MS)
         if (!ready) {
+            val focus = runCatching {
+                device.executeShellCommand("dumpsys window | grep -m2 mCurrentFocus")
+            }.getOrNull()
+            Log.w(
+                TAG,
+                "Home not ready on $label; currentPackage=${device.currentPackageName} focus=$focus"
+            )
+            runCatching {
+                device.dumpWindowHierarchy(File(evidenceDir, "home-not-ready-$label.xml"))
+            }
             dismissSystemDialogs()
             val retried = device.wait(Until.hasObject(By.res(appId, "fabAdd")), FIND_TIMEOUT_MS)
             assertTrue(
-                "Home did not render (Add action missing) on $label; " + systemBarSummary(label),
+                "Home did not render (Add action missing) on $label; currentPackage=" +
+                    "${device.currentPackageName} focus=$focus " + systemBarSummary(label),
                 retried
             )
         }
         SystemClock.sleep(SETTLE_MS)
     }
 
-    /** System dialogs (notification permission, ANR, keyguard) are not the app's layout. */
-    private fun dismissSystemDialogs() {
-        runCatching {
-            device.executeShellCommand(
-                "pm grant $context.packageName android.permission.POST_NOTIFICATIONS"
-            )
+    /**
+     * A system dialog on top of the app is not the app's layout, so it is dismissed before any
+     * measurement. Note what is deliberately *not* done here: sending the app to the home screen.
+     * Android 10+ blocks a background process from starting an activity, so a `pressHome()` between
+     * launches is exactly how the earlier revision made every configuration fail with "Home did not
+     * render" — the start was silently refused.
+     */
+    private fun dismissSystemDialogs(permissionsAlreadyGranted: Boolean = true) {
+        if (permissionsAlreadyGranted) {
+            runCatching {
+                device.executeShellCommand(
+                    "pm grant $context.packageName android.permission.POST_NOTIFICATIONS"
+                )
+            }
         }
         runCatching {
             val deny = device.findObject(By.text("Don't allow")) ?: device.findObject(By.text("Deny"))
-            deny?.click()
+            if (deny != null) {
+                Log.i(TAG, "Dismissing system dialog via '${deny.text}'")
+                deny.click()
+                SystemClock.sleep(300)
+            }
         }
-        device.pressHome()
-        SystemClock.sleep(300)
     }
 
     private fun waitFor(selector: BySelector, label: String, name: String): UiObject2 {
