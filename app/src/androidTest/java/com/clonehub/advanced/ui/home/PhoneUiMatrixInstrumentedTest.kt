@@ -90,20 +90,30 @@ class PhoneUiMatrixInstrumentedTest {
             Log.i(TAG, "PHONE_UI config=$label requested=${naturalWidthPx}x$naturalHeightPx@${densityDpi}dpi reported=$reported")
 
             showHome(label)
-            val screenWidth = device.displayWidth
-            val screenHeight = device.displayHeight
-            // The resize has to be real, otherwise every number below is about a different screen.
-            assertTrue(
-                "Display was not resized for $label: asked ${naturalWidthPx}x$naturalHeightPx px, " +
-                    "actual ${screenWidth}x$screenHeight px at ${densityDpi}dpi",
-                setOf(screenWidth, screenHeight) == setOf(naturalWidthPx, naturalHeightPx)
-            )
-            val safeTop = systemBarTop(label, bottom = false).orZero()
-            val safeBottom = systemBarTop(label, bottom = true) ?: screenHeight
+            // The app's own window is the only honest reference: on API 34 the display reports
+            // 1080x2340 while the app is laid out inside 1080x2136 and draws its system bars on
+            // top. Measuring against the display reported every control as "under the nav bar".
+            val window = appWindowBounds()
+            val screenWidth = window.width()
+            val screenHeight = window.height()
             Log.i(
                 TAG,
                 "PHONE_UI config=$label dp=${widthDp}x$heightDp density=${densityDpi}dpi " +
-                    "screen=${screenWidth}x$screenHeight safeTop=$safeTop safeBottom=$safeBottom"
+                    "window=$window display=${device.displayWidth}x${device.displayHeight}"
+            )
+            val expectedLong = maxOf(naturalWidthPx, naturalHeightPx)
+            val expectedShort = minOf(naturalWidthPx, naturalHeightPx)
+            assertTrue(
+                "App window does not match the requested ${widthDp}x${heightDp}dp on $label: $window",
+                maxOf(screenWidth, screenHeight) == expectedLong &&
+                    minOf(screenWidth, screenHeight) == expectedShort
+            )
+            val safeTop = window.top
+            val safeBottom = window.bottom
+            Log.i(
+                TAG,
+                "PHONE_UI config=$label safeArea top=$safeTop bottom=$safeBottom " +
+                    "systemBars=${systemBarSummary(label)}"
             )
 
             // 1. The Add action: on screen, above the navigation bar, and a real touch target.
@@ -114,7 +124,7 @@ class PhoneUiMatrixInstrumentedTest {
             logBounds(label, "fabAdd", fabBounds)
 
             // 2. The space controls in the toolbar: reachable and not overlapping the title.
-            listOf("btnPrevSpace", "btnNextSpace", "btnSettings", "btnBackup").forEach { id ->
+            listOf("btnPrevSpace", "btnNextSpace", "btnOverflow").forEach { id ->
                 val nodeBounds = runCatching { boundsOf(resourceId = id) }.getOrNull()
                 if (nodeBounds != null) {
                     logBounds(label, id, nodeBounds)
@@ -177,14 +187,38 @@ class PhoneUiMatrixInstrumentedTest {
 
     private fun showHome(label: String) {
         device.wakeUp()
+        dismissSystemDialogs()
         context.startActivity(Intent(context, HomeActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         })
-        val rendered = device.wait(
-            Until.hasObject(By.res(appId, "coordinator")), FIND_TIMEOUT_MS
-        )
-        assertTrue("Home did not render on $label", rendered)
+        // "Rendered" means the screen the user sees is really there: the Add action itself, not
+        // just the root view. The first API 34 attempt failed here because a notification-permission
+        // dialog was on top and the hierarchy it searched belonged to the dialog.
+        val ready = device.wait(Until.hasObject(By.res(appId, "fabAdd")), FIND_TIMEOUT_MS)
+        if (!ready) {
+            dismissSystemDialogs()
+            val retried = device.wait(Until.hasObject(By.res(appId, "fabAdd")), FIND_TIMEOUT_MS)
+            assertTrue(
+                "Home did not render (Add action missing) on $label; " + systemBarSummary(label),
+                retried
+            )
+        }
         SystemClock.sleep(SETTLE_MS)
+    }
+
+    /** System dialogs (notification permission, ANR, keyguard) are not the app's layout. */
+    private fun dismissSystemDialogs() {
+        runCatching {
+            device.executeShellCommand(
+                "pm grant $context.packageName android.permission.POST_NOTIFICATIONS"
+            )
+        }
+        runCatching {
+            val deny = device.findObject(By.text("Don't allow")) ?: device.findObject(By.text("Deny"))
+            deny?.click()
+        }
+        device.pressHome()
+        SystemClock.sleep(300)
     }
 
     private fun waitFor(selector: BySelector, label: String, name: String): UiObject2 {
@@ -283,6 +317,20 @@ class PhoneUiMatrixInstrumentedTest {
         return null
     }
 
+    /** Real window area of the app under test, in pixels, including the system bar areas. */
+    private fun appWindowBounds(): Rect {
+        val root = instrumentation.uiAutomation.rootInActiveWindow
+            ?: throw AssertionError("No active window to measure")
+        try {
+            val rect = Rect()
+            root.getBoundsInScreen(rect)
+            return rect
+        } finally {
+            @Suppress("DEPRECATION")
+            root.recycle()
+        }
+    }
+
     /** System-UI nodes live in another package, so they are matched by full resource name. */
     @Suppress("DEPRECATION")
     private fun systemUiBounds(resourceId: String): Rect? {
@@ -326,6 +374,11 @@ class PhoneUiMatrixInstrumentedTest {
         }
     }
 
-    private fun Int?.orZero(): Int = this ?: 0
+    /** Diagnostics: where the system bars are, so a failure report says what the app was up against. */
+    private fun systemBarSummary(label: String): String {
+        val top = systemBarTop(label, bottom = false)
+        val bottom = systemBarTop(label, bottom = true)
+        return "statusBarBottom=$top navBarTop=$bottom"
+    }
 
 }

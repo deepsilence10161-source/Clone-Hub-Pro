@@ -54,10 +54,9 @@ class HomeActivity : AppCompatActivity() {
         spaceManager = SpaceManager.getInstance(this)
 
         initViews()
-        // The measured capacity note is driven by refreshSpaces(), so it always matches the model.
-        findViewById<View>(R.id.btnBackup).setOnClickListener {
-            startActivity(BackupActivity.intent(this))
-        }
+        // One overflow menu instead of a decorative gear and a loose save icon: every secondary
+        // action (backup, new space, about) lives here and is reachable on a 320dp phone.
+        findViewById<View>(R.id.btnOverflow).setOnClickListener { showOverflowMenu() }
         setupViewPager()
         setupSpaceControls()
         refreshSpaces()
@@ -172,21 +171,7 @@ class HomeActivity : AppCompatActivity() {
             if (current < count - 1) {
                 selectSpace(current + 1)
             } else {
-                val newSpace = spaceManager.createNextSpace()
-                if (newSpace == null) {
-                    Toast.makeText(this, R.string.slot_limit_reached, Toast.LENGTH_LONG).show()
-                    return@setOnClickListener
-                }
-                Log.i("HomeActivity", "Created Space ${newSpace.spaceId}; total=${spaceManager.getSpaces().size}")
-                refreshSpaces()
-                // Let ViewPager consume the adapter update before selecting the new page;
-                // otherwise its restoration callback can move back to Space 1.
-                viewPager.post {
-                    val newPosition = spaceManager.getSpaces().indexOfFirst { it.spaceId == newSpace.spaceId }
-                    if (newPosition >= 0) {
-                        selectSpace(newPosition)
-                    }
-                }
+                createSpaceAndShow()
             }
         }
     }
@@ -251,8 +236,32 @@ class HomeActivity : AppCompatActivity() {
             viewPager.setCurrentItem(spaces.lastIndex.coerceAtLeast(0), false)
         }
         updateSpaceIndicator(viewPager.currentItem)
-        findViewById<View>(R.id.layoutEmpty).isVisible = spaces.all { it.apps.isEmpty() }
         findViewById<View>(R.id.tvCapacityNote)?.isVisible = spaces.any { it.apps.isNotEmpty() }
+    }
+
+    private fun showOverflowMenu() {
+        val items = arrayOf(getString(R.string.action_backup), getString(R.string.action_new_space))
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> startActivity(BackupActivity.intent(this))
+                    else -> createSpaceAndShow()
+                }
+            }
+            .show()
+    }
+
+    private fun createSpaceAndShow() {
+        val newSpace = spaceManager.createNextSpace()
+        if (newSpace == null) {
+            Toast.makeText(this, R.string.slot_limit_reached, Toast.LENGTH_LONG).show()
+            return
+        }
+        refreshSpaces()
+        viewPager.post {
+            val position = spaceManager.getSpaces().indexOfFirst { it.spaceId == newSpace.spaceId }
+            if (position >= 0) selectSpace(position)
+        }
     }
 
     /** Space management: rename, and delete only when the space holds no clones. */
