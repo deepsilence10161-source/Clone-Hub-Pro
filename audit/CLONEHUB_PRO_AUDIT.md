@@ -547,3 +547,122 @@ Google account signed in and no Play Services.
 - `Native ARM64 deep clone testing` — `43203694482` green (deep suite `OK (5 tests)` + Google sign-in `OK (3 tests)`)
 - `Real app compatibility smoke` — `43203694484` green (now scoped to the three pinned third-party apps)
 - `Publish latest verified APK` — `43205089212` green (`CloneHub-Pro.apk`, 7,894,182 bytes)
+
+## 19. Mobile-size UI: the gate that was measuring nothing, and the fixes it found
+
+### The measurement bug first
+
+The phone-UI gate reported `safeArea top=0 bottom=2340 navBarTop=null` on every configuration of run
+`43203694595`. It had taken the app window's own edges as the safe area, and on this image the app
+window is the whole display — so "no control is under a system bar" passed four times without ever
+looking at a system bar. The bars are separate windows here; the gate now reads them through
+`AccessibilityWindowInfo` and **fails if either cannot be located**, so it can no longer pass by
+accident. First honest measurement, API 34 (`43242286828`, `43267061891`):
+
+```
+PHONE_UI config=411x891@3x safeArea top=72 bottom=2196  via=windows
+PHONE_UI config=360x720@2x  safeArea top=48 bottom=1184  via=windows
+PHONE_UI config=320x640@2x  safeArea top=48 bottom=1184  via=windows
+PHONE_UI config=720x360@2x  safeArea top=48 side=1184    via=windows   (landscape: bar on the side)
+```
+
+Classifying a landscape bar as a bottom bar made the landscape configuration fail three times in a
+row (`7a01785`, `1d3a6bb`, `abeb436`) — each failure was the gate being wrong, not the app, and each
+was fixed by measuring rather than by loosening the assertion.
+
+### What the gate now covers on every one of the four configurations
+
+Add action, toolbar chevrons and menu (and their ordering against the space indicator), the grid Add
+tile, the space card bounds against the screen, the overflow menu and its first item, the long-press
+action sheet (header status line + four action rows), Backup & restore (all four buttons, scrolled
+into view when the screen is short) and the App Picker (toolbar title below the status bar, install
+button, search field, active filter). All four `PHONE_UI_RESULT … outcome=PASS` on `43267061891`,
+with screenshots per state in `ui-matrix/`.
+
+### UI changes it justified (all visible in those screenshots)
+
+- The picker toolbar sat flush against the status bar; it now applies the inset, and the picker has a
+  real empty state instead of blaming MIUI settings when the honest answer is "no apps to clone".
+- Backup & restore had no title and no way back except the system gesture; it has both now.
+- The long-press sheet's header used a `wrap_content` text block, so a long app name or a failure
+  reason ran past the right edge on a 320dp phone. It is a weighted row now.
+- The capacity note was a paragraph that pushed the space card down; it is one line.
+- A space chevron that cannot go anywhere is hidden, and the space subtitle says which space is on
+  screen (it used to be ellipsised to "Clone Hu…" to make room for arrows that did nothing).
+- A scrollable screen is measured after scrolling the control into view — a button cut off by the
+  screen edge measured 1120x33px in landscape and correctly failed the 48dp rule.
+
+### What this gate still does not prove
+
+Touch targets, bounds, ordering and system-bar clearance are asserted; "looks good" is not. The
+screenshots still show a large empty card when a space holds one clone — the grid is correct and
+within bounds, but the empty space is a design question, not a defect this gate can settle. Wider
+layout polish (an empty state that fills the card, a less redundant Add affordance) is NOT DONE.
+
+## 20. Google sign-in inside a clone: the defect that was actually in the way
+
+### The gate could pass while nothing worked
+
+Up to commit `92a80a4` the sign-in gate asserted host/clone **parity** — and parity is satisfied by
+`0 == 0`. Evidence from run `43203694482`: `google_accounts=0` on both sides, `NO_ACCOUNT` on both
+sides, therefore PASS — while the app under test held **no `GET_ACCOUNTS` grant at all**
+(`dumpsys package com.clonehub.pro` had no such line). A cloned app's "Sign in with Google" asks
+`AccountManager` for the `com.google` account list; if the process may not read accounts, that call
+is refused, the app shows no account, and the user sees a sign-in button that does nothing. The gate
+was green and the path was broken.
+
+### What changed
+
+- `com.clonehub.pro` now declares `android.permission.GET_ACCOUNTS` (as a cloned app would), and the
+  test grants it to **both** processes that answer the probe — the fixture APK and the Pro process
+  that hosts the clone.
+- The probe reports three things it never did: whether the answering process may query accounts,
+  whether the `com.google` authenticator is visible to it, and which component answers
+  `AccountManager.newChooseAccountIntent()`.
+- A new test asks for the account chooser **from inside the clone**.
+
+### The evidence on `43267061891` (deep gate, `OK (4 tests)`)
+
+```
+GOOGLE_SIGNIN_PROBE kind=clone pid=3383 realProcess=com.clonehub.pro:agent0
+  answer={ok=true, google_accounts=0, can_query_accounts=true,
+          account_type_resolvable=false,
+          picker_component=android/android.accounts.ChooseTypeAndAccountActivity}
+GOOGLE_SIGNIN_CHOOSER clone accounts=0 component=android/…ChooseTypeAndAccountActivity authenticator=false
+```
+and the platform's own record of the permission, in the evidence archive:
+`android.permission.GET_ACCOUNTS: granted=true`.
+
+Read honestly: the clone process **can** read the account list, the platform's account chooser
+**is reachable from inside the clone**, and there is **no `com.google` account or authenticator on
+this image** — so the account list is empty and the token request returns `NO_ACCOUNT` on both
+sides. That is the image's state, not the app's.
+
+### NOT TESTED, stated plainly
+
+An end-to-end "Sign in with Google" — the consent screen, a real OAuth token from Google, a signed-in
+account inside the clone — has **not** been run. It needs an image with Play Services and a real
+Google account (a `com.google` account cannot be added programmatically: `SecurityException: uid
+10087 cannot explicitly add accounts of type: com.google`), or a physical device signed in. The
+improvement here is that the gate can no longer report success when the permission that every
+Google sign-in depends on is missing, and that the failure mode is now named in the evidence.
+
+## 21. Gate state for commit `20f0223`
+
+All five workflows green on the same commit:
+
+| Gate | Run | Evidence |
+|---|---|---|
+| API compatibility matrix (27/28/30/31/34/35) | `43267061891` | every level success; API 35/30/31/28/27 (`OK (3 tests)` smoke), API 34 phone-UI matrix (4/4 PASS) |
+| Strict E2E (API 34) | `43267062057` | `OK (32 tests)`, `COMPAT_VISUAL` frameDiff 0.0 / 1.6 / 0.0 |
+| Deep clone testing | `43267061977` | deep suite `OK (5 tests)`, sign-in `OK (4 tests)`, cold restart `OK (1 test)` |
+| Real app compatibility smoke | `43267062282` | green |
+| Publish latest verified APK | `43267934661` | `CloneHub-Pro.apk` published |
+
+Two platform-level problems surfaced and were handled without hiding anything: API 27's image
+crashed `system_server` during boot on two runs (`43252415602`, `43257236404`) — the matrix now
+retries a level **only** when the evidence proves the platform died before any test ran, and never
+when instrumentation produced a result; API 28 once answered `resultCode=1` while its package
+manager did not list the clone — the engine now logs the reply bundle and the verification result per
+attempt (`INSTALL_RESULT package=… resultCode=1 listed=true` on the passing run), which is how that
+step is now proven rather than assumed.
