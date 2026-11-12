@@ -68,10 +68,20 @@ REFERENCE_INSTALL_STATUS=$?
 set -e
 cat "${EVIDENCE_DIR}/real-clonehub-install.txt"
 if [ "${REFERENCE_INSTALL_STATUS}" -ne 0 ]; then
-  echo "Real Clone Hub could not install beside Clone Hub Pro"
-  exit 1
+  # The reference build itself targets API 32, so older Android levels refuse it. That is a
+  # property of the reference app, not of Clone Hub Pro: on those levels the coexistence check is
+  # recorded as NOT APPLICABLE and the rest of the suite still runs.
+  if grep -q "INSTALL_FAILED_OLDER_SDK" "${EVIDENCE_DIR}/real-clonehub-install.txt"; then
+    echo "Reference Clone Hub requires a newer Android level; coexistence check not applicable here"
+    adb shell pm list packages | grep "^package:${PACKAGE_ID}$" \
+      || { echo "App under test is not installed"; exit 1; }
+  else
+    echo "Real Clone Hub could not install beside Clone Hub Pro"
+    exit 1
+  fi
+else
+  adb shell pm list packages | grep '^package:com.multibox.clone.hub$'
 fi
-adb shell pm list packages | grep '^package:com.multibox.clone.hub$'
 
 echo "Installing pinned real third-party compatibility apps"
 for compatibility_apk in markor.apk calculator.apk aegis.apk; do

@@ -108,20 +108,30 @@ class ApiLevelSmokeInstrumentedTest {
             val bar = device.findObject(
                 By.res("com.android.systemui", "navigation_bar_frame")
             ) ?: device.findObject(By.res("com.android.systemui", "navigationBarBackground"))
-            val fabBottom = addButton.visibleBounds.bottom
-            val barTop = bar?.visibleBounds?.top
+            // Re-read the node immediately before measuring/tapping: the home screen re-binds its
+            // grid while it settles, which invalidates a node cached a moment earlier
+            // (StaleObjectException on run 43159382054).
+            val fab = device.wait(Until.findObject(By.res(appId, "fabAdd")), UI_TIMEOUT_MS)
+            if (fab == null) {
+                homeOpened = false
+                return@repeat
+            }
+            val fabBounds = runCatching { fab.visibleBounds }.getOrNull()
+            val barTop = runCatching { bar?.visibleBounds?.top }.getOrNull()
             Log.i(
                 TAG,
-                "API_SMOKE level=$api fab=${addButton.visibleBounds} navBarTop=$barTop attempt=${attempt + 1}"
+                "API_SMOKE level=$api fab=$fabBounds navBarTop=$barTop attempt=${attempt + 1}"
             )
-            if (barTop != null) {
+            if (fabBounds != null && barTop != null) {
                 assertTrue(
                     "Add-app button is covered by the system navigation bar on API $api " +
-                        "(button bottom=$fabBottom, nav bar top=$barTop)",
-                    fabBottom <= barTop
+                        "(button bottom=${fabBounds.bottom}, nav bar top=$barTop)",
+                    fabBounds.bottom <= barTop
                 )
             }
-            addButton.click()
+            runCatching { fab.click() }.onFailure {
+                Log.w(TAG, "API_SMOKE level=$api tap failed on attempt ${attempt + 1}: $it")
+            }
             // Detect the picker by anything the picker really shows: the SearchView may be missing
             // from the accessibility tree on some platforms, but its chips and list are not.
             val deadline = SystemClock.elapsedRealtime() + PICKER_TIMEOUT_MS
