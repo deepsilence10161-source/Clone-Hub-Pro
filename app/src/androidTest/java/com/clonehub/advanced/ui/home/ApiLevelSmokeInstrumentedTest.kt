@@ -86,6 +86,25 @@ class ApiLevelSmokeInstrumentedTest {
         repeat(3) { attempt ->
             val addButton = device.wait(Until.findObject(By.res(appId, "fabAdd")), UI_TIMEOUT_MS)
             checkNotNull(addButton) { "Home Add action never appeared on API $api" }
+            // A control hidden under the navigation bar cannot be tapped by a user. Assert the
+            // geometry before injecting the tap: this is what caught the Android 15 edge-to-edge
+            // regression, where the FAB sat at y=2211..2358 under a bar starting at 2274.
+            val bar = device.findObject(
+                By.res("com.android.systemui", "navigation_bar_frame")
+            ) ?: device.findObject(By.res("com.android.systemui", "navigationBarBackground"))
+            val fabBottom = addButton.visibleBounds.bottom
+            val barTop = bar?.visibleBounds?.top
+            Log.i(
+                TAG,
+                "API_SMOKE level=$api fab=${addButton.visibleBounds} navBarTop=$barTop attempt=${attempt + 1}"
+            )
+            if (barTop != null) {
+                assertTrue(
+                    "Add-app button is covered by the system navigation bar on API $api " +
+                        "(button bottom=$fabBottom, nav bar top=$barTop)",
+                    fabBottom <= barTop
+                )
+            }
             addButton.click()
             pickerOpen = device.wait(Until.hasObject(By.res(appId, "searchView")), PICKER_TIMEOUT_MS)
             if (!pickerOpen && attempt < 2) {

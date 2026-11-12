@@ -28,6 +28,10 @@ import kotlinx.coroutines.withContext
 
 class HomeActivity : AppCompatActivity() {
 
+    private companion object {
+        const val TAG = "HomeActivity"
+    }
+
     private lateinit var spaceManager: SpaceManager
     private lateinit var viewPager: ViewPager2
     private lateinit var spacePagerAdapter: SpacePagerAdapter
@@ -75,6 +79,53 @@ class HomeActivity : AppCompatActivity() {
             val currentSpaceId = getCurrentSpaceId()
             openAppPicker(currentSpaceId)
         }
+        applySystemBarInsets()
+    }
+
+    /**
+     * Android 15 (targetSdk 35) forces edge-to-edge, so the activity draws under the navigation
+     * bar and the FAB ended up behind the gesture bar: taps landed on the system bar and the app
+     * picker never opened (measured on the API 35 gate, run 43153564675).
+     *
+     * The theme deliberately starts outside the system bars, so the insets are applied as padding
+     * on the root view instead of being consumed blindly — this keeps working on API 24-34, where
+     * the insets are already zero and the padding simply adds nothing.
+     */
+    private fun applySystemBarInsets() {
+        val root = findViewById<View>(R.id.coordinator) ?: return
+        val basePadding = intArrayOf(root.paddingLeft, root.paddingTop, root.paddingRight, root.paddingBottom)
+        val baseFabMargin = findViewById<View>(R.id.fabAdd)?.let { fab ->
+            (fab.layoutParams as? android.view.ViewGroup.MarginLayoutParams)?.let {
+                intArrayOf(it.leftMargin, it.topMargin, it.rightMargin, it.bottomMargin)
+            }
+        }
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root) { _, insets ->
+            val bars = insets.getInsets(
+                androidx.core.view.WindowInsetsCompat.Type.systemBars() or
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout()
+            )
+            root.setPadding(
+                basePadding[0] + bars.left,
+                basePadding[1] + bars.top,
+                basePadding[2] + bars.right,
+                basePadding[3] + bars.bottom
+            )
+            // The FAB is anchored to the bottom, so it needs the navigation-bar inset as margin.
+            findViewById<View>(R.id.fabAdd)?.let { fab ->
+                (fab.layoutParams as? android.view.ViewGroup.MarginLayoutParams)?.let { params ->
+                    if (baseFabMargin != null) {
+                        params.leftMargin = baseFabMargin[0] + bars.left
+                        params.topMargin = baseFabMargin[1]
+                        params.rightMargin = baseFabMargin[2] + bars.right
+                        params.bottomMargin = baseFabMargin[3] + 0
+                    }
+                    fab.layoutParams = params
+                }
+            }
+            insets
+        }
+        androidx.core.view.ViewCompat.requestApplyInsets(root)
+        Log.i(TAG, "System bar insets applied to the home layout (API ${android.os.Build.VERSION.SDK_INT})")
     }
 
     private fun setupViewPager() {

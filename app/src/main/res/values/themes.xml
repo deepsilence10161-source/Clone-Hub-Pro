@@ -13,8 +13,11 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
         <item name="android:windowLightStatusBar">false</item>
 
-        <!-- Edge to Edge & Modern Android 15 Support -->
-        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">false</item>
+        <!-- Android 15 forces edge-to-edge for targetSdk 35. Opting out keeps the window outside
+             the status/navigation bars on API 35 as well, so no control can end up under the system
+             UI. HomeActivity additionally applies the system-bar insets as padding, so the layout
+             is correct on devices that ignore the opt-out. -->
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
     </style>
 
     <!-- Exact agent-theme behavior required by the virtual activity stubs. -->
