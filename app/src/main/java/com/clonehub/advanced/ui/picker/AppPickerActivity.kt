@@ -177,7 +177,7 @@ class AppPickerActivity : AppCompatActivity() {
                 } else {
                     list.isVisible = true
                     adapter.submitList(installed)
-                    Log.i(TAG, "Picker loaded ${apps.size} apps includeSystem=$includeSystem")
+                    Log.i(TAG, "Picker loaded ${installed.size} apps includeSystem=$includeSystem")
                 }
             }.onFailure { error ->
                 guide.isVisible = true
