@@ -164,7 +164,6 @@ class GoogleSignInCloneInstrumentedTest {
         val mode = if (kind == "clone") "clone" else "normal"
         val fileName = if (token) "token_probe-$mode.txt" else "account_probe-$mode.txt"
         device.executeShellCommand("logcat -c")
-        File(context.filesDir, "account_probe_request").writeText(kind)
         if (kind == "clone") {
             val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
             assertTrue(
@@ -173,9 +172,18 @@ class GoogleSignInCloneInstrumentedTest {
             )
             waitForCloneProcess()
         } else {
-            context.startActivity(Intent(context, CloneFixtureActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            })
+            // The fixture lives in the instrumentation APK, so the component is named explicitly;
+            // starting it through the app's own context resolves to the wrong package.
+            val started = runCatching {
+                instrumentation.context.startActivity(
+                    Intent().setClassName(fixturePackage, CloneFixtureActivity::class.java.name)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                )
+            }
+            assertTrue(
+                "Could not start the fixture for the normal probe: ${started.exceptionOrNull()}",
+                started.isSuccess
+            )
         }
 
         val deadline = SystemClock.elapsedRealtime() + REPORT_TIMEOUT_MS

@@ -41,18 +41,20 @@ final class AccountProbe {
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
     private static final String TOKEN_TYPE =
             "oauth2:https://www.googleapis.com/auth/userinfo.email";
-    private static final String REQUEST_FLAG = "account_probe_request";
     private static final long TOKEN_TIMEOUT_SECONDS = 20L;
 
     private AccountProbe() {
     }
 
-    /** Runs both probes when the suite has asked for them, from a background thread. */
-    static void runIfRequested(final Activity activity) {
-        File flag = new File(activity.getFilesDir(), REQUEST_FLAG);
-        if (!flag.exists()) {
-            return;
-        }
+    /**
+     * Runs both probes on every start, from a background thread.
+     *
+     * A request flag cannot be used to gate this: inside the clone the app's data directory is
+     * virtualised, so a marker written by the host is not visible there — the probe would then be
+     * silent exactly where it matters. This is a test-only fixture, so answering every time is the
+     * cheaper trade.
+     */
+    static void run(final Activity activity) {
         final Context context = activity.getApplicationContext();
         new Thread(() -> {
             String kind = processKind();
