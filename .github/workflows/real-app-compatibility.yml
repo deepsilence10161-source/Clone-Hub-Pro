@@ -178,7 +178,10 @@ jobs:
       TEST_PACKAGE_ID: com.clonehub.pro.test
       MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
       ANDROID_SERIAL: localhost:5555
-      TEST_CLASS: ${{ inputs.test_class }}
+      # This job's name is its scope: the three pinned real third-party apps, cloned and compared
+      # with their un-cloned screens. It used to inherit an empty class and therefore ran the whole
+      # suite, so unrelated suites (UI matrix, Google sign-in) reported through it.
+      TEST_CLASS: com.clonehub.advanced.ui.home.ThirdPartyCloneCompatibilityInstrumentedTest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
