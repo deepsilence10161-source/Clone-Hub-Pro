@@ -69,7 +69,9 @@ for attempt in $(seq 1 90); do
     adb -s localhost:5555 shell getprop ro.build.version.release | tee "$OUT/redroid-android-version.txt"
     exit 0
   fi
-  if ! docker ps --format '{{.Names}}' | grep -qx redroid; then
+  # Must match the container this run actually created: hard-coding "redroid" made every matrix
+  # level abort on its first poll while the container was still booting (run 43151133377).
+  if ! docker ps --format '{{.Names}}' | grep -qx "${REDROID_CONTAINER:-redroid}"; then
     docker logs "${REDROID_CONTAINER:-redroid}" > "$OUT/redroid-docker.log" 2>&1 || true
     echo "redroid container exited before boot"
     exit 1
