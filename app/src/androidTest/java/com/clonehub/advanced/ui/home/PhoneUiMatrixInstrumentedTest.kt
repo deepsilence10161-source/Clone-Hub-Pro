@@ -395,9 +395,16 @@ class PhoneUiMatrixInstrumentedTest {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             })
             if (device.wait(Until.hasObject(By.res(appId, "btnCreateBackup")), FIND_TIMEOUT_MS)) {
+                // A scrollable screen legitimately needs a scroll to reach a button, but a button
+                // that cannot be brought fully into view — or that is cut off by the screen edge —
+                // is a real defect. Measured in landscape on run 43242286828: btnRestoreReplace was
+                // reported as 1120x33px because it was clipped at the bottom edge.
                 listOf("btnCreateBackup", "btnPickRestore", "btnRestoreMerge", "btnRestoreReplace")
                     .forEach { id ->
-                        val b = runCatching { boundsOf(resourceId = id) }.getOrNull() ?: return@forEach
+                        val b = scrollIntoView(label, id, bottomLimit) ?: run {
+                            Log.w(TAG, "PHONE_UI config=$label $id not found on the backup screen")
+                            return@forEach
+                        }
                         logBounds(label, id, b)
                         assertInside(id, b, screenWidth, safeTop, bottomLimit)
                         assertTouchTarget(id, b, densityDpi)

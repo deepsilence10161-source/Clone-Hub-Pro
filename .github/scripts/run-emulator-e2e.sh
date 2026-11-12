@@ -62,6 +62,16 @@ echo "Installing application under test"
 adb install -r -t artifacts/app-debug.apk
 adb shell pm list packages | grep "^package:${PACKAGE_ID}$"
 
+# The API smoke suite launches a second, ordinary app inside a clone and needs it to be a real
+# installed package: it ships in the instrumentation APK, so install that APK as an app too.
+if [ -f artifacts/app-debug-androidTest.apk ]; then
+  adb install -r -t artifacts/app-debug-androidTest.apk \
+    > "${EVIDENCE_DIR}/fixture-install.txt" 2>&1 || true
+  cat "${EVIDENCE_DIR}/fixture-install.txt"
+  adb shell pm list packages | grep "^package:${PACKAGE_ID}.test$" \
+    || echo "WARNING: the clone fixture app is not installed on this level"
+fi
+
 echo "Installing untouched real Clone Hub beside Clone Hub Pro"
 # This catches both package-name and provider-authority conflicts in the same
 # direction reported by users: Pro is already present, then real Clone Hub installs.
