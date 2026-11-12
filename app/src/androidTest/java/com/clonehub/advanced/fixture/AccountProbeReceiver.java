@@ -12,7 +12,6 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -148,8 +147,15 @@ public final class AccountProbeReceiver extends BroadcastReceiver {
         for (int i = 0; i < accounts.length; i++) {
             values[i] = accounts[i].name;
         }
-        Arrays.sort(values);
-        return String.join(",", values);
+        java.util.Arrays.sort(values);
+        StringBuilder joined = new StringBuilder();
+        for (int i = 0; i < values.length; i++) {
+            if (i > 0) {
+                joined.append(',');
+            }
+            joined.append(values[i]);
+        }
+        return joined.toString();
     }
 
     private void report(Context context, String fileName, String content) {

@@ -7,6 +7,7 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
+import androidx.test.uiautomator.BySelector
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
@@ -77,8 +78,7 @@ class PhoneUiMatrixInstrumentedTest {
         heightDp: Int,
         landscape: Boolean
     ) {
-        assertTrue("Display $naturalWidthPx x $naturalHeightPx is not supported",
-            device.setOrientationNatural())
+        device.setOrientationNatural()
         device.executeShellCommand("wm size ${naturalWidthPx}x$naturalHeightPx")
         device.executeShellCommand("wm density $densityDpi")
         SystemClock.sleep(SETTLE_MS)
@@ -189,7 +189,7 @@ class PhoneUiMatrixInstrumentedTest {
         SystemClock.sleep(SETTLE_MS)
     }
 
-    private fun waitFor(selector: By, label: String, name: String): UiObject2 {
+    private fun waitFor(selector: BySelector, label: String, name: String): UiObject2 {
         val node = device.wait(Until.findObject(selector), FIND_TIMEOUT_MS)
         assertNotNull(
             "$name not found on $label; hierarchy dumped to $label-$name-failure.xml",

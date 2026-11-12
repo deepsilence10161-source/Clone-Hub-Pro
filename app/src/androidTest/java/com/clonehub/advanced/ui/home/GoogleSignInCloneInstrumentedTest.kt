@@ -2,18 +2,10 @@ package com.clonehub.advanced.ui.home
 
 import android.Manifest
 import android.accounts.AccountManager
-import android.accounts.AccountManagerCallback
-import android.accounts.AccountManagerFuture
-import android.app.Activity
-import android.content.Context
-import android.content.pm.PackageManager
-import android.os.Bundle
 import android.os.SystemClock
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
-import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.Until
 import com.clonehub.advanced.core.container.VirtualContainerEngine
 import com.clonehub.advanced.data.model.ClonedApp
 import org.junit.Assert.assertTrue
@@ -21,8 +13,6 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runners.MethodSorters
 import java.io.File
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 /**
  * Google sign-in inside a cloned app.
@@ -50,7 +40,6 @@ class GoogleSignInCloneInstrumentedTest {
         const val TAG = "GOOGLE_SIGNIN"
         const val TEST_ACCOUNT = "clonehub.verify@gmail.com"
         const val TEST_ACCOUNT_TYPE = "com.google"
-        const val TOKEN_TYPE = "oauth2:https://www.googleapis.com/auth/userinfo.email"
         const val CLONE_TIMEOUT_MS = 60_000L
         const val TOKEN_TIMEOUT_MS = 25_000L
     }
