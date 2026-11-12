@@ -1,40 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
-    android:gravity="center"
+    android:minHeight="@dimen/grid_item_min_width"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:gravity="top|center_horizontal"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingTop="@dimen/margin_small"
+    android:paddingBottom="@dimen/margin_small"
+    android:paddingStart="@dimen/margin_micro"
+    android:paddingEnd="@dimen/margin_micro">
 
-    <!-- App Icon Container with Badge -->
     <FrameLayout
-        android:layout_width="54dp"
-        android:layout_height="54dp">
+        android:layout_width="@dimen/app_icon_box"
+        android:layout_height="@dimen/app_icon_box">
 
         <ImageView
             android:id="@+id/ivAppIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="@dimen/app_icon_size"
+            android:layout_height="@dimen/app_icon_size"
             android:layout_gravity="center"
-            android:contentDescription="App Icon" />
+            android:contentDescription="@string/clone_app_icon" />
 
         <!-- Real clone health indicator: only visible when the last launch failed. -->
         <ImageView
             android:id="@+id/ivAppStatus"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:layout_gravity="bottom|end"
             android:background="@color/surface_dark"
             android:contentDescription="@string/clone_status_failed"
+            android:padding="2dp"
             android:src="@drawable/ic_status_failed"
             android:visibility="gone" />
 
-        <!-- Notification or Cloned Badge Indicator -->
         <TextView
             android:id="@+id/tvAppBadge"
-            android:layout_width="16dp"
-            android:layout_height="16dp"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
             android:layout_gravity="top|end"
             android:background="@drawable/bg_permission_step"
             android:gravity="center"
@@ -44,15 +48,15 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- App Title Label -->
     <TextView
         android:id="@+id/tvAppTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="6dp"
         android:ellipsize="end"
-        android:gravity="center"
-        android:maxLines="1"
+        android:gravity="center_horizontal"
+        android:maxLines="2"
+        android:minLines="1"
         android:textColor="@color/text_primary_dark"
-        android:textSize="12sp" />
+        android:textSize="11sp" />
 </LinearLayout>

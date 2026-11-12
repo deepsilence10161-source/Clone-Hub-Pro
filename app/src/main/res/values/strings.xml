@@ -48,6 +48,8 @@
     <string name="clone_failed">Could not clone %1$s. The virtual engine is unavailable on this device.</string>
     <string name="launch_failed">Could not open %1$s in this space.</string>
     <string name="launch_failed_reason">Could not open %1$s\n%2$s</string>
+    <string name="clone_app_icon">Cloned app icon</string>
+    <string name="action_space_menu">Space options</string>
     <string name="clone_status_failed">Last launch failed: %1$s</string>
     <string name="error_details_title">Details</string>
     <string name="space_rename">Rename space</string>

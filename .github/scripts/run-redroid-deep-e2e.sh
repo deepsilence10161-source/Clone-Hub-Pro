@@ -5,6 +5,9 @@ OUT=deep-evidence
 mkdir -p "$OUT"
 RUNNER="$TEST_PACKAGE_ID/androidx.test.runner.AndroidJUnitRunner"
 DEEP_CLASS=com.clonehub.advanced.ui.home.DeepCloneFlowInstrumentedTest
+# Google sign-in inside a clone: account-list parity, token path, and account added while the
+# clone is running. Same device, same APKs, driven through the runtime like a real cloned app.
+SIGNIN_CLASS=com.clonehub.advanced.ui.home.GoogleSignInCloneInstrumentedTest
 
 cleanup() {
   status=$?
@@ -64,6 +67,14 @@ adb shell am force-stop "$PACKAGE_ID"
 adb shell am start -W -n "$PACKAGE_ID/$MAIN_ACTIVITY" > "$OUT/cold-start.txt" 2>&1 || true
 grep -E "TotalTime|WaitTime" "$OUT/cold-start.txt" || true
 run_tests deep-suite -e class "$DEEP_CLASS" || deep_status=$?
+# Kept separate so a sign-in failure names itself instead of hiding inside the deep suite.
+adb logcat -c
+run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
+adb logcat -d -v threadtime > "$OUT/google-signin-logcat.txt" 2>/dev/null || true
+# Platform answers about accounts, from the device's own point of view.
+adb shell dumpsys account > "$OUT/account-service.txt" 2>&1 || true
+adb shell pm list packages | grep -i "google\|gsf\|vending" > "$OUT/play-services-packages.txt" 2>&1 || true
+echo "Sign-in evidence captured; packages: $(cat "$OUT/play-services-packages.txt" | tr '\n' ' ')"
 
 # Instrumentation has terminated the target process. Force-stop again explicitly,
 # then run only the persistence check in a genuinely fresh target process.

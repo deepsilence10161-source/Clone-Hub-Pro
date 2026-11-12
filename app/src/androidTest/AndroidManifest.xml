@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Asked for by every app that offers Google sign-in; the probe reports what the clone sees. -->
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <!-- A separate, ordinary user app used only to prove the complete clone flow. -->
         <activity
@@ -11,5 +17,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+          Answers the account/token probes from whatever process it runs in. The host suite
+          broadcasts to it directly for the un-cloned answer, and the virtual container delivers
+          the same broadcast to the cloned instance for the in-clone answer.
+        -->
+        <receiver
+            android:name="com.clonehub.advanced.fixture.AccountProbeReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.clonehub.advanced.GOOGLE_ACCOUNT_PROBE" />
+                <action android:name="com.clonehub.advanced.GOOGLE_TOKEN_PROBE" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

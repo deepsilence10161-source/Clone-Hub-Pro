@@ -18,7 +18,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="@dimen/dp_56"
+            android:paddingEnd="0dp"
             app:title="@string/app_name"
+            app:titleMarginStart="0dp"
             app:titleTextColor="@color/white">
 
             <!-- Space Selector in Toolbar (< 1 >) -->
@@ -33,8 +35,9 @@
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/btnPrevSpace"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/touch_target"
+                    android:padding="10dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/baseline_arrow_left_24"
                     app:tint="@color/colorPrimary" />
@@ -52,8 +55,9 @@
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/btnBackup"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/touch_target"
+                    android:padding="10dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:contentDescription="@string/action_backup"
                     android:src="@android:drawable/ic_menu_save"
@@ -61,16 +65,18 @@
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/btnNextSpace"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/touch_target"
+                    android:padding="10dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/baseline_arrow_right_24"
                     app:tint="@color/colorPrimary" />
 
                 <androidx.appcompat.widget.AppCompatImageButton
                     android:id="@+id/btnSettings"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
+                    android:layout_width="@dimen/touch_target"
+                    android:layout_height="@dimen/touch_target"
+                    android:padding="10dp"
                     android:layout_marginStart="4dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_action_setting"
@@ -80,44 +86,50 @@
     </com.google.android.material.appbar.AppBarLayout>
 
     <!-- Content Area -->
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <!-- ViewPager2 for Swiping Between Spaces -->
         <TextView
-        android:id="@+id/tvCapacityNote"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="@dimen/margin_normal"
-        android:paddingVertical="@dimen/margin_small"
-        android:text="@string/clone_capacity_note"
-        android:textColor="@color/text_secondary_dark"
-        android:textSize="12sp"
-        android:visibility="gone" />
+            android:id="@+id/tvCapacityNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/margin_normal"
+            android:paddingEnd="@dimen/margin_normal"
+            android:paddingTop="@dimen/margin_small"
+            android:paddingBottom="0dp"
+            android:text="@string/clone_capacity_note"
+            android:textColor="@color/text_secondary_dark"
+            android:textSize="12sp"
+            android:visibility="gone" />
 
-    <androidx.viewpager2.widget.ViewPager2
+        <androidx.viewpager2.widget.ViewPager2
             android:id="@+id/viewPagerSpaces"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:clipChildren="false"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:paddingStart="@dimen/dp_12"
-            android:paddingEnd="@dimen/dp_12"
-            android:paddingTop="@dimen/dp_16"
-            android:paddingBottom="80dp" />
+            android:paddingStart="@dimen/home_grid_padding"
+            android:paddingEnd="@dimen/home_grid_padding"
+            android:paddingTop="@dimen/dp_12"
+            android:paddingBottom="@dimen/fab_clearance" />
 
-        <!-- Empty State Hint -->
-        <LinearLayout
-            android:id="@+id/layoutEmpty"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:visibility="gone">
+    </LinearLayout>
+
+    <!-- Empty State Hint, centred over the grid area -->
+    <LinearLayout
+        android:id="@+id/layoutEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
 
             <ImageView
                 android:layout_width="64dp"
@@ -125,24 +137,23 @@
                 android:src="@drawable/ic_action_install"
                 app:tint="@color/text_secondary_dark" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/empty_space_hint"
-                android:textColor="@color/text_secondary_dark"
-                android:textSize="14sp" />
-        </LinearLayout>
-
-        <!-- Loading Spinner -->
-        <ProgressBar
-            android:id="@+id/progressBar"
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:indeterminateTint="@color/colorPrimary"
-            android:visibility="gone" />
-    </RelativeLayout>
+            android:layout_marginTop="12dp"
+            android:text="@string/empty_space_hint"
+            android:textColor="@color/text_secondary_dark"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+    <!-- Loading Spinner -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:indeterminateTint="@color/colorPrimary"
+        android:visibility="gone" />
 
     <!-- Floating Action Button for Adding Apps -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -150,7 +161,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
-        android:layout_margin="@dimen/margin_normal"
+        android:layout_marginEnd="@dimen/margin_normal"
+        android:layout_marginBottom="@dimen/fab_clearance"
         android:backgroundTint="@color/colorPrimary"
         android:src="@drawable/ic_action_add_24"
         app:elevation="6dp"

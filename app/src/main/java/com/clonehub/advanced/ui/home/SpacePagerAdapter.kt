@@ -55,6 +55,16 @@ class SpacePagerAdapter(
         holder.bind(spaces[position])
     }
 
+    /**
+     * Columns are derived from the real width available to the grid, at the 72dp minimum tile
+     * width used by the phone layout, instead of assuming one screen size.
+     */
+    private fun gridColumnCount(): Int {
+        val widthDp = context.resources.configuration.screenWidthDp
+        val usable = (widthDp - 48).coerceAtLeast(72 * 3)
+        return (usable / 72).coerceIn(3, 6)
+    }
+
     inner class SpaceViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvBadge: TextView = itemView.findViewById(R.id.tvSpaceBadge)
         private val btnMenu: ImageButton = itemView.findViewById(R.id.btnSpaceMenu)
@@ -76,7 +86,9 @@ class SpacePagerAdapter(
             // re-inflate of every icon whenever any space changed.
             if (boundSpaceId != space.spaceId || appAdapter == null) {
                 boundSpaceId = space.spaceId
-                recyclerApps.layoutManager = GridLayoutManager(context, 4)
+                // 4 columns on a phone is the reference density; a wider screen (tablet, unfolded
+                // device, landscape) fits more instead of stretching each icon.
+                recyclerApps.layoutManager = GridLayoutManager(context, gridColumnCount())
                 appAdapter = AppGridAdapter(
                     context = context,
                     spaceId = space.spaceId,

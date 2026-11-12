@@ -70,6 +70,13 @@ jobs:
             image: "redroid/redroid:12.0.0_64only-240527"
           - api: 35
             image: "redroid/redroid:15.0.0_64only-latest"
+          # Mobile-size UI matrix (PhoneUiMatrixInstrumentedTest). It runs on its own level so the
+          # per-level smoke suite keeps its identity; it sets the display to 320/360/411dp phones
+          # itself, in portrait and landscape, and fails the gate if any control is out of bounds,
+          # under a system bar, or smaller than the 48dp touch target.
+          - api: 34
+            image: "redroid/redroid:14.0.0_64only-latest"
+            test_class: com.clonehub.advanced.ui.home.PhoneUiMatrixInstrumentedTest
           # API 36 is deliberately absent: redroid 16.0.0 never finishes booting on this runner
           # (run 43151607712: zygote in a restart loop, sys.boot_completed never set, no error in
           # the container log). Android 16 support is therefore NOT TESTED, not silently assumed.
@@ -83,7 +90,7 @@ jobs:
       # the same container or the same runtime data directory.
       REDROID_IMAGE: ${{ matrix.image }}
       REDROID_CONTAINER: redroid-${{ matrix.api }}
-      TEST_CLASS: com.clonehub.advanced.ui.home.ApiLevelSmokeInstrumentedTest
+      TEST_CLASS: ${{ matrix.test_class || 'com.clonehub.advanced.ui.home.ApiLevelSmokeInstrumentedTest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4

@@ -14,4 +14,17 @@
     <dimen name="margin_normal">16dp</dimen>
     <dimen name="margin_large">24dp</dimen>
     <dimen name="text_size_h2">20sp</dimen>
+
+    <!-- Phone-first layout metrics. A 360dp phone is the reference width: 4-column grids,
+         48dp touch targets and a FAB that clears the bottom bar plus the last grid row. -->
+    <dimen name="touch_target">48dp</dimen>
+    <dimen name="home_grid_padding">4dp</dimen>
+    <dimen name="space_card_margin">6dp</dimen>
+    <dimen name="space_card_padding">10dp</dimen>
+    <dimen name="grid_item_min_width">72dp</dimen>
+    <dimen name="app_icon_size">52dp</dimen>
+    <dimen name="app_icon_box">56dp</dimen>
+    <dimen name="fab_clearance">88dp</dimen>
+    <dimen name="list_row_min_height">64dp</dimen>
+    <dimen name="picker_horizontal_padding">12dp</dimen>
 </resources>

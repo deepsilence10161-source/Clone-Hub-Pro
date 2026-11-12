@@ -17,6 +17,10 @@ cleanup() {
     "${EVIDENCE_DIR}/compatibility" 2>/dev/null || true
   adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/api-matrix" \
     "${EVIDENCE_DIR}/api-matrix" 2>/dev/null || true
+  adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/ui-matrix" \
+    "${EVIDENCE_DIR}/ui-matrix" 2>/dev/null || true
+  adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/google-signin" \
+    "${EVIDENCE_DIR}/google-signin" 2>/dev/null || true
   adb pull "/sdcard/Android/data/${PACKAGE_ID}/files/settings-clone.png" \
     "${EVIDENCE_DIR}/settings-clone.png" 2>/dev/null || true
   exit "${STATUS}"
