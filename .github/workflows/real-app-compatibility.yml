@@ -190,7 +190,7 @@ jobs:
       - if: always()
         run: |
           mkdir -p evidence
-          docker logs redroid > evidence/redroid-docker.log 2>&1 || true
+          docker logs "${REDROID_CONTAINER:-redroid}" > evidence/redroid-docker.log 2>&1 || true
           adb -s localhost:5555 shell getprop > evidence/redroid-getprop.txt 2>&1 || true
       # Public diagnosis channel: artifact downloads need account scope that this repository
       # token does not have, so failing evidence is attached to a rolling pre-release instead.

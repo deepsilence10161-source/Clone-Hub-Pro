@@ -39,6 +39,7 @@ object VirtualContainerEngine {
     // therefore reported failure for launches that opened normally a moment afterwards.
     private const val AGENT_VISIBLE_TIMEOUT_MS = 3_000L
     private const val LAUNCH_CONFIRM_TIMEOUT_MS = 20_000L
+    private const val LAUNCH_CONFIRM_TIMEOUT_MS_LEGACY = 45_000L
     private const val AGENT_SUFFIX = ":agent"
     private const val AGENT_POLL_INTERVAL_MS = 250L
 
@@ -284,18 +285,18 @@ object VirtualContainerEngine {
             // The transaction returns before the proxied activity is attached, so this polls for the
             // confirmation window instead of sampling once; the failure detail keeps the observed
             // process state and the time that was actually allowed.
-            val agent = awaitForegroundAgentProcess(context, LAUNCH_CONFIRM_TIMEOUT_MS)
+            val agent = awaitForegroundAgentProcess(context, launchConfirmTimeoutMs())
             if (agent == null) {
                 val seen = describeProcesses(context)
                 Log.e(
                     TAG,
                     "Launch code 0 but no agent process became foreground within " +
-                        "${LAUNCH_CONFIRM_TIMEOUT_MS}ms; processes=$seen"
+                        "${launchConfirmTimeoutMs()}ms; processes=$seen"
                 )
                 EngineOutcome.NotVerified(
                     "launch",
                     "runtime answered code=0 but no cloned process became foreground within " +
-                        "${LAUNCH_CONFIRM_TIMEOUT_MS}ms (processes=$seen)"
+                        "${launchConfirmTimeoutMs()}ms (processes=$seen)"
                 )
             } else {
                 Log.i(TAG, "Launch verified in agent process $agent")
@@ -309,6 +310,14 @@ object VirtualContainerEngine {
             reply.recycle()
         }
     }
+
+    /**
+     * Older platforms attach the proxied activity noticeably slower, and the confirmation window
+     * must not turn into a false "launch failed" there. Derived from the platform level only.
+     */
+    private fun launchConfirmTimeoutMs(): Long =
+        if (android.os.Build.VERSION.SDK_INT <= 28) LAUNCH_CONFIRM_TIMEOUT_MS_LEGACY
+        else LAUNCH_CONFIRM_TIMEOUT_MS
 
     /**
      * Waits briefly for one of this application's clone agent processes (`<pkg>:agentN`) to reach

@@ -23,7 +23,13 @@ for name in binder hwbinder vndbinder; do
 done
 ls -l /dev/binderfs /dev/binder /dev/hwbinder /dev/vndbinder > "$OUT/binder-devices.txt"
 
-IMAGE="redroid/redroid:14.0.0_64only-latest"
+# The Android level under test is selectable so the same gate can cover a compatibility matrix;
+# every run records the image it used in redroid-host.txt.
+IMAGE="${REDROID_IMAGE:-redroid/redroid:14.0.0_64only-latest}"
+{
+  echo "REDROID_IMAGE=$IMAGE"
+  echo "container_name=${REDROID_CONTAINER:-redroid}"
+} >> "$OUT/redroid-host.txt"
 # Registry pulls fail transiently (rate limits, DNS) and the failure used to leave no evidence at
 # all. Pull explicitly, retry, and keep the output.
 for attempt in 1 2 3; do
@@ -34,7 +40,7 @@ for attempt in 1 2 3; do
   sleep $((attempt * 5))
 done
 
-if ! docker run -d --name redroid --privileged \
+if ! docker run -d --name "${REDROID_CONTAINER:-redroid}" --privileged \
   -p 127.0.0.1:5555:5555 \
   -v "$PWD/redroid-data:/data" \
   "$IMAGE" \
@@ -64,7 +70,7 @@ for attempt in $(seq 1 90); do
     exit 0
   fi
   if ! docker ps --format '{{.Names}}' | grep -qx redroid; then
-    docker logs redroid > "$OUT/redroid-docker.log" 2>&1 || true
+    docker logs "${REDROID_CONTAINER:-redroid}" > "$OUT/redroid-docker.log" 2>&1 || true
     echo "redroid container exited before boot"
     exit 1
   fi
@@ -81,7 +87,7 @@ done
   echo "--- kernel log (binder/avc)"
   sudo dmesg | grep -iE "binder|avc|seccomp" | tail -n 40 || true
 } > "$OUT/redroid-kernel.txt" 2>&1 || true
-docker logs redroid > "$OUT/redroid-docker.log" 2>&1 || true
+docker logs "${REDROID_CONTAINER:-redroid}" > "$OUT/redroid-docker.log" 2>&1 || true
 
 # Timeout: keep everything that explains why the emulator never became usable, because the job log
 # is the only other place and it needs repository admin rights to read.
@@ -97,7 +103,7 @@ docker logs redroid > "$OUT/redroid-docker.log" 2>&1 || true
   echo "--- binder devices"
   ls -l /dev/binderfs 2>&1 || true
 } > "$OUT/redroid-timeout.txt" 2>&1 || true
-docker logs redroid > "$OUT/redroid-docker.log" 2>&1 || true
+docker logs "${REDROID_CONTAINER:-redroid}" > "$OUT/redroid-docker.log" 2>&1 || true
 echo "Timed out waiting for native ARM64 redroid"
 cat "$OUT/redroid-timeout.txt" || true
 tail -n 40 "$OUT/redroid-docker.log" || true

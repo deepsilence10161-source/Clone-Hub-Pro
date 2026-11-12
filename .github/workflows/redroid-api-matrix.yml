@@ -1,0 +1,107 @@
+name: Native ARM64 API compatibility matrix
+
+# The device gates all ran the same Android 14 image, so "works on API 24-35" was never proven.
+# This gate boots one emulator per supported Android level and runs a per-level smoke suite:
+# install, launch, clone, and the API-behaviour checks that need a specific platform version.
+on:
+  push:
+    branches: ["main", "master"]
+    paths:
+      - "app/**"
+      - ".github/scripts/**"
+      - ".github/workflows/redroid-api-matrix.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: redroid-api-matrix-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build APK and instrumentation tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: gradle
+      - run: chmod +x gradlew
+      - name: Build, lint and unit test
+        run: ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug assembleDebugAndroidTest
+      - name: Stage binaries
+        run: |
+          mkdir -p staged-apks
+          cp app/build/outputs/apk/debug/app-debug.apk staged-apks/
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk staged-apks/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-matrix-binaries
+          path: staged-apks/
+
+  matrix:
+    name: Android API ${{ matrix.api }} (${{ matrix.image }})
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api: 24
+            image: "redroid/redroid:7.1.2_64only-latest"
+            min_supported: true
+          - api: 28
+            image: "redroid/redroid:9.0.0_64only-latest"
+          - api: 30
+            image: "redroid/redroid:11.0.0_64only-latest"
+          - api: 35
+            image: "redroid/redroid:15.0.0_64only-latest"
+    env:
+      PACKAGE_ID: com.clonehub.pro
+      TEST_PACKAGE_ID: com.clonehub.pro.test
+      MAIN_ACTIVITY: com.clonehub.advanced.ui.home.HomeActivity
+      ANDROID_SERIAL: localhost:5555
+      # Docker container names and images are per-matrix-entry so two levels can never fight over
+      # the same container or the same runtime data directory.
+      REDROID_IMAGE: ${{ matrix.image }}
+      REDROID_CONTAINER: redroid-${{ matrix.api }}
+      API_LEVEL: ${{ matrix.api }}
+      TEST_CLASS: com.clonehub.advanced.ui.home.ApiLevelSmokeInstrumentedTest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: api-matrix-binaries
+          path: artifacts
+      - name: Boot native ARM64 Android ${{ matrix.api }}
+        run: bash .github/scripts/start-redroid-arm64.sh
+      - name: Run API ${{ matrix.api }} smoke suite
+        run: bash .github/scripts/run-emulator-e2e.sh
+      - name: Collect evidence for API ${{ matrix.api }}
+        if: always()
+        run: |
+          mkdir -p evidence
+          echo "requested_api=$API_LEVEL" > evidence/api-level.txt
+          echo "requested_image=$REDROID_IMAGE" >> evidence/api-level.txt
+          docker logs "$REDROID_CONTAINER" > evidence/redroid-docker.log 2>&1 || true
+          adb -s localhost:5555 shell getprop > evidence/redroid-getprop.txt 2>&1 || true
+      - name: Publish API ${{ matrix.api }} evidence
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          archive="evidence-api-$API_LEVEL.tar.gz"
+          tar -czf "$archive" evidence 2>/dev/null || true
+          [ -s "$archive" ] || exit 0
+          gh release view ci-diagnostics --repo "${{ github.repository }}" > /dev/null 2>&1 \
+            || gh release create ci-diagnostics --repo "${{ github.repository }}" \
+                 --prerelease --title "CI diagnostics" --notes "Rolling build and test diagnostics"
+          gh release upload ci-diagnostics "$archive" --repo "${{ github.repository }}" --clobber
