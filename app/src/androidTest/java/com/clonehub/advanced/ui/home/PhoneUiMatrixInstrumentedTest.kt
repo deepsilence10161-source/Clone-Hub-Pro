@@ -106,11 +106,15 @@ class PhoneUiMatrixInstrumentedTest {
             val spansWidth = geometry.width() >= displayWidth * 3 / 4
             val spansHeight = geometry.height() >= displayHeight * 3 / 4
             when {
+                // Top edge, full width: the status bar.
                 spansWidth && geometry.top <= displayHeight / 4 ->
                     statusBarBottom = maxOf(statusBarBottom ?: 0, geometry.bottom)
+                // Full height on the right: the navigation bar in landscape.
                 spansHeight && geometry.left >= displayWidth / 2 ->
                     navigationBarSide = minOf(navigationBarSide ?: Int.MAX_VALUE, geometry.left)
-                spansHeight && geometry.top >= displayHeight / 2 ->
+                // Bottom edge, full width: the navigation bar in portrait. Measured on API 34 it is
+                // 720x96 at 720x1280, so "full height" is the wrong test for it.
+                spansWidth && geometry.top >= displayHeight / 2 ->
                     navigationBarTop = minOf(navigationBarTop ?: Int.MAX_VALUE, geometry.top)
             }
         }
