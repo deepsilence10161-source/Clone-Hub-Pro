@@ -168,11 +168,18 @@ class GoogleSignInCloneInstrumentedTest {
      */
     private fun probe(kind: String, token: Boolean = false): Map<String, String> {
         val fileName = if (token) "token_probe.txt" else "account_probe.txt"
-        // The answer is published from onCreate, so a fixture that is already running would stay
-        // silent. Both the plain fixture and the clone are stopped first.
-        runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
-        device.executeShellCommand("am force-stop $fixturePackage")
-        SystemClock.sleep(500)
+        // The answer is published from onCreate, so a running fixture stays silent. For the normal
+        // probe the plain fixture is restarted. For the clone probe the app process must *not* be
+        // killed — force-stopping the host package also tears down the clone's agent process, and the
+        // launch then resolves back to the plain fixture (measured on run 43198828390: the "clone"
+        // answer came from pid 3935 = com.clonehub.pro.test, not from an agent).
+        if (kind != "clone") {
+            device.executeShellCommand("am force-stop $fixturePackage")
+            SystemClock.sleep(500)
+        } else {
+            runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
+            SystemClock.sleep(500)
+        }
         device.executeShellCommand("logcat -c")
         if (kind == "clone") {
             val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
@@ -196,18 +203,33 @@ class GoogleSignInCloneInstrumentedTest {
             )
         }
 
+        // Wait for an answer *from the expected process*: a pid that belongs to another process is a
+        // running instance publishing late, not the evidence this probe is asking for.
+        val expected = if (kind == "clone") ":agent" else fixturePackage
         val deadline = SystemClock.elapsedRealtime() + REPORT_TIMEOUT_MS
-        var log = device.executeShellCommand("logcat -d")
-        var answer = parseProbe(log, fileName)
-        while (answer.isEmpty() && SystemClock.elapsedRealtime() < deadline) {
+        var answer = emptyMap<String, String>()
+        var realProcess = ""
+        while (SystemClock.elapsedRealtime() < deadline) {
+            answer = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+            val candidatePid = answer["pid"]
+            if (candidatePid != null) {
+                realProcess = resolveProcessName(candidatePid)
+                val matches = if (kind == "clone") {
+                    realProcess.contains(":agent")
+                } else {
+                    realProcess == fixturePackage
+                }
+                if (matches) break
+                Log.i(
+                    TAG,
+                    "GOOGLE_SIGNIN_PROBE ignoring answer from pid=$candidatePid ($realProcess), " +
+                        "waiting for $expected"
+                )
+            }
             SystemClock.sleep(500)
-            log = device.executeShellCommand("logcat -d")
-            answer = parseProbe(log, fileName)
         }
 
         val pid = answer["pid"]
-        val realProcess = pid?.let { resolveProcessName(it) } ?: ""
-        val expected = if (kind == "clone") ":agent" else fixturePackage
         val labelled = LinkedHashMap(answer)
         labelled["answer_process"] = realProcess
         labelled["expected_process"] = expected
