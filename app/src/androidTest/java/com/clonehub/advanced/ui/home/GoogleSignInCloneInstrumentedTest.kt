@@ -39,27 +39,8 @@ class GoogleSignInCloneInstrumentedTest {
 
     private companion object {
         const val TAG = "GOOGLE_SIGNIN"
-        const val TEST_ACCOUNT = "clonehub.verify@gmail.com"
-        const val TEST_ACCOUNT_TYPE = "com.google"
         const val CLONE_TIMEOUT_MS = 60_000L
         const val REPORT_TIMEOUT_MS = 40_000L
-    }
-
-    /** Creates a deterministic account of the same type every Google sign-in path reads. */
-    private fun ensureProbeAccount(): Boolean {
-        val manager = AccountManager.get(context)
-        if (manager.getAccountsByType(TEST_ACCOUNT_TYPE).any { it.name == TEST_ACCOUNT }) return true
-        val created = runCatching {
-            manager.addAccountExplicitly(
-                android.accounts.Account(TEST_ACCOUNT, TEST_ACCOUNT_TYPE), null, null
-            )
-        }
-        Log.i(
-            TAG,
-            "GOOGLE_SIGNIN_PROBE_ACCOUNT account=$TEST_ACCOUNT created=${created.getOrNull()} " +
-                "error=${created.exceptionOrNull()}"
-        )
-        return manager.getAccountsByType(TEST_ACCOUNT_TYPE).any { it.name == TEST_ACCOUNT }
     }
 
     @Test(timeout = 300_000)
