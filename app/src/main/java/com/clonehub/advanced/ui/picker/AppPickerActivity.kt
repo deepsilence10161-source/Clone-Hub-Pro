@@ -109,10 +109,18 @@ class AppPickerActivity : AppCompatActivity() {
         val chipUser: Chip = findViewById(R.id.chipUser)
         val chipSystem: Chip = findViewById(R.id.chipSystem)
 
+        // The filter has to show which list is on screen: the chips were clickable but never
+        // checked, so both looked equally inactive and the user could not tell what they were
+        // looking at (visible in the 360dp phone screenshots from the UI matrix).
+        chipUser.isChecked = true
         chipUser.setOnClickListener {
+            chipSystem.isChecked = false
+            chipUser.isChecked = true
             loadApps(includeSystem = false)
         }
         chipSystem.setOnClickListener {
+            chipUser.isChecked = false
+            chipSystem.isChecked = true
             loadApps(includeSystem = true)
         }
 

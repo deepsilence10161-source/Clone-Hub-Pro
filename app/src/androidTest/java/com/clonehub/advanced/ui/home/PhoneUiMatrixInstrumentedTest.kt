@@ -171,6 +171,14 @@ class PhoneUiMatrixInstrumentedTest {
                 .onSuccess { logBounds(label, "pickerRowTitle", it) }
             val searchBounds = boundsOf(resourceId = "search_src_text")
             assertInside("pickerSearch", searchBounds, screenWidth, safeTop, safeBottom)
+            // The active filter has to be visible, otherwise the user cannot tell whether they are
+            // looking at user apps or system apps.
+            val userChip = device.findObject(By.res(appId, "chipUser"))
+            assertNotNull("The user/system filter is missing on $label", userChip)
+            assertTrue(
+                "No filter chip is shown as selected on $label",
+                userChip?.isChecked == true || device.findObject(By.res(appId, "chipSystem"))?.isChecked == true
+            )
             capture(label, "picker")
 
             Log.i(TAG, "PHONE_UI_RESULT config=$label outcome=PASS")
