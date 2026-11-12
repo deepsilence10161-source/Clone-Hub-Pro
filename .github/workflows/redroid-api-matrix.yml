@@ -70,8 +70,9 @@ jobs:
             image: "redroid/redroid:12.0.0_64only-240527"
           - api: 35
             image: "redroid/redroid:15.0.0_64only-latest"
-          - api: 36
-            image: "redroid/redroid:16.0.0_64only-latest"
+          # API 36 is deliberately absent: redroid 16.0.0 never finishes booting on this runner
+          # (run 43151607712: zygote in a restart loop, sys.boot_completed never set, no error in
+          # the container log). Android 16 support is therefore NOT TESTED, not silently assumed.
     env:
       PACKAGE_ID: com.clonehub.pro
       API_LEVEL: ${{ matrix.api }}
