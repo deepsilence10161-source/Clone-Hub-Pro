@@ -231,9 +231,7 @@ class GoogleSignInCloneInstrumentedTest {
         for (target in packages) {
             for (permission in ACCOUNT_PERMISSIONS) {
                 try {
-                    instrumentation.uiAutomation.executeShellCommand(
-                        "pm grant $target $permission"
-                    ).close()
+                    device.executeShellCommand("pm grant $target $permission")
                 } catch (error: Throwable) {
                     Log.w(TAG, "Could not grant $permission to $target", error)
                 }
@@ -241,7 +239,7 @@ class GoogleSignInCloneInstrumentedTest {
         }
         val state = packages.joinToString(" ") { target ->
             ACCOUNT_PERMISSIONS.joinToString(",") { permission ->
-                val granted = instrumentation.uiAutomation.executeShellCommand(
+                val granted = device.executeShellCommand(
                     "dumpsys package $target | grep -c '$permission: granted=true'"
                 ).trim()
                 "$target/$permission=$granted"
