@@ -67,10 +67,12 @@ class PhoneUiMatrixInstrumentedTest {
     private data class SystemBars(
         val statusBarBottom: Int?,
         val navigationBarTop: Int?,
+        val navigationBarSide: Int? = null,
         val source: String
     ) {
         fun describe(): String =
-            "statusBarBottom=$statusBarBottom navigationBarTop=$navigationBarTop via=$source"
+            "statusBarBottom=$statusBarBottom navigationBarTop=$navigationBarTop " +
+                "navigationBarSide=$navigationBarSide via=$source"
     }
 
     /**
@@ -119,6 +121,7 @@ class PhoneUiMatrixInstrumentedTest {
         return SystemBars(
             statusBarBottom = statusBarBottom,
             navigationBarTop = navigationBarTop,
+            navigationBarSide = navigationBarSide,
             source = if (found.isEmpty()) "windows:none" else "windows"
         )
     }
@@ -249,7 +252,7 @@ class PhoneUiMatrixInstrumentedTest {
             waitFor(By.res(appId, "fabAdd"), label, "fabAdd")
             val fabBounds = boundsOf(resourceId = "fabAdd")
             assertInside("fabAdd", fabBounds, screenWidth, safeTop!!, bottomLimit)
-            assertTouchTarget("fabAdd", fabBounds, densityDpi)
+            assertTouchTarget(name = "fabAdd", bounds = fabBounds, densityDpi = densityDpi)
             logBounds(label, "fabAdd", fabBounds)
             if (safeEnd != null) {
                 assertTrue(
