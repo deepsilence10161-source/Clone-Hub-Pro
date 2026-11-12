@@ -37,17 +37,35 @@ class ApiLevelSmokeInstrumentedTest {
     private val device = UiDevice.getInstance(instrumentation)
     private val api = Build.VERSION.SDK_INT
 
-    @Test(timeout = 120_000)
+    @Test(timeout = 180_000)
     fun a_homeScreenRendersOnThisAndroidLevel() {
-        device.wakeUp()
-        context.startActivity(Intent(context, HomeActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        })
-        val rendered = device.wait(
-            Until.hasObject(By.res(context.packageName, "fabAdd")), UI_TIMEOUT_MS
-        )
+        // In the mixed suite this runs after 20+ tests on a loaded emulator, where a single cold
+        // start occasionally exceeds the wait. Retry the start and keep evidence instead of
+        // reporting a phantom "did not render" (runs 43151607784 / 43152454751 both failed here).
+        var rendered = false
+        repeat(3) { attempt ->
+            device.wakeUp()
+            context.startActivity(Intent(context, HomeActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            })
+            rendered = device.wait(
+                Until.hasObject(By.res(context.packageName, "fabAdd")), UI_TIMEOUT_MS
+            )
+            if (rendered) return@repeat
+            Log.w(TAG, "API_SMOKE level=$api home attempt ${attempt + 1} not rendered yet")
+            device.waitForIdle()
+        }
         capture("api-$api-home.png")
-        assertTrue("Home screen did not render on API $api", rendered)
+        if (!rendered) {
+            runCatching {
+                device.dumpWindowHierarchy(File(evidenceDir(), "api-$api-home-failure.xml"))
+            }
+            Log.e(TAG, "API_SMOKE level=$api homeFailed top=${device.currentActivityName}")
+        }
+        assertTrue(
+            "Home screen did not render on API $api (evidence: api-$api-home-failure.xml)",
+            rendered
+        )
         Log.i(TAG, "API_SMOKE level=$api homeRendered=true release=${Build.VERSION.RELEASE}")
     }
 
@@ -60,12 +78,33 @@ class ApiLevelSmokeInstrumentedTest {
         context.startActivity(Intent(context, HomeActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         })
-        val addButton = device.wait(Until.findObject(By.res(appId, "fabAdd")), UI_TIMEOUT_MS)
-        checkNotNull(addButton) { "Home Add action never appeared on API $api" }
-        addButton.click()
-        val pickerOpen = device.wait(Until.hasObject(By.res(appId, "searchView")), UI_TIMEOUT_MS)
+        // A single injected tap can be swallowed while the home screen is still settling (measured
+        // on the API 35 gate: FAB found, tap sent, no picker). Retry with a fresh tap on the node's
+        // own bounds and keep a hierarchy dump when it still refuses, so the next run explains
+        // itself instead of only failing.
+        var pickerOpen = false
+        repeat(3) { attempt ->
+            val addButton = device.wait(Until.findObject(By.res(appId, "fabAdd")), UI_TIMEOUT_MS)
+            checkNotNull(addButton) { "Home Add action never appeared on API $api" }
+            addButton.click()
+            pickerOpen = device.wait(Until.hasObject(By.res(appId, "searchView")), PICKER_TIMEOUT_MS)
+            if (!pickerOpen && attempt < 2) {
+                Log.w(TAG, "API_SMOKE level=$api picker attempt ${attempt + 1} did not open; retrying")
+                device.waitForIdle()
+            }
+            if (pickerOpen) return@repeat
+        }
         capture("api-$api-picker.png")
-        assertTrue("App picker did not open on API $api", pickerOpen)
+        if (!pickerOpen) {
+            runCatching {
+                device.dumpWindowHierarchy(File(evidenceDir(), "api-$api-picker-failure.xml"))
+            }
+            Log.e(
+                TAG,
+                "API_SMOKE level=$api pickerFailed top=${device.currentActivityName}"
+            )
+        }
+        assertTrue("App picker did not open on API $api (evidence: api-$api-picker-failure.xml)", pickerOpen)
         val search = device.wait(Until.findObject(By.res(appId, "search_src_text")), UI_TIMEOUT_MS)
         assertNotNull("Picker search field missing on API $api", search)
         search!!.text = FIXTURE_PACKAGE
@@ -109,11 +148,11 @@ class ApiLevelSmokeInstrumentedTest {
         VirtualContainerEngine.forceStopApp(context, FIXTURE_PACKAGE, SPACE_ID)
     }
 
+    private fun evidenceDir(): File =
+        File(context.getExternalFilesDir(null), "api-matrix").apply { mkdirs() }
+
     private fun capture(name: String) {
-        runCatching {
-            val dir = File(context.getExternalFilesDir(null), "api-matrix").apply { mkdirs() }
-            device.takeScreenshot(File(dir, name))
-        }
+        runCatching { device.takeScreenshot(File(evidenceDir(), name)) }
     }
 
     private companion object {
@@ -124,5 +163,6 @@ class ApiLevelSmokeInstrumentedTest {
         const val SPACE_ID = 121
         const val UI_TIMEOUT_MS = 20_000L
         const val LAUNCH_TIMEOUT_MS = 60_000L
+        const val PICKER_TIMEOUT_MS = 8_000L
     }
 }
