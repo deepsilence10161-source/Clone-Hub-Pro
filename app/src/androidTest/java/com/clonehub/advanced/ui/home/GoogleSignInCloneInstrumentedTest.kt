@@ -243,25 +243,35 @@ class GoogleSignInCloneInstrumentedTest {
     }
 
     /**
-     * Real process name of a pid, read from the shell's own process list. Inside the container the
-     * process cannot name itself truthfully, but `ps -A` outside it shows
-     * `com.clonehub.pro:agent0` — which is what makes a "clone" answer provably a clone answer.
+     * Real process name of a pid, taken from the system's own record.
+     *
+     * Neither the process itself nor `ps` can be trusted here: inside the container both report the
+     * cloned package name for a process that is really `com.clonehub.pro:agent0`, and `ps` even shows
+     * the virtualised name. ActivityManager's "Start proc <pid>:<name>" line is written by the
+     * platform outside the container, so it is the one authoritative source (run 43201019116 had
+     * pid 4999 recorded there as `com.clonehub.pro:agent0` while `ps` called it
+     * `com.clonehub.pro.test`).
      */
     private fun resolveProcessName(pid: String): String {
         for (attempt in 1..3) {
-            val line = device.executeShellCommand("ps -A")
+            val fromPlatform = device.executeShellCommand("logcat -d")
                 .lineSequence()
-                .firstOrNull { row ->
-                    row.split(Regex("\\s+")).getOrNull(1) == pid ||
-                        row.split(Regex("\\s+")).any { it == pid }
-                }
-            if (line != null) {
-                Log.i(TAG, "GOOGLE_SIGNIN_PS pid=$pid line=${line.trim()}")
-                return line.trim().split(Regex("\\s+")).last()
+                .firstOrNull { it.contains("Start proc $pid:") }
+                ?.substringAfter("Start proc $pid:", "")
+                ?.substringBefore("/")
+                ?.trim()
+            if (!fromPlatform.isNullOrEmpty()) {
+                Log.i(TAG, "GOOGLE_SIGNIN_PROCESS pid=$pid platformName=$fromPlatform")
+                return fromPlatform
             }
-            SystemClock.sleep(300)
+            SystemClock.sleep(500)
         }
-        return ""
+        // Fallback only: the shell's process list, which may be virtualised.
+        val psLine = device.executeShellCommand("ps -A")
+            .lineSequence()
+            .firstOrNull { row -> row.split(Regex("\\s+")).any { it == pid } }
+        Log.i(TAG, "GOOGLE_SIGNIN_PROCESS pid=$pid psLine=${psLine?.trim()}")
+        return psLine?.trim()?.split(Regex("\\s+"))?.last() ?: ""
     }
 
     /** Reads the key=value answer the probe published for one file from the device log. */
@@ -293,8 +303,11 @@ class GoogleSignInCloneInstrumentedTest {
     private fun waitForCloneProcess() {
         val deadline = SystemClock.elapsedRealtime() + CLONE_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
-            val processes = device.executeShellCommand("ps -A | grep -i agent || true")
-            if (processes.contains("agent", ignoreCase = true)) {
+            val processes = device.executeShellCommand("logcat -d")
+                .lineSequence()
+                .filter { it.contains("Start proc") && it.contains(":agent") }
+                .joinToString(" | ")
+            if (processes.isNotEmpty()) {
                 Log.i(TAG, "GOOGLE_SIGNIN_CLONE_PROCESS ${processes.trim().replace('\n', ' ')}")
                 return
             }
