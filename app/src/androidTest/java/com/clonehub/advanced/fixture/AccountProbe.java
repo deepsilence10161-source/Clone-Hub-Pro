@@ -57,54 +57,25 @@ final class AccountProbe {
     static void run(final Activity activity) {
         final Context context = activity.getApplicationContext();
         new Thread(() -> {
-            String kind = processKind();
             try {
-                publish(context, "account_probe-" + kind + ".txt", describeAccounts(context, kind));
-                publish(context, "token_probe-" + kind + ".txt", requestToken(context, kind));
+                publish(context, "account_probe.txt", describeAccounts(context));
+                publish(context, "token_probe.txt", requestToken(context));
             } catch (Throwable error) {
-                Log.e(TAG, "Account probe failed in " + kind, error);
+                Log.e(TAG, "Account probe failed", error);
             }
         }, "AccountProbe").start();
     }
 
     /**
-     * "clone" inside an agent process, "normal" in the app's own process.
+     * A probe cannot name its own process reliably: measured inside the container, both
+     * {@link Application#getProcessName()} *and* `/proc/self/cmdline` report the cloned package —
+     * the container virtualises them — while the process really is `com.clonehub.pro:agent0`.
      *
-     * The kernel's own view (`/proc/self/cmdline`) decides this, not
-     * {@link Application#getProcessName()}: measured inside the container, the virtualised API reports
-     * the clone's own package name while the process really is `com.clonehub.pro:agent0`, so the
-     * clone's answer was filed as if it came from the un-cloned app. Both values are reported, so the
-     * evidence shows what each process believed about itself.
+     * So the probe reports only facts it can prove ({@code pid}) and the host side decides the label:
+     * the test clears the log, triggers exactly one launch, and resolves the pid's real process name
+     * from the shell, where the container cannot hide it.
      */
-    private static String processKind() {
-        return realProcessName().contains(":agent") ? "clone" : "normal";
-    }
-
-    /** Kernel process name of the current process, as the device sees it. */
-    private static String realProcessName() {
-        try {
-            java.io.FileInputStream in = new java.io.FileInputStream("/proc/self/cmdline");
-            try {
-                byte[] buffer = new byte[128];
-                int read = in.read(buffer);
-                if (read <= 0) {
-                    return "unknown";
-                }
-                int end = 0;
-                while (end < read && buffer[end] != 0) {
-                    end++;
-                }
-                return new String(buffer, 0, end, "UTF-8").trim();
-            } finally {
-                in.close();
-            }
-        } catch (Throwable error) {
-            return "unknown";
-        }
-    }
-
-    /** What the virtualised API believes this process is called, kept for the evidence. */
-    private static String virtualProcessName() {
+    private static String ownName() {
         try {
             String name = Build.VERSION.SDK_INT >= 28 ? Application.getProcessName() : "unavailable";
             return name == null ? "unavailable" : name;
@@ -113,11 +84,10 @@ final class AccountProbe {
         }
     }
 
-    private static Map<String, String> describeAccounts(Context context, String kind) {
+    private static Map<String, String> describeAccounts(Context context) {
         Map<String, String> out = new LinkedHashMap<>();
-        out.put("mode", kind);
-        out.put("process", realProcessName());
-        out.put("virtual_process", virtualProcessName());
+        out.put("pid", String.valueOf(android.os.Process.myPid()));
+        out.put("reported_name", ownName());
         try {
             AccountManager manager = AccountManager.get(context);
             Account[] google = manager.getAccountsByType(GOOGLE_ACCOUNT_TYPE);
@@ -131,16 +101,15 @@ final class AccountProbe {
             // throws inside the clone. The reason is recorded, never an empty list.
             out.put("ok", "false");
             out.put("error", error.getClass().getSimpleName() + ": " + error.getMessage());
-            Log.e(TAG, "Account list failed in mode " + kind, error);
+            Log.e(TAG, "Account list failed", error);
         }
         return out;
     }
 
-    private static Map<String, String> requestToken(Context context, String kind) {
+    private static Map<String, String> requestToken(Context context) {
         Map<String, String> out = new LinkedHashMap<>();
-        out.put("mode", kind);
-        out.put("process", realProcessName());
-        out.put("virtual_process", virtualProcessName());
+        out.put("pid", String.valueOf(android.os.Process.myPid()));
+        out.put("reported_name", ownName());
         AccountManager manager = AccountManager.get(context);
         Account[] google;
         try {

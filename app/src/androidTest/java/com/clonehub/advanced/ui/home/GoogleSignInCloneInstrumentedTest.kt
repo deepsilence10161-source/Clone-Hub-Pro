@@ -59,6 +59,10 @@ class GoogleSignInCloneInstrumentedTest {
             "The cloned app never answered the account probe: '$cloned'",
             cloned["ok"] == "true"
         )
+        assertTrue(
+            "The clone answer came from '${cloned["answer_process"]}', not from an agent process",
+            cloned["answer_process"]?.contains(":agent") == true
+        )
 
         // The account list the app sees must be the same inside and outside the clone. A clone
         // that answers 0 while the app answers 1 is the reported "Google login does nothing".
@@ -155,14 +159,15 @@ class GoogleSignInCloneInstrumentedTest {
     }
 
     /**
-     * Asks the fixture to report what it sees: normally the fixture is started directly, inside the
-     * clone the cloned activity runs the very same code. Each answer is published one key per log
-     * line, so it reaches the test no matter which process wrote it — the normal answer comes from
-     * the fixture's own process, the clone answer from the virtual agent process.
+     * Runs the probe once and returns the answer, labelled with the process that really produced it.
+     *
+     * The label is decided here, not by the probe: inside the container the fixture cannot name its
+     * own process truthfully (both the virtualised API and /proc/self/cmdline report the cloned
+     * package). So the log is cleared, exactly one launch happens, and the pid reported by the probe
+     * is resolved to its real process name from the shell.
      */
     private fun probe(kind: String, token: Boolean = false): Map<String, String> {
-        val mode = if (kind == "clone") "clone" else "normal"
-        val fileName = if (token) "token_probe-$mode.txt" else "account_probe-$mode.txt"
+        val fileName = if (token) "token_probe.txt" else "account_probe.txt"
         device.executeShellCommand("logcat -c")
         if (kind == "clone") {
             val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
@@ -187,14 +192,31 @@ class GoogleSignInCloneInstrumentedTest {
         }
 
         val deadline = SystemClock.elapsedRealtime() + REPORT_TIMEOUT_MS
-        var answer = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+        var log = device.executeShellCommand("logcat -d")
+        var answer = parseProbe(log, fileName)
         while (answer.isEmpty() && SystemClock.elapsedRealtime() < deadline) {
             SystemClock.sleep(500)
-            answer = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+            log = device.executeShellCommand("logcat -d")
+            answer = parseProbe(log, fileName)
         }
-        Log.i(TAG, "GOOGLE_SIGNIN_PROBE kind=$kind file=$fileName answer=$answer")
-        writeEvidence(fileName, answer.entries.joinToString("\n") { "${it.key}=${it.value}" })
-        return answer
+
+        val pid = answer["pid"]
+        val realProcess = if (pid != null) {
+            device.executeShellCommand("cat /proc/$pid/cmdline | tr -d '\\000'").trim()
+        } else {
+            ""
+        }
+        val expected = if (kind == "clone") ":agent" else fixturePackage
+        val labelled = LinkedHashMap(answer)
+        labelled["answer_process"] = realProcess
+        labelled["expected_process"] = expected
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_PROBE kind=$kind file=$fileName pid=$pid realProcess=$realProcess " +
+                "expected=$expected answer=$answer"
+        )
+        writeEvidence("$kind-answer.txt", labelled.entries.joinToString("\n") { "${it.key}=${it.value}" })
+        return labelled
     }
 
     /** Reads the key=value answer the probe published for one file from the device log. */
