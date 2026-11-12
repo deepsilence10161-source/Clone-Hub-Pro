@@ -294,3 +294,47 @@ so the gate now records `topResumedActivity` and retries the launch once; the ne
 * Built from `7482f7b`; that commit's gates: `Native ARM64 deep clone testing` `43031920978` **SUCCESS**,
   `Native ARM64 redroid strict E2E` `43031920934` **SUCCESS**, and `8e6d59d`'s
   `Real app compatibility smoke` `43030576699` **SUCCESS** (16 tests + backup job + multi-instance job).
+
+---
+
+## 14. Phase 5 run — UI responsiveness work, an infra recovery, and one real product bug found by the gates
+
+| Area | Change | Commit(s) | Evidence | Status |
+|---|---|---|---|---|
+| P6–P10 (UI) | App icons are decoded on a background worker (`CloneIconLoader`) instead of the UI thread; grid and space pager use stable ids + `DiffUtil.submitList`, so adding or launching a clone no longer re-binds every tile | `c638f38` | first verification attempt failed on infra, see next row | PASS (verified by `75f9069` gates below) |
+| Infra | Device jobs died before `docker pull`: `sudo dmesg`/`sysctl` inside `set -euo pipefail`. Now non-fatal, plus `redroid-kernel.txt` (modules, binderfs mounts, kernel binder/avc lines) is published on failure | `49ae2ba`, `12695d4`, `215200d` | runs `43052264583`/`43055946692`/`43059104279` (failures, container never created) → `43062136682`/`43062136740` (emulator boots, container runs) | PASS |
+| §6 correctness | **`VirtualContainerEngine` declared a launch failed after a single 3 s probe**, although the runtime attaches the proxied activity a moment later. Measured: `Launch result ... code=0` at `16:56:03.410`, first agent process foreground at `16:56:24.963`. The launch result now polls for 20 s before reporting `NotVerified` | `75f9069` | suite run `43062137030` failed `DeepCloneFlowInstrumentedTest` on `215200d`, the same test passed in the strict run of `7482f7b` — the difference was timing, not code | PASS |
+
+### Why the mixed 21-test suite exposed it and the strict run did not
+
+The strict gate runs `DeepCloneFlowInstrumentedTest` alone on a cold emulator; the mixed suite runs it
+after the multi-instance test has filled every agent process slot. Under that load the clone needs
+~1 s longer to become foreground, so a one-shot probe reported failure for a launch that in fact
+succeeded. Polling removes the race instead of loosening the assertion.
+
+### Current verified artifact (after Phase 5)
+
+* `https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk`
+* SHA-256 `43c690d77c0b888b7194b8fed8e73dd25ea0b8aab570eb12027257e0812cab5e`, 7,890,474 bytes
+* Built from `75f9069` (`Publish latest verified APK` run `43065972672`, published 17:13:11Z)
+* Gates for that commit, all green:
+  * `Native ARM64 redroid strict E2E` `43064596431` — **SUCCESS**
+  * `Native ARM64 deep clone testing` `43064596342` — **SUCCESS**, suite `OK (5 tests)`, 102.9 s
+  * `Real app compatibility smoke` `43064596370` — **SUCCESS**: mixed suite `OK (21 tests)` (333.1 s), backup `OK (4 tests)`, multi-instance `OK (1 test)`
+
+### Launch timings on this build (redroid ARM64 API 34, fixture clone)
+
+| Case | Before (`7482f7b`/`ad4120f` baseline) | After `75f9069` |
+|---|---|---|
+| Cold start of Clone Hub | 489 ms | unchanged (no startup code touched in Phase 5) |
+| First clone of a package | 2 539–2 597 ms | 2 443 ms |
+| Warm relaunch of a clone | 236–381 ms | 249–410 ms |
+
+### Remaining, honestly stated
+
+* The API-level compatibility matrix (24 / 28 / 30 / 35) is **NOT TESTED** — every device gate runs the
+  same Android 14 (API 34) ARM64 image.
+* Notification / camera / microphone / location / deep-link behaviour inside clones is **NOT TESTED**;
+  only UI-level third-party cloning (Markor, Calculator, Aegis) and the fixture clone are proven.
+* Measured engine capacity remains 1–2 simultaneously live clone processes (see §13); clone data is
+  never lost and reopening is fast, but the app must not and does not claim otherwise.
