@@ -198,6 +198,12 @@ class ApiLevelSmokeInstrumentedTest {
             spaceId = SPACE_ID
         )
         spaceManager.addAppToSpace(SPACE_ID, FIXTURE_PACKAGE, FIXTURE_LABEL)
+        // Install and launch are separate steps and the runtime can answer the first while failing
+        // the second ("resultCode=1 ... does not list", measured on API 28 run 43262281164). Asking
+        // for the install outcome on its own records which step refused.
+        val installOutcome =
+            VirtualContainerEngine.installAppOutcome(context, FIXTURE_PACKAGE, SPACE_ID)
+        Log.i(TAG, "API_SMOKE level=$api installProbe=${installOutcome.describe()}")
         val outcome = VirtualContainerEngine.launchAppOutcome(context, app, SPACE_ID)
         val visible = device.wait(Until.hasObject(By.text(MARKER)), LAUNCH_TIMEOUT_MS)
         // Keep a direct process-level proof next to the UI proof: the api process must exist while

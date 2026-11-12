@@ -131,10 +131,23 @@ object VirtualContainerEngine {
                 null
             }
             val resultCode = result?.getInt(INSTALL_RESULT_CODE, -1) ?: -1
+            Log.i(
+                TAG,
+                "INSTALL_REPLY package=$packageName space=$spaceId codeKey=$INSTALL_RESULT_CODE " +
+                    "resultCode=$resultCode keys=${result?.keySet()?.joinToString(",") ?: "null"}"
+            )
 
             // A returned Bundle alone is not proof of success. Match the original client:
             // query the runtime package manager and require a real PackageInfo afterwards.
-            if (queryInstalledPackage(binder, descriptor, packageName, spaceId) != null) {
+            val listed = queryInstalledPackage(binder, descriptor, packageName, spaceId) != null
+            // One line per attempt, with both halves of the answer: what the runtime said it did and
+            // what its own package manager then reported. Without both, an install that silently
+            // declined (the API 28 smoke gate) cannot be told apart from one that half-succeeded.
+            Log.i(
+                TAG,
+                "INSTALL_RESULT package=$packageName space=$spaceId resultCode=$resultCode listed=$listed"
+            )
+            if (listed) {
                 EngineOutcome.Success
             } else {
                 EngineOutcome.NotVerified(
