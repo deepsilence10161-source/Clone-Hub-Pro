@@ -34,7 +34,9 @@ class GoogleSignInCloneInstrumentedTest {
     private val context = instrumentation.targetContext
     private val device = UiDevice.getInstance(instrumentation)
     private val evidenceDir = File(context.getExternalFilesDir(null), "google-signin").apply { mkdirs() }
-    private val fixturePackage = context.packageName
+    // CloneFixtureActivity ships inside the instrumentation APK, so its package is the target's
+    // with the .test suffix — not the app's own package.
+    private val fixturePackage = "com.clonehub.pro.test"
     private val spaceId = 91
 
     private companion object {
@@ -153,15 +155,15 @@ class GoogleSignInCloneInstrumentedTest {
     }
 
     /**
-     * Asks the fixture to report what it sees. Normally it is started directly; inside the clone it
-     * is the cloned activity that runs the very same code, and the file name records which process
-     * answered, so the two answers can never be confused with each other.
+     * Asks the fixture to report what it sees: normally the fixture is started directly, inside the
+     * clone the cloned activity runs the very same code. Each answer is published one key per log
+     * line, so it reaches the test no matter which process wrote it — the normal answer comes from
+     * the fixture's own process, the clone answer from the virtual agent process.
      */
     private fun probe(kind: String, token: Boolean = false): Map<String, String> {
         val mode = if (kind == "clone") "clone" else "normal"
-        val name = if (token) "token_probe-$mode.txt" else "account_probe-$mode.txt"
-        val report = File(context.filesDir, name)
-        report.delete()
+        val fileName = if (token) "token_probe-$mode.txt" else "account_probe-$mode.txt"
+        device.executeShellCommand("logcat -c")
         File(context.filesDir, "account_probe_request").writeText(kind)
         if (kind == "clone") {
             val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
@@ -175,16 +177,29 @@ class GoogleSignInCloneInstrumentedTest {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             })
         }
+
         val deadline = SystemClock.elapsedRealtime() + REPORT_TIMEOUT_MS
-        while (SystemClock.elapsedRealtime() < deadline && !report.exists()) {
-            SystemClock.sleep(250)
+        var answer = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+        while (answer.isEmpty() && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(500)
+            answer = parseProbe(device.executeShellCommand("logcat -d"), fileName)
         }
-        val content = if (report.exists()) report.readText() else ""
-        Log.i(TAG, "GOOGLE_SIGNIN_PROBE kind=$kind file=$name report=${content.replace('\n', ' ')}")
-        writeEvidence(name, content)
-        return content.lineSequence()
-            .filter { it.contains('=') }
-            .associate { it.substringBefore('=').trim() to it.substringAfter('=').trim() }
+        Log.i(TAG, "GOOGLE_SIGNIN_PROBE kind=$kind file=$fileName answer=$answer")
+        writeEvidence(fileName, answer.entries.joinToString("\n") { "${it.key}=${it.value}" })
+        return answer
+    }
+
+    /** Reads the key=value answer the probe published for one file from the device log. */
+    private fun parseProbe(log: String, fileName: String): Map<String, String> {
+        val answer = mutableMapOf<String, String>()
+        log.lineSequence()
+            .filter { it.contains("GOOGLE_SIGNIN_KV") && it.contains("file=$fileName") }
+            .forEach { line ->
+                val key = line.substringAfter("key=", "").substringBefore(" ").trim()
+                val value = line.substringAfter("value=", "").trim()
+                if (key.isNotEmpty()) answer[key] = value
+            }
+        return answer
     }
 
     private fun writeEvidence(name: String, content: String) {

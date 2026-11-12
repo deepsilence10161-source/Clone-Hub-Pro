@@ -43,7 +43,8 @@ class PhoneUiMatrixInstrumentedTest {
     private val context = instrumentation.targetContext
     private val device = UiDevice.getInstance(instrumentation)
     private val evidenceDir = File(context.getExternalFilesDir(null), "ui-matrix").apply { mkdirs() }
-    private val appId = "com.clonehub.advanced"
+    // The installed package is the applicationId, not the code namespace.
+    private val appId = context.packageName
 
     private companion object {
         const val TAG = "PHONE_UI"
