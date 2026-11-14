@@ -479,6 +479,44 @@ class GoogleSignInCloneInstrumentedTest {
         }
     }
 
+    /**
+     * The host side of the fix, proven on the device: the account answer a clone is supposed to get
+     * must be obtainable from the host process through the bridge, and must agree with what the
+     * platform tells the app itself.
+     *
+     * This is the half of the sign-in contract that is inside our own code. Whether the bundled
+     * runtime routes its own account calls to this bridge is reported by the probe above and by
+     * [d_accountChooserAnsweredInsideTheClone] — it is never assumed here.
+     */
+    @Test(timeout = 180_000)
+    fun e_hostAccountBridgeAnswersLikeThePlatform() {
+        seedGoogleAccount()
+        val platform = android.accounts.AccountManager.get(context)
+            .getAccountsByType(GOOGLE_ACCOUNT_TYPE)
+            .map { it.name }
+            .sorted()
+
+        val accounts = VirtualContainerEngine.hostAccountQuery(context, "accounts", GOOGLE_ACCOUNT_TYPE)
+        assertTrue("The host account bridge returned no reply", accounts != null)
+        val bridged = accounts!!.getStringArrayList("names").orEmpty().sorted()
+        Log.i(TAG, "GOOGLE_SIGNIN_BRIDGE platform=$platform bridged=$bridged " +
+            "error=${accounts.getString("error")}")
+        assertTrue(
+            "Host bridge disagrees with the platform: platform=$platform bridged=$bridged",
+            platform == bridged
+        )
+
+        val token = VirtualContainerEngine.hostAccountQuery(context, "token", GOOGLE_ACCOUNT_TYPE)
+        assertTrue("The host account bridge returned no token reply", token != null)
+        val result = token!!.getString("result")
+        Log.i(TAG, "GOOGLE_SIGNIN_BRIDGE_TOKEN result=$result length=${token.getInt("length")} " +
+            "detail=${token.getString("detail")}")
+        assertTrue(
+            "The bridge did not mint a token although the platform gave the app one: $result",
+            result == "TOKEN"
+        )
+    }
+
     private fun waitForCloneProcess() {
         val deadline = SystemClock.elapsedRealtime() + CLONE_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {

@@ -29,6 +29,10 @@ class CloneHubApplication : Application() {
     }
 
     override fun onCreate() {
+        // The account bridge answers a cloned app's AccountManager calls from this process; it needs
+        // the application context before any clone can ask.
+        com.clonehub.advanced.core.accounts.CloneHubContextHolder.install(this)
+
         super.onCreate()
         val currentProcessName = if (Build.VERSION.SDK_INT >= 28) getProcessName() else packageName
         if (applicationInfo.processName != null && applicationInfo.processName != currentProcessName) {

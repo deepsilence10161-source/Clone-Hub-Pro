@@ -17,6 +17,21 @@ import com.clonehub.advanced.data.model.ClonedApp
  */
 object VirtualContainerEngine {
 
+    /**
+     * The account bridge, reachable from tests and from the container-side hook by the same path the
+     * runtime will use: a provider `call()` on the signature authority.
+     */
+    fun hostAccountQuery(context: Context, method: String, type: String? = null): Bundle? =
+        runCatching {
+            context.contentResolver.call(
+                android.net.Uri.parse("content://com.clonehub.pro.accounts"),
+                method,
+                null,
+                Bundle().apply { type?.let { putString("type", it) } }
+            )
+        }.onFailure { Log.w(TAG, "Host account bridge call failed: $method", it) }.getOrNull()
+
+
     private const val TAG = "VirtualContainerEngine"
     private const val PROVIDER_METHOD_SERVICE = "995"
     // Pro-owned transport. PF maps this internally to the runtime's server mode

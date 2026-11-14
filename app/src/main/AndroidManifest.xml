@@ -14,6 +14,12 @@
         android:name="com.clonehub.pro.permission.VIRTUAL_CONTAINER"
         android:protectionLevel="signature" />
 
+    <!-- Signature-level permission for the sign-in bridge below: only an app signed with this key can
+         ask the host process for the device's account list or mint a token for a clone. -->
+    <permission
+        android:name="com.clonehub.pro.permission.CLONE_ACCOUNT_BRIDGE"
+        android:protectionLevel="signature" />
+
     <!-- Essential Android 14/15 Permissions -->
     <!-- A cloned app that offers "Sign in with Google" asks AccountManager for the com.google
          account list. Inside the container that query is answered for the agent process, so the
@@ -50,6 +56,23 @@
         android:theme="@style/Theme.CloneHub"
         android:usesCleartextTraffic="false"
         tools:targetApi="35">
+
+        <!--
+          Answer a cloned app's Google-account question from the host process.
+
+          The bundled virtual runtime serves the account API with its own empty implementation, so a
+          cloned app saw 0 Google accounts no matter what was on the device: measured on a device with
+          one com.google account, the un-cloned app got a token while its clone reported NO_ACCOUNT.
+          Copying the account list into the container cannot fix that — only the host process holds
+          the real AccountManager registration and receives the authenticator callbacks. So the
+          runtime's account calls are answered here while a clone is in front
+          (VirtualContainerEngine + AccountBridge). Signature-protected.
+        -->
+        <provider
+            android:name="com.clonehub.advanced.core.accounts.HostAccountProvider"
+            android:authorities="com.clonehub.pro.accounts"
+            android:exported="true"
+            android:permission="com.clonehub.pro.permission.CLONE_ACCOUNT_BRIDGE" />
 
         <!-- Main Home Activity (SingleTask to avoid multiple launcher instances) -->
         <activity

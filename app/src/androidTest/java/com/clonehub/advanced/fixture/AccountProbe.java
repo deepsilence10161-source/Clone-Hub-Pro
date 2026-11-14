@@ -100,6 +100,10 @@ final class AccountProbe {
             // accounts" are different user-visible failures, and both used to look like 0.
             out.put("can_query_accounts", String.valueOf(canQueryAccounts(context)));
             out.put("account_type_resolvable", String.valueOf(accountTypeResolvable(context)));
+            // Who does the platform think is asking? This separates the two possible causes of an
+            // empty list: the container answering on its own, or the platform refusing this process.
+            // The answer decides where the fix has to live, so it is recorded, not assumed.
+            out.put("caller_identity", callerIdentity(context));
             out.put("picker_component", pickerComponent(context));
         } catch (Throwable error) {
             // This is what a user experiences as "the sign-in button does nothing": the call itself
@@ -109,6 +113,36 @@ final class AccountProbe {
             Log.e(TAG, "Account list failed", error);
         }
         return out;
+    }
+
+    /**
+     * The platform's own view of the caller: uid, which apps share it, and whether it holds
+     * GET_ACCOUNTS. An empty account list means one of two very different things and this is what
+     * tells them apart:
+     *   registered=yes → the request reaches AccountManagerService and it filtered the result;
+     *   registered=no  → the request never left the container process.
+     */
+    private static String callerIdentity(Context context) {
+        StringBuilder out = new StringBuilder();
+        try {
+            int uid = android.os.Process.myUid();
+            out.append("uid=").append(uid);
+            out.append(" packages=").append(join(context.getPackageManager().getPackagesForUid(uid)));
+            out.append(" get_accounts=").append(context.checkSelfPermission(
+                    "android.permission.GET_ACCOUNTS") == android.content.pm.PackageManager
+                    .PERMISSION_GRANTED);
+            // A real IPC round trip to the platform's account service, independent of the
+            // container's account implementation: if this returns a non-zero count the platform is
+            // reachable from this process and only the account *API* is being answered locally.
+            android.accounts.AccountManager manager = android.accounts.AccountManager.get(context);
+            out.append(" authenticator_types=").append(manager.getAuthenticatorTypes().length);
+            out.append(" accounts_of_probe_type=")
+                    .append(manager.getAccountsByType("com.clonehub.probe.fake").length);
+        } catch (Throwable error) {
+            out.append(" error=").append(error.getClass().getSimpleName())
+                    .append(": ").append(error.getMessage());
+        }
+        return out.toString();
     }
 
     private static Map<String, String> requestToken(Context context) {
