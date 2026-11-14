@@ -44,6 +44,8 @@ class GoogleSignInCloneInstrumentedTest {
         const val CLONE_TIMEOUT_MS = 60_000L
         const val REPORT_TIMEOUT_MS = 40_000L
         const val GOOGLE_ACCOUNT_TYPE = "com.google"
+        // The app the platform sees hosting the container.
+        const val CLONE_PACKAGE = "com.clonehub.pro"
         const val SEED_ACCOUNT = "clonehub.probe@example.com"
         val ACCOUNT_PERMISSIONS = listOf(
             Manifest.permission.GET_ACCOUNTS,
@@ -54,6 +56,8 @@ class GoogleSignInCloneInstrumentedTest {
     @Test(timeout = 300_000)
     fun a_accountListIsIdenticalInsideTheClone() {
         grantTestPermissions()
+        seedGoogleAccount()
+        shareAccountWithCloneHost()
 
         val normal = probe("normal")
         assertTrue(
@@ -282,11 +286,44 @@ class GoogleSignInCloneInstrumentedTest {
             Log.w(TAG, "GOOGLE_SIGNIN_SEED addAccountExplicitly failed", it)
             false
         }
+        // The measured answer to "who is allowed to see this account". If it is not VISIBLE the
+        // clone can never list it, and the reason is the platform's, not the clone's.
+        val visibility = runCatching {
+            val manager = android.accounts.AccountManager.get(context)
+            val account = android.accounts.Account(SEED_ACCOUNT, GOOGLE_ACCOUNT_TYPE)
+            "self=" + manager.getAccountVisibility(account, context.packageName) +
+                " clone=" + manager.getAccountVisibility(account, CLONE_PACKAGE)
+        }.getOrElse { "unavailable(" + it.javaClass.simpleName + ")" }
         Log.i(
             TAG,
             "GOOGLE_SIGNIN_SEED added=$added accounts=${googleAccountCount()} " +
-                "authenticators=${authenticatorTypes()}"
+                "authenticators=${authenticatorTypes()} visibility=[$visibility] " +
+                "proof=${authenticatorProof()}"
         )
+        Log.i(TAG, "GOOGLE_SIGNIN_PROOF ${authenticatorProof()}")
+    }
+
+    /**
+     * Makes the seeded account visible to the app that hosts the clone, the same way a user does by
+     * choosing the account on the platform's account screen.
+     *
+     * Without this the account is invisible to a package whose signature does not match the
+     * authenticator's (measured: clone list empty while the app's own list had one entry), so a
+     * cloned app could never sign in — for a reason that has nothing to do with cloning. Setting it
+     * explicitly makes the clone's account answer meaningful: any difference after this is the
+     * container's own behaviour.
+     */
+    private fun shareAccountWithCloneHost() {
+        val outcome = runCatching {
+            val manager = android.accounts.AccountManager.get(context)
+            manager.setAccountVisibility(
+                android.accounts.Account(SEED_ACCOUNT, GOOGLE_ACCOUNT_TYPE),
+                context.packageName,
+                android.accounts.AccountManager.VISIBILITY_VISIBLE
+            )
+        }.getOrElse { "failed: " + it.javaClass.simpleName + ": " + it.message }
+        Log.i(TAG, "GOOGLE_SIGNIN_VISIBILITY set=$outcome")
+        Log.i(TAG, "GOOGLE_SIGNIN_PROOF ${authenticatorProof()}")
     }
 
     private fun googleAccountCount(): Int = runCatching {
