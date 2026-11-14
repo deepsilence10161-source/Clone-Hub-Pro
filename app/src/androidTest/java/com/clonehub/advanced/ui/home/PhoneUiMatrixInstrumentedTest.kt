@@ -439,7 +439,7 @@ class PhoneUiMatrixInstrumentedTest {
                     assertInside("tvEmptySpaceHint", hintEmpty, screenWidth, safeTop, bottomLimit)
                     assertTrue(
                         "The empty-space hint does not clear the 48dp touch rule as text: $hintEmpty",
-                        hintEmpty.height > 0 && hintEmpty.width > 0
+                        hintEmpty.height() > 0 && hintEmpty.width() > 0
                     )
                 }
             }
