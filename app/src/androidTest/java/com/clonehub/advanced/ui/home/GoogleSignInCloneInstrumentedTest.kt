@@ -462,7 +462,7 @@ class GoogleSignInCloneInstrumentedTest {
         // logcat is deliberately not cleared: the first, cold launch is the measurement, and its
         // warm-up timeline (account_samples.txt) would be wiped with the buffer. The price is that
         // the dead process's answer is still there, so everything before this instant is ignored.
-        val launchedAt = device.executeShellCommand("date '+%m-%d %H:%M:%S.000'").trim()
+        val launchedAt = currentLogStamp()
         val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
         val launched = runCatching { VirtualContainerEngine.launchApp(context, app, spaceId) }
             .getOrDefault(false)
@@ -568,13 +568,15 @@ class GoogleSignInCloneInstrumentedTest {
                 }.getOrDefault("")
             } ?: ""
             val line = "launch=$label pid=${result["pid"]} accounts=${result["google_accounts"]} " +
-                "device=${googleAccountCount()} elapsedMs=${result["elapsed_ms"]}"
+                "device=${googleAccountCount()} names=${result["names"]}"
             seen += line
             Log.i(TAG, "GOOGLE_SIGNIN_REPEAT $line")
             Log.i(
                 TAG,
                 "GOOGLE_SIGNIN_REPEAT_FILE launch=$label file=account_probe-raw-${result["pid"]}.txt " +
-                    "size=${onDisk.length} content=${onDisk.trim().replace("\n", " | ")}"
+                    "size=${onDisk.length} (0 is expected: the clone's files are not readable from " +
+                    "the host, which is why the log answer is the evidence) " +
+                    "content=${onDisk.trim().replace("\n", " | ")}"
             )
         }
         val answered = seen.count { !it.contains("accounts=null") }
@@ -586,11 +588,26 @@ class GoogleSignInCloneInstrumentedTest {
         )
     }
 
+    /**
+     * The newest logcat threadtime stamp, used as "everything before this is history".
+     *
+     * `date` was tried first and returned an empty string on the redroid image, which silently
+     * disabled the filter. Reading the stamp out of logcat uses the same clock and the same format
+     * as the lines being filtered, so the comparison is well defined.
+     */
+    private fun currentLogStamp(): String =
+        device.executeShellCommand("logcat -d -v threadtime -t 1")
+            .lineSequence()
+            .lastOrNull { it.length > 18 && it[2] == '-' && it[5] == ' ' }
+            ?.substringBefore("   ")
+            ?.trim()
+            ?: ""
+
     /** Starts the clone fixture for one repeatability round, tagging it with its launch number. */
     private fun cloneLaunch(label: String): String {
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
         SystemClock.sleep(1_000)
-        val launchedAt = device.executeShellCommand("date '+%m-%d %H:%M:%S.000'").trim()
+        val launchedAt = currentLogStamp()
         val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
         val launched = runCatching { VirtualContainerEngine.launchApp(context, app, spaceId) }
             .getOrDefault(false)
