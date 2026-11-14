@@ -199,6 +199,15 @@ class PhoneUiMatrixInstrumentedTest {
         val added = runCatching {
             manager.addAppToSpace(FIXTURE_SPACE, FIXTURE_PACKAGE, FIXTURE_LABEL)
         }.getOrNull()
+        // Recorded, not assumed: every configuration of run 43572692518 logged
+        // "cloneTile state=SKIPPED" while this call had no outcome logged at all, so the grid state
+        // the screenshots show could not be explained from the evidence. Now it can.
+        Log.i(
+            TAG,
+            "PHONE_UI config=$label fixtureClone added=${added != null} " +
+                "installed=${installedForLog()} space=${FIXTURE_SPACE} " +
+                "spaces=${spaces.getSpaces().joinToString(";") { it.spaceId.toString() + ":" + it.apps.size }}"
+        )
         if (added == null) Log.w(TAG, "Could not add the fixture clone on $label")
         showHome(label)
     }
@@ -576,6 +585,11 @@ class PhoneUiMatrixInstrumentedTest {
             SystemClock.sleep(SETTLE_MS)
         }
     }
+
+    /** Whether the fixture APK is really installed, asked at log time (the install above is best effort). */
+    private fun installedForLog(): Boolean = runCatching {
+        device.executeShellCommand("pm list packages $fixturePackage").contains(fixturePackage)
+    }.getOrDefault(false)
 
     private fun showHome(label: String) {
         device.wakeUp()
