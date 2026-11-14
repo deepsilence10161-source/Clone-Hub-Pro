@@ -290,6 +290,49 @@ final class AccountProbe {
         return out.toString();
     }
 
+    /**
+     * `getAuthToken` for a named account, never for one read from the list.
+     *
+     * This is the experiment that separates "the clone cannot use accounts" from "the clone cannot
+     * list accounts": the token path and the list path are different calls, and only one of them was
+     * ever measured inside the clone.
+     */
+    private static String namedAccountToken(AccountManager manager) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final String[] outcome = {"PENDING"};
+        try {
+            manager.getAuthToken(
+                    new Account(SEEDED_ACCOUNT_NAME, GOOGLE_ACCOUNT_TYPE),
+                    TOKEN_TYPE,
+                    new Bundle(),
+                    true,
+                    future -> {
+                        try {
+                            Bundle result = future.getResult();
+                            String token = result == null ? null
+                                    : result.getString(AccountManager.KEY_AUTHTOKEN);
+                            int errorCode = result == null ? 0
+                                    : result.getInt(AccountManager.KEY_ERROR_CODE);
+                            String errorMessage = result == null ? null
+                                    : result.getString(AccountManager.KEY_ERROR_MESSAGE);
+                            outcome[0] = token != null ? "TOKEN(" + token.length() + ")"
+                                    : errorCode != 0 ? "ERROR(" + errorCode + ":" + errorMessage + ")"
+                                    : result != null && result.getParcelable(AccountManager.KEY_INTENT) != null
+                                        ? "CONSENT_REQUIRED" : "EMPTY";
+                        } catch (Throwable error) {
+                            outcome[0] = error.getClass().getSimpleName() + ": " + error.getMessage();
+                        } finally {
+                            latch.countDown();
+                        }
+                    },
+                    null);
+            latch.await(TOKEN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        } catch (Throwable error) {
+            outcome[0] = error.getClass().getSimpleName() + ": " + error.getMessage();
+        }
+        return outcome[0];
+    }
+
     private static Map<String, String> requestToken(Context context) {
         Map<String, String> out = new LinkedHashMap<>();
         out.put("pid", String.valueOf(android.os.Process.myPid()));
@@ -305,6 +348,11 @@ final class AccountProbe {
             return out;
         }
         out.put("identity_probe", identityProbe(context));
+        // A token request for an account named explicitly, instead of one taken from the list. The
+        // list is what the container answers itself; if this reaches the platform and returns a
+        // token, then only the list is broken and the account itself is still usable from inside the
+        // clone — which decides whether a fix is possible at all.
+        out.put("named_account_token", namedAccountToken(manager));
         if (google.length == 0) {
             // One more legitimate path before giving up: a device with no account can still be asked
             // to add one. On an image without Play services this is what a sign-in button would
