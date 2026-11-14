@@ -59,6 +59,9 @@ final class AccountProbe {
      */
     static void run(final Activity activity) {
         final Context context = activity.getApplicationContext();
+        // The timeline starts before the answers are asked, not after: the interesting window is the
+        // first second of the process, and asking afterwards put every sample beyond it.
+        sampleOverTime(context);
         new Thread(() -> {
             try {
                 String launch = String.valueOf(android.os.Process.myPid());
@@ -72,13 +75,6 @@ final class AccountProbe {
                         : "token_probe-raw-" + launch + ".txt";
                 publish(context, "account_probe.txt", describeAccounts(context), accountFile);
                 publish(context, "token_probe.txt", requestToken(context), tokenFile);
-                // The same process, asked again after waiting. Measured across runs 43578805921,
-                // 43582144297 and 43582950032: a clone sometimes lists the device's account and
-                // sometimes none, in the same build. Sampling one process over time separates
-                // "the container answers wrongly for a while after launch" (numbers grow) from
-                // "the container answers wrongly per process" (numbers stay flat), and only the
-                // first is something the app could work around.
-                sampleOverTime(context);
             } catch (Throwable error) {
                 Log.e(TAG, "Account probe failed", error);
             }
@@ -104,37 +100,54 @@ final class AccountProbe {
     }
 
     /**
-     * The same account question asked at increasing delays inside one process.
+     * The same account question asked repeatedly, from the moment the process starts.
      *
-     * One line per sample, with the elapsed time since the process started, so the answer is a
-     * timeline rather than a verdict.
+     * Runs on its own thread and is the first thing started, so the timeline covers the window the
+     * first answer falls in. A 100 ms ladder was chosen because the two measured crossovers sat at
+     * +370 ms (answer: 0) and +858 ms (answer: 1) in run 43586239139.
+     *
+     * Each sample also records the class of the AccountManager that answered, which says *who*
+     * answered rather than only what: a container-installed proxy appearing part-way through the
+     * ladder names the mechanism, and a single class throughout rules that out.
      */
-    private static void sampleOverTime(Context context) {
-        long start = 0;
+    private static void sampleOverTime(final Context context) {
+        final long start;
         try {
-            if (Build.VERSION.SDK_INT >= 24) {
-                start = android.os.Process.getStartElapsedRealtime();
-            }
+            start = Build.VERSION.SDK_INT >= 24
+                    ? android.os.Process.getStartElapsedRealtime()
+                    : SystemClock.elapsedRealtime();
         } catch (Throwable ignored) {
-            // Older images: fall back to now, which still orders the samples.
             start = SystemClock.elapsedRealtime();
         }
-        long base = SystemClock.elapsedRealtime();
-        for (int waitMs : new int[]{0, 1_000, 3_000, 6_000, 10_000, 20_000}) {
-            try {
-                long target = base + waitMs;
-                long now = SystemClock.elapsedRealtime();
-                if (target > now) Thread.sleep(target - now);
-                AccountManager manager = AccountManager.get(context);
-                int count = manager.getAccountsByType(GOOGLE_ACCOUNT_TYPE).length;
-                Log.i(TAG, KV_PREFIX + " answer=sample-" + android.os.Process.myPid()
-                        + " file=account_samples.txt key=at_" + waitMs + "ms"
-                        + " value=accounts=" + count
-                        + " sinceProcessStartMs=" + (SystemClock.elapsedRealtime() - start));
-            } catch (Throwable error) {
-                Log.w(TAG, "Account sample at " + waitMs + "ms failed", error);
+        final long base = SystemClock.elapsedRealtime();
+        Thread sampler = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                for (int waitMs : new int[]{0, 100, 200, 300, 400, 600, 800, 1_200, 2_000, 4_000}) {
+                    try {
+                        long target = base + waitMs;
+                        long now = SystemClock.elapsedRealtime();
+                        if (target > now) Thread.sleep(target - now);
+                        AccountManager manager = AccountManager.get(context);
+                        String accounts;
+                        try {
+                            accounts = String.valueOf(manager.getAccountsByType(GOOGLE_ACCOUNT_TYPE).length);
+                        } catch (Throwable error) {
+                            accounts = "error(" + error.getClass().getSimpleName() + ")";
+                        }
+                        Log.i(TAG, KV_PREFIX + " answer=sample-" + android.os.Process.myPid()
+                                + " file=account_samples.txt key=at_" + waitMs + "ms"
+                                + " value=accounts=" + accounts
+                                + " manager=" + manager.getClass().getName()
+                                + " startupMs=" + (SystemClock.elapsedRealtime() - start));
+                    } catch (Throwable error) {
+                        Log.w(TAG, "Account sample at " + waitMs + "ms failed", error);
+                    }
+                }
             }
-        }
+        }, "account-sampler");
+        sampler.setDaemon(true);
+        sampler.start();
     }
 
     private static Map<String, String> describeAccounts(Context context) {
