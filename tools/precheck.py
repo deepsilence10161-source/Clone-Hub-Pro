@@ -18,6 +18,19 @@ for path in (REPO / 'app/src/main/java').rglob('*.java'):
     if src.count('(') != src.count(')'):
         problems.append(f'{path.name}: unbalanced parentheses')
 
+# Instrumentation sources compile in CI too, and two failures reached CI from there that this file
+# never looked at: a definite-assignment error ("variable start might already have been assigned",
+# run 43589662551). Narrow on purpose: only shapes javac is certain to reject.
+for path in (REPO / 'app/src/androidTest').rglob('*.java'):
+    src = path.read_text()
+    if src.count('{') != src.count('}'):
+        problems.append(f'{path.name}: unbalanced braces ({src.count("{")} vs {src.count("}")})')
+    for match in re.finditer(r'final\s+\w+\s+(\w+);\s*\n\s*try\s*\{(.*?)\n\s*\}\s*catch', src, re.S):
+        if re.search(r'\b' + match.group(1) + r'\s*=', match.group(2)):
+            problems.append(
+                f'{path.name}: final {match.group(1)} assigned in both try and catch (javac rejects this)'
+            )
+
 for path in list((REPO / 'app/src/main').rglob('*.xml')):
     try:
         ET.parse(path)

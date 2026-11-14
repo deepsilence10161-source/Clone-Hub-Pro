@@ -111,14 +111,15 @@ final class AccountProbe {
      * ladder names the mechanism, and a single class throughout rules that out.
      */
     private static void sampleOverTime(final Context context) {
-        final long start;
+        long processStart = SystemClock.elapsedRealtime();
         try {
-            start = Build.VERSION.SDK_INT >= 24
-                    ? android.os.Process.getStartElapsedRealtime()
-                    : SystemClock.elapsedRealtime();
+            if (Build.VERSION.SDK_INT >= 24) {
+                processStart = android.os.Process.getStartElapsedRealtime();
+            }
         } catch (Throwable ignored) {
-            start = SystemClock.elapsedRealtime();
+            // No start time on this image: the samples still order correctly from now.
         }
+        final long start = processStart;
         final long base = SystemClock.elapsedRealtime();
         Thread sampler = new Thread(new Runnable() {
             @Override
