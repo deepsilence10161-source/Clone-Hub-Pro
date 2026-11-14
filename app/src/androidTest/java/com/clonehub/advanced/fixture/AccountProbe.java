@@ -130,10 +130,9 @@ final class AccountProbe {
             // to add one. On an image without Play services this is what a sign-in button would
             // trigger, so whether it resolves is worth recording.
             Bundle addOptions = new Bundle();
-            addOptions.putBoolean(AccountManager.KEY_CALLER_IS_REQUEST, true);
             try {
                 AccountManagerFuture<Bundle> future = manager.addAccount(
-                        GOOGLE_ACCOUNT_TYPE, TOKEN_TYPE, null, addOptions, null, null);
+                        GOOGLE_ACCOUNT_TYPE, TOKEN_TYPE, null, addOptions, null, null, null);
                 Bundle added = future == null ? null : future.getResult();
                 Intent addIntent = added == null ? null
                         : (Intent) added.getParcelable(AccountManager.KEY_INTENT);
@@ -154,11 +153,10 @@ final class AccountProbe {
         final String[] result = {"PENDING", "0", null};
         try {
             // A Bundle of options, not null: an app's sign-in library passes one, and the platform
-            // treats a null argument as "the caller cannot be asked for consent", which changes the
-            // outcome on some releases.
+            // treats a null argument differently ("the caller cannot be asked for consent").
+            // Only public keys are used — the caller-identity flags are @hide and do not compile
+            // against the public SDK (this is exactly what the first attempt of this change hit).
             Bundle options = new Bundle();
-            options.putBoolean(AccountManager.KEY_CALLER_IS_REQUEST, true);
-            options.putBoolean(AccountManager.KEY_CALLER_IS_FOREGROUND, true);
             manager.getAuthToken(google[0], TOKEN_TYPE, options, true,
                     new AccountManagerCallback<Bundle>() {
                         @Override
