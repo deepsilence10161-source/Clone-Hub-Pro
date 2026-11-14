@@ -460,7 +460,9 @@ class GoogleSignInCloneInstrumentedTest {
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
         SystemClock.sleep(1_000)
         // logcat is deliberately not cleared: the first, cold launch is the measurement, and its
-        // warm-up timeline (account_samples.txt) would be wiped with the buffer.
+        // warm-up timeline (account_samples.txt) would be wiped with the buffer. The price is that
+        // the dead process's answer is still there, so everything before this instant is ignored.
+        val launchedAt = device.executeShellCommand("date '+%m-%d %H:%M:%S.000'").trim()
         val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
         val launched = runCatching { VirtualContainerEngine.launchApp(context, app, spaceId) }
             .getOrDefault(false)
@@ -468,7 +470,7 @@ class GoogleSignInCloneInstrumentedTest {
         if (!launched) return null
         val deadline = SystemClock.elapsedRealtime() + REPORT_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
-            val candidate = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+            val candidate = parseProbe(device.executeShellCommand("logcat -d"), fileName, launchedAt)
             val pid = candidate["pid"]
             if (pid != null && resolveProcessName(pid).contains(":agent")) {
                 runCatching {
@@ -707,13 +709,25 @@ class GoogleSignInCloneInstrumentedTest {
     }
 
     /** Reads the key=value answer the probe published for one file from the device log. */
-    private fun parseProbe(log: String, fileName: String): Map<String, String> {
+    private fun parseProbe(
+        log: String,
+        fileName: String,
+        ignoreBefore: String? = null
+    ): Map<String, String> {
         // Answers are grouped by the id their publisher stamped on every line, and the newest group
         // is the answer being waited for. Keying on the file name alone mixed two probes together
         // when they published the same key names (measured on run 43578805921, see AccountProbe).
+        //
+        // `ignoreBefore` is a logcat threadtime stamp ("11-14 10:42:45.603"): once logcat is no
+        // longer wiped between launches, the previous process's answer for the same file is still
+        // in the buffer, and reading it made the retry in run 43586239139 report the dead process
+        // 3065 instead of the process it had just started.
         val groups = linkedMapOf<String, MutableMap<String, String>>()
         log.lineSequence()
             .filter { it.contains("GOOGLE_SIGNIN_KV") && it.contains("file=$fileName") }
+            .filter { line ->
+                ignoreBefore == null || line.substringBefore("  ").trim() >= ignoreBefore
+            }
             .forEach { line ->
                 val answerId = line.substringAfter("answer=", "").substringBefore(" ").trim()
                 val key = line.substringAfter("key=", "").substringBefore(" ").trim()
