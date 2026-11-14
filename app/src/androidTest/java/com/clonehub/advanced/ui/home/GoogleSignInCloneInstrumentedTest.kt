@@ -531,6 +531,74 @@ class GoogleSignInCloneInstrumentedTest {
      * package). So the log is cleared, exactly one launch happens, and the pid reported by the probe
      * is resolved to its real process name from the shell.
      */
+    /**
+     * How repeatable the answer is, measured once instead of inferred from run history.
+     *
+     * Every earlier reading of this question cost one CI run, and the answers looked contradictory
+     * (runs 43578805921, 43581333419, 43582144297, 43582950032, 43584621840, 43586239139,
+     * 43587049380). This launches the clone six times in one run, reads each launch's own file, and
+     * prints the count, so the flake rate is a measured number rather than a guess. It asserts only
+     * what would be a real defect: that *no* launch in six saw the device's account.
+     */
+    @Test
+    fun f_repeatedLaunchesAnswerConsistently() {
+        val rounds = 6
+        val seen = mutableListOf<String>()
+        repeat(rounds) { index ->
+            val label = (index + 1).toString()
+            val launchedAt = cloneLaunch(label)
+            val deadline = SystemClock.elapsedRealtime() + REPORT_TIMEOUT_MS
+            var result: Map<String, String> = emptyMap()
+            while (SystemClock.elapsedRealtime() < deadline) {
+                val candidate = parseProbe(device.executeShellCommand("logcat -d"), "account_probe.txt", launchedAt)
+                val pid = candidate["pid"]
+                if (pid != null && candidate["google_accounts"] != null) {
+                    result = candidate
+                    break
+                }
+                SystemClock.sleep(500)
+            }
+            // The copy on disk is read too, from the same pid the log named: two readings of one
+            // answer, so a future disagreement shows up here instead of in a CI log nobody can replay.
+            val onDisk = result["pid"]?.let { pid ->
+                runCatching {
+                    device.executeShellCommand(
+                        "cat /sdcard/Android/data/$fixturePackage/files/account_probe-raw-$pid.txt 2>/dev/null"
+                    )
+                }.getOrDefault("")
+            } ?: ""
+            val line = "launch=$label pid=${result["pid"]} accounts=${result["google_accounts"]} " +
+                "device=${googleAccountCount()} elapsedMs=${result["elapsed_ms"]}"
+            seen += line
+            Log.i(TAG, "GOOGLE_SIGNIN_REPEAT $line")
+            Log.i(
+                TAG,
+                "GOOGLE_SIGNIN_REPEAT_FILE launch=$label file=account_probe-raw-${result["pid"]}.txt " +
+                    "size=${onDisk.length} content=${onDisk.trim().replace("\n", " | ")}"
+            )
+        }
+        val answered = seen.count { !it.contains("accounts=null") }
+        val withAccount = seen.count { it.contains("accounts=1") }
+        Log.i(TAG, "GOOGLE_SIGNIN_REPEAT_SUMMARY launches=$rounds answered=$answered with_account=$withAccount")
+        assertTrue(
+            "None of $rounds clone launches saw the device's Google account: " + seen.joinToString(" ; "),
+            withAccount > 0
+        )
+    }
+
+    /** Starts the clone fixture for one repeatability round, tagging it with its launch number. */
+    private fun cloneLaunch(label: String): String {
+        runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
+        SystemClock.sleep(1_000)
+        val launchedAt = device.executeShellCommand("date '+%m-%d %H:%M:%S.000'").trim()
+        val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
+        val launched = runCatching { VirtualContainerEngine.launchApp(context, app, spaceId) }
+            .getOrDefault(false)
+        Log.i(TAG, "GOOGLE_SIGNIN_REPEAT launch=$label started=$launched at=$launchedAt")
+        SystemClock.sleep(3_000)
+        return launchedAt
+    }
+
     private fun probe(kind: String, token: Boolean = false): Map<String, String> {
         val fileName = if (token) "token_probe.txt" else "account_probe.txt"
         // Every probe runs against a device that has a com.google account, so "no account" is never

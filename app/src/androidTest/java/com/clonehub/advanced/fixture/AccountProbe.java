@@ -61,8 +61,17 @@ final class AccountProbe {
         final Context context = activity.getApplicationContext();
         new Thread(() -> {
             try {
-                publish(context, "account_probe.txt", describeAccounts(context));
-                publish(context, "token_probe.txt", requestToken(context));
+                String launch = String.valueOf(android.os.Process.myPid());
+                // Each launch writes its own files (opened fresh, so the byte count is this launch's
+                // own), keyed by launch number. Without this, N launches of the same suite keep only
+                // the last answer and the repeatability of the account path cannot be counted.
+                // Named by the answering pid, which is what distinguishes one launch from the next.
+                String accountFile = launch.isEmpty() ? "account_probe.txt"
+                        : "account_probe-raw-" + launch + ".txt";
+                String tokenFile = launch.isEmpty() ? "token_probe.txt"
+                        : "token_probe-raw-" + launch + ".txt";
+                publish(context, "account_probe.txt", describeAccounts(context), accountFile);
+                publish(context, "token_probe.txt", requestToken(context), tokenFile);
                 // The same process, asked again after waiting. Measured across runs 43578805921,
                 // 43582144297 and 43582950032: a clone sometimes lists the device's account and
                 // sometimes none, in the same build. Sampling one process over time separates
@@ -543,7 +552,8 @@ final class AccountProbe {
         return joined.toString();
     }
 
-    private static void publish(Context context, String fileName, Map<String, String> answer) {
+    private static void publish(Context context, String fileName, Map<String, String> answer,
+                                String fileOverride) {
         // Every line carries the answering pid and when it was first written.
         //
         // A plain `file=` key is not enough: two probes of the same kind (account list, then token)
@@ -557,13 +567,14 @@ final class AccountProbe {
             Log.i(TAG, KV_PREFIX + " answer=" + answerId + " file=" + fileName
                     + " key=" + entry.getKey() + " value=" + value.replace('\n', ' '));
         }
+        String target = fileOverride == null || fileOverride.isEmpty() ? fileName : fileOverride;
         StringBuilder content = new StringBuilder();
         for (Map.Entry<String, String> entry : answer.entrySet()) {
             content.append(entry.getKey()).append('=')
                     .append(entry.getValue() == null ? "" : entry.getValue()).append('\n');
         }
         try {
-            FileOutputStream out = new FileOutputStream(new File(context.getFilesDir(), fileName));
+            FileOutputStream out = new FileOutputStream(new File(context.getFilesDir(), target));
             try {
                 out.write(content.toString().getBytes("UTF-8"));
                 out.flush();
