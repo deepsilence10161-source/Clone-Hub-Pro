@@ -177,6 +177,13 @@ class GoogleSignInCloneInstrumentedTest {
         // With an account present, "sign in does nothing" would show up as one side refusing where
         // the other succeeds — or as a clone that gets a *different*, empty answer.
         val seeded = googleAccountCount()
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_TOKEN_STATE accounts_now=$seeded " +
+                "normal=${normal["result"]}/${normal["token_length"]} " +
+                "clone=${cloned["result"]}/${cloned["token_length"]} " +
+                "clone_names=${cloned["names"]} host_names=${normal["names"]}"
+        )
         if (seeded > 0) {
             assertTrue(
                 "The device has $seeded Google account(s) but the token request returned " +
@@ -492,6 +499,8 @@ class GoogleSignInCloneInstrumentedTest {
             SystemClock.sleep(500)
         }
         device.executeShellCommand("logcat -c")
+        val accountsBeforeProbe = googleAccountCount()
+        Log.i(TAG, "GOOGLE_SIGNIN_PRE_PROBE kind=$kind file=$fileName accounts_on_device=$accountsBeforeProbe")
         if (kind == "clone") {
             val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
             assertTrue(
@@ -530,7 +539,26 @@ class GoogleSignInCloneInstrumentedTest {
                 } else {
                     realProcess == fixturePackage
                 }
-                if (matches) break
+                if (matches) {
+                    // The parsed answer and the raw log it came from are kept per probe: the shared
+                    // logcat buffer is cleared at the next probe, so a failure in the first test can
+                    // otherwise only be read from whatever the last test wrote.
+                    runCatching {
+                        File(evidenceDir, "$kind-${fileName}.log").writeText(
+                            device.executeShellCommand("logcat -d")
+                        )
+                        File(evidenceDir, "$kind-${fileName}.answer.txt").writeText(
+                            answer.entries.joinToString("\n") { "${it.key}=${it.value}" }
+                        )
+                    }
+                    Log.i(
+                        TAG,
+                        "GOOGLE_SIGNIN_ACCEPTED kind=$kind file=$fileName pid=$candidatePid " +
+                            "process=$realProcess google_accounts=${answer["google_accounts"]} " +
+                            "result=${answer["result"]} accountsOnDevice=$accountsBeforeProbe"
+                    )
+                    break
+                }
                 Log.i(
                     TAG,
                     "GOOGLE_SIGNIN_PROBE ignoring answer from pid=$candidatePid ($realProcess), " +
