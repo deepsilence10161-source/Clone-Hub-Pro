@@ -69,8 +69,19 @@ grep -E "TotalTime|WaitTime" "$OUT/cold-start.txt" || true
 run_tests deep-suite -e class "$DEEP_CLASS" || deep_status=$?
 # Kept separate so a sign-in failure names itself instead of hiding inside the deep suite.
 adb logcat -c
+# The account service's own verbose trace is the only way to tell "the request reached the platform
+# and was filtered" from "the request never left the container". Debug-level tags for that service are
+# not on by default, so they are turned on for this test and the tag dump is kept as evidence.
+adb shell setprop log.tag.AccountManagerService VERBOSE 2>/dev/null || true
+adb shell setprop log.tag.Accounts VERBOSE 2>/dev/null || true
+adb shell setprop log.tag.AccountManager VERBOSE 2>/dev/null || true
 run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 adb logcat -d -v threadtime > "$OUT/google-signin-logcat.txt" 2>/dev/null || true
+# Every line the account service wrote while the sign-in test ran, kept separately so the verdict is
+# readable without grepping 4 MB of logcat.
+adb logcat -d -v threadtime -s AccountManagerService:V Accounts:V AccountManager:V \
+  > "$OUT/account-service-logcat.txt" 2>/dev/null || true
+cat "$OUT/account-service-logcat.txt" || true
 # The probe reports the clone wrote about Google sign-in.
 adb shell run-as "$PACKAGE_ID" sh -c 'cat files/account_probe-*.txt files/token_probe-*.txt' \
   > "$OUT/google-signin-probes.txt" 2>&1 || true

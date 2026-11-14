@@ -6,7 +6,7 @@ so this is deliberately narrow and false-positive-free.
 import re, sys, pathlib
 import xml.etree.ElementTree as ET
 
-REPO = pathlib.Path('/home/user/Clonehub/pro-fix')
+REPO = pathlib.Path('/home/user/Clonehub/pro-live')
 problems = []
 
 for path in (REPO / 'app/src/main/java').rglob('*.java'):

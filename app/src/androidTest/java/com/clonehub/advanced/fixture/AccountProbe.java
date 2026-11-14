@@ -39,6 +39,7 @@ final class AccountProbe {
     private static final String TAG = "GOOGLE_SIGNIN";
     private static final String KV_PREFIX = "GOOGLE_SIGNIN_KV";
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
+    private static final String SEEDED_ACCOUNT_NAME = "clonehub.probe@example.com";
     private static final String TOKEN_TYPE =
             "oauth2:https://www.googleapis.com/auth/userinfo.email";
     private static final long TOKEN_TIMEOUT_SECONDS = 20L;
@@ -109,6 +110,7 @@ final class AccountProbe {
             // explicitly change the answer? A platform that filtered the request answers the second
             // call; a container answering on its own answers both the same way (empty).
             out.put("identity_probe", identityProbe(context));
+            out.put("platform_verdict", platformVerdict(context));
         } catch (Throwable error) {
             // This is what a user experiences as "the sign-in button does nothing": the call itself
             // throws inside the clone. The reason is recorded, never an empty list.
@@ -194,6 +196,46 @@ final class AccountProbe {
 
     private static int count(Account[] accounts) {
         return accounts == null ? -1 : accounts.length;
+    }
+
+    /**
+     * The platform's own verdict, asked from inside the clone, plus whether the host bridge this app
+     * installs is reachable from the container.
+     *
+     * `getAccountVisibility` is answered by AccountManagerService itself and needs no account list,
+     * so it separates the two remaining possibilities with no room for interpretation:
+     *   visibility=1  → the platform is reachable and says this package may see the account, so an
+     *                   empty list means the request never reached it;
+     *   visibility=0  → the platform is reachable and refuses, which is a different fix entirely.
+     * The bridge probe answers whether the container can reach the app's own provider at all, which
+     * decides if the host-side bridge can be the fix.
+     */
+    private static String platformVerdict(Context context) {
+        StringBuilder out = new StringBuilder();
+        try {
+            AccountManager manager = AccountManager.get(context);
+            out.append("visibility_self=").append(manager.getAccountVisibility(
+                    new Account(SEEDED_ACCOUNT_NAME, GOOGLE_ACCOUNT_TYPE),
+                    context.getPackageName()));
+            out.append(" visibility_host=").append(manager.getAccountVisibility(
+                    new Account(SEEDED_ACCOUNT_NAME, GOOGLE_ACCOUNT_TYPE), "com.clonehub.pro"));
+        } catch (Throwable error) {
+            out.append(" visibility_error=").append(error.getClass().getSimpleName())
+                    .append(": ").append(error.getMessage());
+        }
+        try {
+            // The app under test answers this provider on a signature permission; the bridge is the
+            // host-side answer that already works for the un-cloned app.
+            android.os.Bundle reply = context.getContentResolver().call(
+                    android.net.Uri.parse("content://com.clonehub.pro.accounts"),
+                    "accounts", null, new android.os.Bundle());
+            out.append(" bridge=").append(reply == null ? "null"
+                    : String.valueOf(reply.getStringArrayList("names")));
+        } catch (Throwable error) {
+            out.append(" bridge_error=").append(error.getClass().getSimpleName())
+                    .append(": ").append(error.getMessage());
+        }
+        return out.toString();
     }
 
     private static Map<String, String> requestToken(Context context) {

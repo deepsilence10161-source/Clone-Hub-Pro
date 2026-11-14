@@ -66,6 +66,11 @@ class GoogleSignInCloneInstrumentedTest {
             normal["ok"] == "true"
         )
         val cloned = probe("clone")
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_VERDICT normal=[${normal["platform_verdict"]}] " +
+                "clone=[${cloned["platform_verdict"]}]"
+        )
         assertTrue(
             "The cloned app never answered the account probe: '$cloned'",
             cloned["ok"] == "true"
