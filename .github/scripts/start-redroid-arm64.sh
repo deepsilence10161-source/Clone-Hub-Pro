@@ -40,6 +40,13 @@ for attempt in 1 2 3; do
   sleep $((attempt * 5))
 done
 
+# A retry recreates the container under the same name, and `docker run --name` refuses while the
+# previous attempt's container still exists. Measured on run 43564432964 (API 27): the re-boot step
+# printed "Conflict. The container name /redroid-27 is already in use" and the level failed for that
+# reason alone, with someone else's emulator still running on 5555. The old container holds this
+# job's port and its own stale /data, so it has to go before the new one starts.
+docker rm -f "${REDROID_CONTAINER:-redroid}" > /dev/null 2>&1 || true
+
 if ! docker run -d --name "${REDROID_CONTAINER:-redroid}" --privileged \
   -p 127.0.0.1:5555:5555 \
   -v "$PWD/redroid-data:/data" \
