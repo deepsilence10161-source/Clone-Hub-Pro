@@ -126,15 +126,40 @@ final class AccountProbe {
             return out;
         }
         if (google.length == 0) {
-            out.put("ok", "true");
-            out.put("result", "NO_ACCOUNT");
-            out.put("token_length", "0");
+            // One more legitimate path before giving up: a device with no account can still be asked
+            // to add one. On an image without Play services this is what a sign-in button would
+            // trigger, so whether it resolves is worth recording.
+            Bundle addOptions = new Bundle();
+            addOptions.putBoolean(AccountManager.KEY_CALLER_IS_REQUEST, true);
+            try {
+                AccountManagerFuture<Bundle> future = manager.addAccount(
+                        GOOGLE_ACCOUNT_TYPE, TOKEN_TYPE, null, addOptions, null, null);
+                Bundle added = future == null ? null : future.getResult();
+                Intent addIntent = added == null ? null
+                        : (Intent) added.getParcelable(AccountManager.KEY_INTENT);
+                out.put("ok", "true");
+                out.put("result", "NO_ACCOUNT");
+                out.put("token_length", "0");
+                out.put("add_account", addIntent == null ? "NO_INTENT"
+                        : String.valueOf(addIntent.getComponent()));
+            } catch (Throwable error) {
+                out.put("ok", "true");
+                out.put("result", "NO_ACCOUNT");
+                out.put("token_length", "0");
+                out.put("add_account", "EXCEPTION:" + error.getClass().getSimpleName());
+            }
             return out;
         }
         final CountDownLatch latch = new CountDownLatch(1);
         final String[] result = {"PENDING", "0", null};
         try {
-            manager.getAuthToken(google[0], TOKEN_TYPE, null, false,
+            // A Bundle of options, not null: an app's sign-in library passes one, and the platform
+            // treats a null argument as "the caller cannot be asked for consent", which changes the
+            // outcome on some releases.
+            Bundle options = new Bundle();
+            options.putBoolean(AccountManager.KEY_CALLER_IS_REQUEST, true);
+            options.putBoolean(AccountManager.KEY_CALLER_IS_FOREGROUND, true);
+            manager.getAuthToken(google[0], TOKEN_TYPE, options, true,
                     new AccountManagerCallback<Bundle>() {
                         @Override
                         public void run(AccountManagerFuture<Bundle> future) {
@@ -157,7 +182,11 @@ final class AccountProbe {
                                     result[0] = "EMPTY_TOKEN";
                                 }
                             } catch (Throwable error) {
-                                result[0] = "EXCEPTION";
+                                // AuthenticationException/OperationCanceledException are real answers;
+                                // a SecurityException is the platform refusing the clone outright,
+                                // which is exactly the reported "sign-in does nothing".
+                                result[0] = error instanceof SecurityException
+                                        ? "SECURITY_EXCEPTION" : "EXCEPTION";
                                 result[2] = error.getClass().getSimpleName()
                                         + ": " + error.getMessage();
                             } finally {
@@ -173,6 +202,7 @@ final class AccountProbe {
         out.put("ok", "true");
         out.put("result", result[0]);
         out.put("token_length", result[1]);
+        out.put("account", google[0].name);
         if (result[2] != null) {
             out.put("detail", result[2].replace('\n', ' '));
         }

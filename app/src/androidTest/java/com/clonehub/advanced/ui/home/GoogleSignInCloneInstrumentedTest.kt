@@ -43,6 +43,8 @@ class GoogleSignInCloneInstrumentedTest {
         const val TAG = "GOOGLE_SIGNIN"
         const val CLONE_TIMEOUT_MS = 60_000L
         const val REPORT_TIMEOUT_MS = 40_000L
+        const val GOOGLE_ACCOUNT_TYPE = "com.google"
+        const val SEED_ACCOUNT = "clonehub.probe@example.com"
         val ACCOUNT_PERMISSIONS = listOf(
             Manifest.permission.GET_ACCOUNTS,
             Manifest.permission.READ_CONTACTS
@@ -132,11 +134,32 @@ class GoogleSignInCloneInstrumentedTest {
             "Token requests disagree: normal=${normal["result"]} clone=${cloned["result"]}",
             normal["result"] == cloned["result"]
         )
-        if (cloned["result"] == "NO_ACCOUNT") {
+        // With an account present, "sign in does nothing" would show up as one side refusing where
+        // the other succeeds — or as a clone that gets a *different*, empty answer.
+        val seeded = googleAccountCount()
+        if (seeded > 0) {
+            assertTrue(
+                "The device has $seeded Google account(s) but the token request returned " +
+                    "${cloned["result"]} inside the clone (host: ${normal["result"]})",
+                cloned["result"] == "TOKEN"
+            )
+            assertTrue(
+                "The clone received a token of length ${cloned["token_length"]}; the app received " +
+                    "${normal["token_length"]}",
+                cloned["token_length"] == normal["token_length"]
+            )
+            val proof = authenticatorProof()
+            Log.i(TAG, "GOOGLE_SIGNIN_AUTHENTICATOR_PROOF $proof")
+            assertTrue(
+                "The account authenticator never recorded a token request, so the token came from " +
+                    "somewhere else: '$proof'",
+                proof.contains("getAuthToken")
+            )
+        } else {
             Log.i(
                 TAG,
-                "GOOGLE_SIGNIN_NOTE no Google account is signed into this image, so no token could " +
-                    "be issued; host and clone refused identically"
+                "GOOGLE_SIGNIN_NOTE no Google account could be created in this image, so no token " +
+                    "could be issued; host and clone refused identically"
             )
         }
         capture("token")
@@ -202,7 +225,8 @@ class GoogleSignInCloneInstrumentedTest {
         // Two acceptable truths, both recorded with their evidence: the chooser resolves (the real
         // Google account manager is reachable from inside the clone), or it does not resolve because
         // this image ships no com.google authenticator — which is an image property, stated as such.
-        val authenticatorPresent = cloned["account_type_resolvable"] == "true"
+        val authenticatorPresent = cloned["account_type_resolvable"] == "true" ||
+            authenticatorTypes().contains(GOOGLE_ACCOUNT_TYPE)
         if (authenticatorPresent) {
             assertTrue(
                 "The Google authenticator is present but the account chooser does not resolve in the clone: $chooser",
@@ -226,6 +250,66 @@ class GoogleSignInCloneInstrumentedTest {
      * only assertion, "both sides refused" looked like success. The grant is applied to the app under
      * test as well, and the probe reports the permission state it actually saw.
      */
+    /**
+     * Makes sure the device has a `com.google` account, created the way the platform allows.
+     *
+     * On an image without Play services there is no authenticator for `com.google`, so an app's
+     * sign-in cannot reach the account manager and every gate could only report `NO_ACCOUNT` — for
+     * both the app and the clone, which is parity but proves nothing. The instrumentation APK
+     * registers a test authenticator for the same account type; this method then adds an account
+     * through `AccountManager`, and records whether the platform accepted it.
+     */
+    private fun seedGoogleAccount() {
+        if (googleAccountCount() > 0) return
+        val staged = File(context.getExternalFilesDir(null), "fixture-app.apk")
+        if (!staged.exists() || staged.length() == 0L) {
+            runCatching {
+                File(instrumentation.context.applicationInfo.sourceDir).inputStream().use { input ->
+                    staged.outputStream().use { output -> input.copyTo(output) }
+                }
+            }.onFailure { Log.w(TAG, "Could not stage the authenticator APK", it) }
+        }
+        device.executeShellCommand("pm install -r -t ${staged.absolutePath}").trim().let {
+            Log.i(TAG, "GOOGLE_SIGNIN_SEED authenticator install: $it")
+        }
+        // The platform only accepts an account-add for a type that has a registered authenticator.
+        val added = runCatching {
+            val manager = android.accounts.AccountManager.get(context)
+            manager.addAccountExplicitly(
+                android.accounts.Account(SEED_ACCOUNT, GOOGLE_ACCOUNT_TYPE), null, null
+            )
+        }.getOrElse {
+            Log.w(TAG, "GOOGLE_SIGNIN_SEED addAccountExplicitly failed", it)
+            false
+        }
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_SEED added=$added accounts=${googleAccountCount()} " +
+                "authenticators=${authenticatorTypes()}"
+        )
+    }
+
+    private fun googleAccountCount(): Int = runCatching {
+        android.accounts.AccountManager.get(context)
+            .getAccountsByType(GOOGLE_ACCOUNT_TYPE).size
+    }.getOrDefault(0)
+
+    private fun authenticatorTypes(): String = runCatching {
+        android.accounts.AccountManager.get(context).getAuthenticatorTypes()
+            .joinToString(",") { it.type }
+    }.getOrDefault("unavailable")
+
+    /**
+     * What the test authenticator recorded when the token was requested — read from the device, so
+     * it proves the request arrived from the app/clone rather than being answered inside it.
+     */
+    private fun authenticatorProof(): String = runCatching {
+        device.executeShellCommand(
+            "cat /sdcard/Android/data/$fixturePackage/files/test_authenticator_proof.txt 2>/dev/null " +
+                "| grep getAuthToken | tail -3"
+        ).trim().replace('\n', ' ')
+    }.getOrDefault("")
+
     private fun grantTestPermissions() {
         val packages = listOf(fixturePackage, context.packageName)
         for (target in packages) {
@@ -258,6 +342,11 @@ class GoogleSignInCloneInstrumentedTest {
      */
     private fun probe(kind: String, token: Boolean = false): Map<String, String> {
         val fileName = if (token) "token_probe.txt" else "account_probe.txt"
+        // Every probe runs against a device that has a com.google account, so "no account" is never
+        // mistaken for a broken clone. The account is created through the platform's own
+        // AccountManager with a test authenticator registered under the real com.google type (see
+        // TestGoogleAuthenticator): the credential is fake and labelled as such, the path is real.
+        seedGoogleAccount()
         // The answer is published from onCreate, so a running fixture stays silent. For the normal
         // probe the plain fixture is restarted. For the clone probe the app process must *not* be
         // killed — force-stopping the host package also tears down the clone's agent process, and the

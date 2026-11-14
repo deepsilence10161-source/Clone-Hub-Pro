@@ -18,5 +18,25 @@
             </intent-filter>
         </activity>
 
+        <!--
+          A test-only authenticator under the real com.google account type.
+
+          The device gates run on an image with no Play services, so there is no authenticator for
+          com.google and an app's Google sign-in cannot reach the account manager at all — which is
+          why end-to-end sign-in could only ever be reported as NOT TESTED. With this registered, a
+          token request from inside a clone travels the real path (app -> AccountManagerService ->
+          authenticator -> response) and returns a fake token that is labelled as such.
+        -->
+        <service
+            android:name="com.clonehub.advanced.fixture.TestGoogleAuthenticator$AuthenticatorService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/test_google_authenticator" />
+        </service>
+
 </application>
 </manifest>

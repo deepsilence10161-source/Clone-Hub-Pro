@@ -77,7 +77,16 @@ adb shell run-as "$PACKAGE_ID" sh -c 'cat files/account_probe-*.txt files/token_
 cat "$OUT/google-signin-probes.txt" || true
 # Platform answers about accounts, from the device's own point of view.
 adb shell dumpsys account > "$OUT/account-service.txt" 2>&1 || true
+# Did the platform accept the seeded com.google account, and did a token request reach the
+# authenticator? Both answers are in the device's own words.
+adb shell dumpsys account | grep -A3 "Accounts: " > "$OUT/account-list.txt" 2>&1 || true
+adb shell cat "/sdcard/Android/data/$TEST_PACKAGE_ID/files/test_authenticator_proof.txt" \
+  > "$OUT/test-authenticator-proof.txt" 2>&1 || true
+cat "$OUT/test-authenticator-proof.txt" || true
+adb shell pm list packages | grep -i "test.google\|authenticator" > "$OUT/authenticator-packages.txt" 2>&1 || true
 adb shell pm list packages | grep -i "google\|gsf\|vending" > "$OUT/play-services-packages.txt" 2>&1 || true
+adb shell dumpsys account | grep -iE "type=|Authenticator" | head -40 > "$OUT/account-types.txt" 2>&1 || true
+cat "$OUT/account-types.txt" || true
 # The permission that decides whether a cloned app can read the account list at all, in the
 # platform's own words, plus the clone UI on screen. Without these two files a sign-in failure
 # cannot be told apart from a layout that hides the button.
