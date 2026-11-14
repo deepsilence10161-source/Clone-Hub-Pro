@@ -435,10 +435,11 @@ class GoogleSignInCloneInstrumentedTest {
      * service is switched on by the deep gate; without it the answer is recorded as unavailable.
      */
     private fun tokenRequesters(): String = runCatching {
-        device.executeShellCommand(
+        val lines = device.executeShellCommand(
             "logcat -d -s AccountManagerService:V | grep 'getAuthToken' | " +
                 "grep '$GOOGLE_ACCOUNT_TYPE' | tail -6"
-        ).trim().replace('\n', " || ")
+        )
+        lines.trim().replace('\n', " || ")
     }.getOrDefault("")
 
     private fun grantTestPermissions() {
