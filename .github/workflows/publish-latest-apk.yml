@@ -43,7 +43,11 @@ jobs:
           strict_run_id="$(jq -r '[.workflow_runs[] | select(.name == "Native ARM64 redroid strict E2E" and .status == "completed" and .conclusion == "success")] | sort_by(.created_at) | last | .id // empty' runs.json)"
           deep_state="$(jq -r '[.workflow_runs[] | select(.name == "Native ARM64 deep clone testing")] | sort_by(.created_at) | last | if . == null then "missing" elif .status != "completed" then .status else .conclusion end' runs.json)"
           if [[ -z "$strict_run_id" || "$deep_state" != "success" ]]; then
-            echo "Verified gates are not both ready (deep=$deep_state)."
+            # Not the same thing as "an older commit won the race": here the gates for THIS commit
+            # are missing or not green. Printing both states is what makes that readable — the
+            # previous run pasted "Verified gates are not both ready (deep=success)" beside a strict
+            # run that was still in progress, which read like a contradiction.
+            echo "This commit's gates are not both green yet: strict=${strict_run_id:-none} deep=$deep_state (HEAD_SHA=$HEAD_SHA, main=$main_sha)."
             echo "publish=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -83,3 +87,13 @@ jobs:
               --target "$HEAD_SHA" --latest --title "$title" --notes "$notes"
           fi
           echo "Direct download: https://github.com/$REPO/releases/latest/download/CloneHub-Pro.apk"
+
+      - name: Say what happened
+        if: always()
+        shell: bash
+        run: |
+          if [[ "${{ steps.verify.outputs.publish }}" == "true" ]]; then
+            echo "Published the APK verified by strict run ${{ steps.verify.outputs.strict-run-id }} for $HEAD_SHA."
+          else
+            echo "Nothing published: the strict and deep gates for $HEAD_SHA were not both green when this ran, so the release still points at an earlier commit."
+          fi
