@@ -567,8 +567,15 @@ class GoogleSignInCloneInstrumentedTest {
                     )
                 }.getOrDefault("")
             } ?: ""
+            // How long into the process the answer arrived, so the start-up window is re-measured
+            // every run instead of being taken from the run it was first seen in.
+            val firstSample = device.executeShellCommand("logcat -d")
+                .lineSequence()
+                .firstOrNull { it.contains("answer=sample-${result["pid"]} ") && it.contains("key=at_0ms") }
+                ?.substringAfter("startupMs=", "")
+                ?.trim() ?: "unknown"
             val line = "launch=$label pid=${result["pid"]} accounts=${result["google_accounts"]} " +
-                "device=${googleAccountCount()} names=${result["names"]}"
+                "device=${googleAccountCount()} names=${result["names"]} firstSampleAtMs=$firstSample"
             seen += line
             Log.i(TAG, "GOOGLE_SIGNIN_REPEAT $line")
             Log.i(
