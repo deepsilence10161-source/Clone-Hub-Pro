@@ -62,6 +62,8 @@ class PhoneUiMatrixInstrumentedTest {
         const val FIXTURE_PACKAGE = "com.clonehub.pro.test"
         const val FIXTURE_LABEL = "Clone Hub Fixture With A Deliberately Long Name"
         const val FIXTURE_SPACE = 77
+        // Six spaces is the app's own limit; the walk never needs more taps than that.
+        const val MAX_SPACE_PAGES = 6
     }
 
     /** Bottom of the status bar and top of the navigation bar, read from the platform windows. */
@@ -386,7 +388,19 @@ class PhoneUiMatrixInstrumentedTest {
             //     app in, and the one the single "Add App" label never exercised. The name is long
             //     on purpose — two lines, ellipsised, both inside the card.
             showHomeWithFixtureClone(label)
+            // The space holding the clone is not necessarily the page the pager opens on: measured
+            // on runs 43573844666 and 43572692518, the model held '77:1' while the visible page was
+            // another space, so the tile was reported missing on all four configurations and the
+            // check below silently measured the wrong page. The page is chosen by name, through the
+            // same buttons a user taps, and the number of taps is logged.
+            val fixtureSpaceName = spaces.getSpace(FIXTURE_SPACE)?.spaceName ?: "Space $FIXTURE_SPACE"
+            val pageTaps = openSpace(label, fixtureSpaceName)
             val tilePresent = device.wait(Until.hasObject(By.text(FIXTURE_LABEL)), FIND_TIMEOUT_MS)
+            Log.i(
+                TAG,
+                "PHONE_UI config=$label cloneTile present=$tilePresent pageTaps=$pageTaps " +
+                    "spaceName=$fixtureSpaceName"
+            )
             if (!tilePresent) {
                 Log.w(
                     TAG,
@@ -446,10 +460,13 @@ class PhoneUiMatrixInstrumentedTest {
                     hintEmpty = runCatching { boundsOf(resourceId = "tvEmptySpaceHint") }.getOrNull()
                     if (hintEmpty != null) break
                 }
+                val landedOn = runCatching {
+                    device.findObject(By.res(appId, "tvSpaceBadge"))?.text
+                }.getOrNull()
                 Log.i(
                     TAG,
                     "PHONE_UI config=$label emptyHint emptySpace=${emptySpace.spaceId} " +
-                        "pages=${pageReached} bounds=$hintEmpty"
+                        "pages=${pageReached} landedOn=$landedOn bounds=$hintEmpty"
                 )
                 if (hintEmpty == null) {
                     // Never silently passing: the state was not reachable on this configuration and
@@ -590,6 +607,35 @@ class PhoneUiMatrixInstrumentedTest {
     private fun installedForLog(): Boolean = runCatching {
         device.executeShellCommand("pm list packages $fixturePackage").contains(fixturePackage)
     }.getOrDefault(false)
+
+    /**
+     * Brings the space called [spaceName] on screen by walking the pager with the app's own chevrons,
+     * and reports how many taps it took (0 when the right space was already showing).
+     *
+     * Walking is not optional here: a `swipe()` on the pager reports only that the gesture was
+     * accepted (measured: `swiped=true` with the page unchanged), so the page the assertions see has
+     * to be established by reading the header, not by hoping the swipe worked.
+     */
+    private fun openSpace(label: String, spaceName: String): Int {
+        repeat(MAX_SPACE_PAGES) { taps ->
+            val onScreen = runCatching {
+                device.findObject(By.res(appId, "tvSpaceBadge"))?.text
+            }.getOrNull()
+            if (onScreen != null && onScreen.trim() == spaceName.trim()) return taps
+            val next = runCatching { device.findObject(By.res(appId, "btnNextSpace")) }.getOrNull()
+            val prev = runCatching { device.findObject(By.res(appId, "btnPrevSpace")) }.getOrNull()
+            val moved = when {
+                next != null -> { next.click(); true }
+                prev != null -> { prev.click(); true }
+                else -> false
+            }
+            if (!moved) return taps
+            SystemClock.sleep(SETTLE_MS)
+        }
+        val ended = runCatching { device.findObject(By.res(appId, "tvSpaceBadge"))?.text }.getOrNull()
+        Log.w(TAG, "PHONE_UI config=$label space navigation stopped at '$ended', wanted '$spaceName'")
+        return MAX_SPACE_PAGES
+    }
 
     private fun showHome(label: String) {
         device.wakeUp()
