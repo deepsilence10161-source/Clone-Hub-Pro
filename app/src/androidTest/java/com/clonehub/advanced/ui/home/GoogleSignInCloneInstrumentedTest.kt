@@ -439,7 +439,7 @@ class GoogleSignInCloneInstrumentedTest {
             "logcat -d -s AccountManagerService:V | grep 'getAuthToken' | " +
                 "grep '$GOOGLE_ACCOUNT_TYPE' | tail -6"
         )
-        lines.trim().replace('\n', " || ")
+        lines.trim().replace("\n", " || ")
     }.getOrDefault("")
 
     private fun grantTestPermissions() {
