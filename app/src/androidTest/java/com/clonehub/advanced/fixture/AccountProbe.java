@@ -105,6 +105,10 @@ final class AccountProbe {
             // The answer decides where the fix has to live, so it is recorded, not assumed.
             out.put("caller_identity", callerIdentity(context));
             out.put("picker_component", pickerComponent(context));
+            // Which identity does the account service see, and does naming the hosting package
+            // explicitly change the answer? A platform that filtered the request answers the second
+            // call; a container answering on its own answers both the same way (empty).
+            out.put("identity_probe", identityProbe(context));
         } catch (Throwable error) {
             // This is what a user experiences as "the sign-in button does nothing": the call itself
             // throws inside the clone. The reason is recorded, never an empty list.
@@ -145,6 +149,53 @@ final class AccountProbe {
         return out.toString();
     }
 
+    /**
+     * The same question asked three ways, plus the caller identity the platform will see.
+     *
+     * `getAccountsByType` lets the process imply which package is asking; `getAccountsByTypeForPackage`
+     * names it. If the container answers account calls itself both come back empty; if the platform
+     * answers and filters, the named-package call is the one that can succeed. That difference decides
+     * where a fix belongs, so it is measured rather than guessed.
+     */
+    private static String identityProbe(Context context) {
+        StringBuilder out = new StringBuilder();
+        try {
+            AccountManager manager = AccountManager.get(context);
+            out.append("uid=").append(android.os.Process.myUid());
+            out.append(" package=").append(context.getPackageName());
+            try {
+                out.append(" op_package=").append(context.getOpPackageName());
+            } catch (Throwable error) {
+                out.append(" op_package=error(").append(error.getClass().getSimpleName()).append(")");
+            }
+            out.append(" by_type=").append(count(manager.getAccountsByType(GOOGLE_ACCOUNT_TYPE)));
+            try {
+                out.append(" by_type_for_package=").append(count(
+                        manager.getAccountsByTypeForPackage(GOOGLE_ACCOUNT_TYPE, "com.clonehub.pro")));
+            } catch (Throwable error) {
+                out.append(" by_type_for_package=error(")
+                        .append(error.getClass().getSimpleName()).append(")");
+            }
+            out.append(" all=").append(count(manager.getAccounts()));
+            // Does a completely different account type behave the same way? A container that answers
+            // account calls itself returns an empty list for every type; a platform that filters
+            // returns the same (empty) answer too, but the error text differs when it refuses.
+            try {
+                out.append(" unknown_type=").append(count(manager.getAccountsByType("com.example.none")));
+            } catch (Throwable error) {
+                out.append(" unknown_type=error(").append(error.getClass().getSimpleName()).append(")");
+            }
+        } catch (Throwable error) {
+            out.append(" error=").append(error.getClass().getSimpleName())
+                    .append(": ").append(error.getMessage());
+        }
+        return out.toString();
+    }
+
+    private static int count(Account[] accounts) {
+        return accounts == null ? -1 : accounts.length;
+    }
+
     private static Map<String, String> requestToken(Context context) {
         Map<String, String> out = new LinkedHashMap<>();
         out.put("pid", String.valueOf(android.os.Process.myPid()));
@@ -159,6 +210,7 @@ final class AccountProbe {
             out.put("error", error.getClass().getSimpleName() + ": " + error.getMessage());
             return out;
         }
+        out.put("identity_probe", identityProbe(context));
         if (google.length == 0) {
             // One more legitimate path before giving up: a device with no account can still be asked
             // to add one. On an image without Play services this is what a sign-in button would
