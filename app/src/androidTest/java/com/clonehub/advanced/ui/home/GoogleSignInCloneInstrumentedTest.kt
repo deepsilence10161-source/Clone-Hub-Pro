@@ -188,12 +188,23 @@ class GoogleSignInCloneInstrumentedTest {
                     "${normal["token_length"]}",
                 cloned["token_length"] == normal["token_length"]
             )
+            // The authenticator's own proof file, when its app-private directory is readable. It is
+            // not always: the path under /sdcard/Android/data is rewritten by storage isolation, and
+            // the fixture is reinstalled by several probes in one run. So the proof is reported, and
+            // the *asserted* proof is the platform's own record that a token request arrived from the
+            // process under test — which is what actually matters and is read from dumpsys/logcat.
             val proof = authenticatorProof()
-            Log.i(TAG, "GOOGLE_SIGNIN_AUTHENTICATOR_PROOF $proof")
+            Log.i(TAG, "GOOGLE_SIGNIN_AUTHENTICATOR_PROOF ${proof.ifEmpty { "<no readable proof file>" }}")
+            val requester = tokenRequesters()
+            Log.i(TAG, "GOOGLE_SIGNIN_TOKEN_REQUESTERS $requester")
+            val clonePid = cloned["pid"]
+            val cloneRequested = clonePid != null && requester.contains("pid $clonePid") &&
+                requester.contains(GOOGLE_ACCOUNT_TYPE)
             assertTrue(
-                "The account authenticator never recorded a token request, so the token came from " +
-                    "somewhere else: '$proof'",
-                proof.contains("getAuthToken")
+                "The platform recorded no token request for $GOOGLE_ACCOUNT_TYPE from the clone " +
+                    "process (pid=$clonePid), so the token did not come through the platform: " +
+                    "requesters=[$requester] proof=[$proof]",
+                cloneRequested || proof.contains("getAuthToken")
             )
         } else {
             Log.i(
@@ -404,10 +415,30 @@ class GoogleSignInCloneInstrumentedTest {
      * it proves the request arrived from the app/clone rather than being answered inside it.
      */
     private fun authenticatorProof(): String = runCatching {
+        val candidates = listOf(
+            "/sdcard/Android/data/$fixturePackage/files/test_authenticator_proof.txt",
+            "/storage/emulated/0/Android/data/$fixturePackage/files/test_authenticator_proof.txt"
+        )
+        val found = candidates.map { path ->
+            path to device.executeShellCommand("cat $path 2>/dev/null | grep getAuthToken | tail -3")
+                .trim().replace('\n', ' ')
+        }
+        Log.i(TAG, "GOOGLE_SIGNIN_PROOF_FILES ${found.joinToString(" | ") { it.first + "=>" + it.second.ifEmpty { "<empty>" } }}")
+        found.firstOrNull { it.second.isNotEmpty() }?.second ?: ""
+    }.getOrDefault("")
+
+    /**
+     * Which processes asked the platform for a `com.google` token, in the platform's own words.
+     *
+     * AccountManagerService logs `getAuthToken … caller's uid N, pid M` for every request, so this
+     * names the requester instead of inferring it from a token's length. Verbose logging for that
+     * service is switched on by the deep gate; without it the answer is recorded as unavailable.
+     */
+    private fun tokenRequesters(): String = runCatching {
         device.executeShellCommand(
-            "cat /sdcard/Android/data/$fixturePackage/files/test_authenticator_proof.txt 2>/dev/null " +
-                "| grep getAuthToken | tail -3"
-        ).trim().replace('\n', ' ')
+            "logcat -d -s AccountManagerService:V | grep 'getAuthToken' | " +
+                "grep '$GOOGLE_ACCOUNT_TYPE' | tail -6"
+        ).trim().replace('\n', " || ")
     }.getOrDefault("")
 
     private fun grantTestPermissions() {
@@ -555,15 +586,21 @@ class GoogleSignInCloneInstrumentedTest {
 
     /** Reads the key=value answer the probe published for one file from the device log. */
     private fun parseProbe(log: String, fileName: String): Map<String, String> {
-        val answer = mutableMapOf<String, String>()
+        // Answers are grouped by the id their publisher stamped on every line, and the newest group
+        // is the answer being waited for. Keying on the file name alone mixed two probes together
+        // when they published the same key names (measured on run 43578805921, see AccountProbe).
+        val groups = linkedMapOf<String, MutableMap<String, String>>()
         log.lineSequence()
             .filter { it.contains("GOOGLE_SIGNIN_KV") && it.contains("file=$fileName") }
             .forEach { line ->
+                val answerId = line.substringAfter("answer=", "").substringBefore(" ").trim()
                 val key = line.substringAfter("key=", "").substringBefore(" ").trim()
                 val value = line.substringAfter("value=", "").trim()
-                if (key.isNotEmpty()) answer[key] = value
+                if (key.isNotEmpty()) {
+                    groups.getOrPut(answerId.ifEmpty { "unkeyed" }) { mutableMapOf() }[key] = value
+                }
             }
-        return answer
+        return groups.values.lastOrNull() ?: emptyMap()
     }
 
     private fun writeEvidence(name: String, content: String) {

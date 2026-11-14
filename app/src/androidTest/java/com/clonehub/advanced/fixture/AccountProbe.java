@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.File;
@@ -502,10 +503,18 @@ final class AccountProbe {
     }
 
     private static void publish(Context context, String fileName, Map<String, String> answer) {
+        // Every line carries the answering pid and when it was first written.
+        //
+        // A plain `file=` key is not enough: two probes of the same kind (account list, then token)
+        // write the same key names, so a reader that takes the last line of each key mixes them — and
+        // this fixture is started several times per run. Measured on run 43578805921: the clone's own
+        // file on disk read `google_accounts=1` while the host test parsed `google_accounts=0` out of
+        // the log, and the mismatch was pure bookkeeping. The `answer=` prefix is unique per publish.
+        String answerId = android.os.Process.myPid() + "-" + SystemClock.elapsedRealtime();
         for (Map.Entry<String, String> entry : answer.entrySet()) {
             String value = entry.getValue() == null ? "" : entry.getValue();
-            Log.i(TAG, KV_PREFIX + " file=" + fileName + " key=" + entry.getKey()
-                    + " value=" + value.replace('\n', ' '));
+            Log.i(TAG, KV_PREFIX + " answer=" + answerId + " file=" + fileName
+                    + " key=" + entry.getKey() + " value=" + value.replace('\n', ' '));
         }
         StringBuilder content = new StringBuilder();
         for (Map.Entry<String, String> entry : answer.entrySet()) {
