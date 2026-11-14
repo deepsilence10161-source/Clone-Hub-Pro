@@ -94,8 +94,23 @@ if [ "${REFERENCE_INSTALL_STATUS}" -ne 0 ]; then
   if grep -q "INSTALL_FAILED_OLDER_SDK" "${EVIDENCE_DIR}/real-clonehub-install.txt" \
     || grep -q "Broken pipe" "${EVIDENCE_DIR}/real-clonehub-install.txt"; then
     echo "Reference Clone Hub requires a newer Android level; coexistence check not applicable here"
-    adb shell pm list packages | grep "^package:${PACKAGE_ID}$" \
-      || { echo "App under test is not installed"; exit 1; }
+    # On API 27 the retry of the reference install also took the package service down for a moment:
+    # `pm list packages` then answers "Could not access the Package Manager" although the app under
+    # test had installed with "Success" a moment earlier (run 43592167654). So wait for the service
+    # to answer again rather than reading one refused call as "the app is missing".
+    app_present=0
+    for attempt in 1 2 3 4 5 6 7 8 9 10; do
+      if adb shell pm list packages 2>/dev/null | grep -q "^package:${PACKAGE_ID}$"; then
+        app_present=1
+        echo "app under test still installed after the refused reference install"
+        break
+      fi
+      sleep 3
+    done
+    if [ "${app_present}" -ne 1 ]; then
+      echo "App under test is not installed"
+      exit 1
+    fi
   else
     echo "Real Clone Hub could not install beside Clone Hub Pro"
     exit 1
