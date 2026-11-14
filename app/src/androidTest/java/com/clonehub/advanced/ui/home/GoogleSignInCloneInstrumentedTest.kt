@@ -95,7 +95,9 @@ class GoogleSignInCloneInstrumentedTest {
         // Reported as a KNOWN LIMITATION instead of a pass or a mystery: the test is skipped, never
         // green, so a build in which sign-in inside a clone still cannot see the device account can
         // never be published as "sign-in works".
-        skipIfCloneCannotSeeAccounts("account-list", normal, cloned)
+        // The skip decision needs the token outcome (see skipIfCloneCannotSeeAccounts): a fresh
+        // token request from both processes, in this test, on this device.
+        skipIfCloneCannotSeeAccounts("account-list", probe("normal", token = true), probe("clone", token = true))
         assertTrue(
             "Clone sees $clonedCount Google accounts but the app sees $normalCount",
             normalCount == clonedCount
@@ -155,22 +157,6 @@ class GoogleSignInCloneInstrumentedTest {
         // With an account present, "sign in does nothing" would show up as one side refusing where
         // the other succeeds — or as a clone that gets a *different*, empty answer.
         val seeded = googleAccountCount()
-        // Same measured limitation as in test a: the clone answers account calls with an empty list,
-        // so its token request is refused for that reason. Skipped and reported, never passed off as
-        // a working sign-in.
-        if (seeded > 0 && cloned["result"] != "TOKEN") {
-            Log.e(
-                TAG,
-                "GOOGLE_SIGNIN_KNOWN_LIMITATION token: host=${normal["result"]} " +
-                    "clone=${cloned["result"]} cloneIdentity=${cloned["identity_probe"]}"
-            )
-            Assume.assumeTrue(
-                "KNOWN LIMITATION (audit §22): the clone requested a token and got " +
-                    "${cloned["result"]} while the app got ${normal["result"]}; the runtime answers " +
-                    "account calls inside the clone with an empty list.",
-                false
-            )
-        }
         if (seeded > 0) {
             assertTrue(
                 "The device has $seeded Google account(s) but the token request returned " +
@@ -598,20 +584,28 @@ class GoogleSignInCloneInstrumentedTest {
         normal: Map<String, String>,
         cloned: Map<String, String>
     ) {
-        val hostCount = normal["google_accounts"]?.toIntOrNull() ?: -1
-        val cloneCount = cloned["google_accounts"]?.toIntOrNull() ?: -2
-        if (hostCount <= 0 || cloneCount > 0) return
+        // The condition is this clone's own refusal to reach an account the app can reach, read from
+        // the token outcome. It is deliberately NOT read from the account count: measured on run
+        // 43568762673 the clone reported 0 while the host reported 1, yet a host whose platform
+        // account database had stopped serving the seeded account reports 0 too — a count cannot tell
+        // a container that hides accounts from a device that no longer has one. The token outcome can:
+        // the app got TOKEN, the clone got NO_ACCOUNT.
+        val hostToken = normal["result"]
+        val cloneToken = cloned["result"]
+        val hiddenAccounts = hostToken == "TOKEN" && cloneToken != null && cloneToken != "TOKEN"
+        if (!hiddenAccounts) return
         Log.e(
             TAG,
-            "GOOGLE_SIGNIN_KNOWN_LIMITATION what=$what host=$hostCount clone=$cloneCount " +
+            "GOOGLE_SIGNIN_KNOWN_LIMITATION what=$what hostToken=$hostToken " +
+                "cloneToken=$cloneToken cloneCount=${cloned["google_accounts"]} " +
                 "cloneIdentity=${cloned["identity_probe"]} hostIdentity=${normal["identity_probe"]}"
         )
         Assume.assumeTrue(
             "KNOWN LIMITATION (audit §22): the bundled virtual runtime answers AccountManager " +
                 "inside the clone and returns an empty list for every account query " +
-                "(by_type=0, by_type_for_package=0, all=0) while the host process lists " +
-                "$hostCount account(s) and mints a token. Sign-in inside a clone is therefore NOT " +
-                "fixed by this revision; the host-side bridge is proven separately by " +
+                "(by_type=0, by_type_for_package=0, all=0) while the host process lists the device's " +
+                "account and mints a token. Sign-in inside a clone is therefore NOT fixed by this " +
+                "revision; the host-side bridge is proven separately by " +
                 "e_hostAccountBridgeAnswersLikeThePlatform.",
             false
         )
