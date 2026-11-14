@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The same test authenticator under a deliberately non-Google type.
+
+  Measured on run 43577497143: inside the clone the platform answers getAccountVisibility with 1 for
+  both the app's package and the host's, yet no getAccounts call from the clone pid ever reaches
+  AccountManagerService — only the host's calls do. One explanation left is that the container treats
+  the Google account type specially. A second type, following the same code path, settles it: if this
+  type is visible inside the clone and com.google is not, the container is filtering by type, and the
+  fix has to live where that filter is.
+-->
+<account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accountType="com.clonehub.probe.account"
+    android:icon="@android:drawable/sym_def_app_icon"
+    android:label="Clone Hub probe account (test authenticator)"
+    android:smallIcon="@android:drawable/sym_def_app_icon" />

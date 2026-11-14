@@ -40,6 +40,7 @@ final class AccountProbe {
     private static final String KV_PREFIX = "GOOGLE_SIGNIN_KV";
     private static final String GOOGLE_ACCOUNT_TYPE = "com.google";
     private static final String SEEDED_ACCOUNT_NAME = "clonehub.probe@example.com";
+    private static final String PROBE_ACCOUNT_TYPE = "com.clonehub.probe.account";
     private static final String TOKEN_TYPE =
             "oauth2:https://www.googleapis.com/auth/userinfo.email";
     private static final long TOKEN_TIMEOUT_SECONDS = 20L;
@@ -111,6 +112,11 @@ final class AccountProbe {
             // call; a container answering on its own answers both the same way (empty).
             out.put("identity_probe", identityProbe(context));
             out.put("platform_verdict", platformVerdict(context));
+            // Google's type next to a non-Google type, same call, same process: if only one of them is
+            // ever visible inside the clone, the container is filtering by type and the fix belongs
+            // where that filter lives.
+            out.put("type_google", typeProbe(context, GOOGLE_ACCOUNT_TYPE));
+            out.put("type_probe", typeProbe(context, PROBE_ACCOUNT_TYPE));
         } catch (Throwable error) {
             // This is what a user experiences as "the sign-in button does nothing": the call itself
             // throws inside the clone. The reason is recorded, never an empty list.
@@ -233,6 +239,52 @@ final class AccountProbe {
                     : String.valueOf(reply.getStringArrayList("names")));
         } catch (Throwable error) {
             out.append(" bridge_error=").append(error.getClass().getSimpleName())
+                    .append(": ").append(error.getMessage());
+        }
+        return out.toString();
+    }
+
+    /**
+     * One account type, asked the same way, with the answer broken down far enough to name a cause.
+     *
+     * `by_type` is the list the app's sign-in button reads. `visibility` is answered by
+     * AccountManagerService itself when it is reachable, so a reachable platform that reports
+     * "visible" while the list is empty means the request was answered somewhere else. The type is
+     * only recorded when Android exposes a public authenticator for it; the autofill check exists
+     * because the framework routes some account types through autofill services.
+     */
+    private static String typeProbe(Context context, String type) {
+        StringBuilder out = new StringBuilder();
+        try {
+            AccountManager manager = AccountManager.get(context);
+            out.append("type=").append(type);
+            try {
+                out.append(" accounts=").append(manager.getAccountsByType(type).length);
+            } catch (Throwable error) {
+                out.append(" accounts=error(").append(error.getClass().getSimpleName()).append(")");
+            }
+            try {
+                out.append(" visibility=").append(manager.getAccountVisibility(
+                        new Account(SEEDED_ACCOUNT_NAME, type), context.getPackageName()));
+                out.append(" visibility_host=").append(manager.getAccountVisibility(
+                        new Account(SEEDED_ACCOUNT_NAME, type), "com.clonehub.pro"));
+            } catch (Throwable error) {
+                out.append(" visibility=error(").append(error.getClass().getSimpleName()).append(")");
+            }
+            try {
+                // Does the platform list an authenticator for this type at all, as seen from here?
+                boolean listed = false;
+                for (android.accounts.AuthenticatorDescription description
+                        : manager.getAuthenticatorTypes()) {
+                    if (type.equals(description.type)) listed = true;
+                }
+                out.append(" authenticator_listed=").append(listed);
+            } catch (Throwable error) {
+                out.append(" authenticator_listed=error(")
+                        .append(error.getClass().getSimpleName()).append(")");
+            }
+        } catch (Throwable error) {
+            out.append(" error=").append(error.getClass().getSimpleName())
                     .append(": ").append(error.getMessage());
         }
         return out.toString();

@@ -38,5 +38,18 @@
                 android:resource="@xml/test_google_authenticator" />
         </service>
 
+        <!-- Same authenticator implementation, different account type: see
+             res/xml/test_probe_authenticator.xml for why this exists. -->
+        <service
+            android:name="com.clonehub.advanced.fixture.TestGoogleAuthenticator$ProbeAuthenticatorService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/test_probe_authenticator" />
+        </service>
+
 </application>
 </manifest>

@@ -116,6 +116,26 @@ public final class TestGoogleAuthenticator extends AbstractAccountAuthenticator 
     }
 
     /** The bound service the platform talks to. */
+    /**
+     * The same implementation under {@code com.clonehub.probe.account}, so the clone can be asked
+     * about a type that is not Google's. Nothing about the code path differs except the type.
+     */
+    public static final class ProbeAuthenticatorService extends Service {
+        private TestGoogleAuthenticator authenticator;
+
+        @Override
+        public void onCreate() {
+            super.onCreate();
+            authenticator = new TestGoogleAuthenticator(this);
+            Log.i(TAG, "Probe account authenticator service created");
+        }
+
+        @Override
+        public IBinder onBind(Intent intent) {
+            return authenticator.getIBinder();
+        }
+    }
+
     public static final class AuthenticatorService extends Service {
         private TestGoogleAuthenticator authenticator;
 

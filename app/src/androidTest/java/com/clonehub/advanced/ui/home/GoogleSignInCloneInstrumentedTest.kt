@@ -47,6 +47,10 @@ class GoogleSignInCloneInstrumentedTest {
         const val GOOGLE_ACCOUNT_TYPE = "com.google"
         // The app the platform sees hosting the container.
         const val CLONE_PACKAGE = "com.clonehub.pro"
+        // A second account type on the same test authenticator. Nothing about the code path differs
+        // except the type string, so it answers whether the container treats Google's type specially.
+        const val PROBE_ACCOUNT_TYPE = "com.clonehub.probe.account"
+        const val PROBE_SEED_ACCOUNT = "clonehub.probe2@example.com"
         const val SEED_ACCOUNT = "clonehub.probe@example.com"
         val ACCOUNT_PERMISSIONS = listOf(
             Manifest.permission.GET_ACCOUNTS,
@@ -102,7 +106,18 @@ class GoogleSignInCloneInstrumentedTest {
         // never be published as "sign-in works".
         // The skip decision needs the token outcome (see skipIfCloneCannotSeeAccounts): a fresh
         // token request from both processes, in this test, on this device.
-        skipIfCloneCannotSeeAccounts("account-list", probe("normal", token = true), probe("clone", token = true))
+        val normalToken = probe("normal", token = true)
+        val clonedToken = probe("clone", token = true)
+        // Both account types, measured in both processes. If the clone can see the non-Google type but
+        // not Google's, the container filters by type; if it can see neither while the platform says
+        // both are visible, the account call is answered before it reaches the platform.
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_TYPE_PARITY normal_google=[${normal["type_google"]}] " +
+                "clone_google=[${cloned["type_google"]}] " +
+                "normal_probe=[${normal["type_probe"]}] clone_probe=[${cloned["type_probe"]}]"
+        )
+        skipIfCloneCannotSeeAccounts("account-list", normalToken, clonedToken)
         assertTrue(
             "Clone sees $clonedCount Google accounts but the app sees $normalCount",
             normalCount == clonedCount
@@ -317,6 +332,20 @@ class GoogleSignInCloneInstrumentedTest {
             "self=" + manager.getAccountVisibility(account, context.packageName) +
                 " clone=" + manager.getAccountVisibility(account, CLONE_PACKAGE)
         }.getOrElse { "unavailable(" + it.javaClass.simpleName + ")" }
+        val probeAdded = runCatching {
+            val manager = android.accounts.AccountManager.get(context)
+            manager.addAccountExplicitly(
+                android.accounts.Account(PROBE_SEED_ACCOUNT, PROBE_ACCOUNT_TYPE), null, null
+            )
+        }.getOrElse {
+            Log.w(TAG, "GOOGLE_SIGNIN_SEED probe-type addAccountExplicitly failed", it)
+            false
+        }
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_SEED probeType added=$probeAdded " +
+                "accounts=${probeAccountCount()} authenticators=${authenticatorTypes()}"
+        )
         Log.i(
             TAG,
             "GOOGLE_SIGNIN_SEED added=$added accounts=${googleAccountCount()} " +
@@ -344,10 +373,21 @@ class GoogleSignInCloneInstrumentedTest {
                 context.packageName,
                 android.accounts.AccountManager.VISIBILITY_VISIBLE
             )
+            // The non-Google type gets exactly the same treatment, so the comparison is fair.
+            manager.setAccountVisibility(
+                android.accounts.Account(PROBE_SEED_ACCOUNT, PROBE_ACCOUNT_TYPE),
+                context.packageName,
+                android.accounts.AccountManager.VISIBILITY_VISIBLE
+            )
         }.getOrElse { "failed: " + it.javaClass.simpleName + ": " + it.message }
         Log.i(TAG, "GOOGLE_SIGNIN_VISIBILITY set=$outcome")
         Log.i(TAG, "GOOGLE_SIGNIN_PROOF ${authenticatorProof()}")
     }
+
+    private fun probeAccountCount(): Int = runCatching {
+        android.accounts.AccountManager.get(context)
+            .getAccountsByType(PROBE_ACCOUNT_TYPE).size
+    }.getOrDefault(0)
 
     private fun googleAccountCount(): Int = runCatching {
         android.accounts.AccountManager.get(context)
