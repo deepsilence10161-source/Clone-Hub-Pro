@@ -69,6 +69,7 @@ class SpacePagerAdapter(
         private val tvBadge: TextView = itemView.findViewById(R.id.tvSpaceBadge)
         private val btnMenu: ImageButton = itemView.findViewById(R.id.btnSpaceMenu)
         private val recyclerApps: RecyclerView = itemView.findViewById(R.id.recyclerAppsGrid)
+        private val tvEmptyHint: TextView = itemView.findViewById(R.id.tvEmptySpaceHint)
 
         private var boundSpaceId: Int = -1
         private var appAdapter: AppGridAdapter? = null
@@ -81,6 +82,11 @@ class SpacePagerAdapter(
             }
 
             btnMenu.setOnClickListener { onSpaceMenuClick(space) }
+
+            // While a clone is present the hint is hidden: it explains an empty space, and on a
+            // full card it would only compete with the icons. The Add tile stays the affordance the
+            // hint names, so there is one way in, described once.
+            tvEmptyHint.visibility = if (space.apps.isEmpty()) View.VISIBLE else View.GONE
 
             // The grid is reused across binds; recreating it on every update caused a full
             // re-inflate of every icon whenever any space changed.

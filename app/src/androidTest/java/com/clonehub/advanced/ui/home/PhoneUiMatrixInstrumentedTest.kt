@@ -44,6 +44,7 @@ class PhoneUiMatrixInstrumentedTest {
 
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
+    private val spaces = SpaceManager.getInstance(instrumentation.targetContext)
     private val device = UiDevice.getInstance(instrumentation)
     private val evidenceDir = File(context.getExternalFilesDir(null), "ui-matrix").apply { mkdirs() }
     // The installed package is the applicationId, not the code namespace.
@@ -397,6 +398,50 @@ class PhoneUiMatrixInstrumentedTest {
                         cloneTileBounds.bottom <= cardWithTile.bottom
                 )
             }
+            }
+
+            // 4d-bis. The empty-space hint: it must be gone while a clone is on screen (it explains
+            // an empty space and would otherwise compete with the grid) and it must be inside the
+            // card, clear of the system bars, when the space really is empty. Both directions are
+            // measured here instead of trusting the visibility flag.
+            val hintWithClone = runCatching { boundsOf(resourceId = "tvEmptySpaceHint") }.getOrNull()
+            Log.i(
+                TAG,
+                "PHONE_UI config=$label emptyHint withClone=${hintWithClone ?: "absent"} " +
+                    "cloneTile=$tilePresent"
+            )
+            if (tilePresent) {
+                assertTrue(
+                    "The empty-space hint is shown while a clone occupies the space on $label: " +
+                        "$hintWithClone",
+                    hintWithClone == null
+                )
+            }
+            // A second space on top of the fixture one: the fixture space keeps its clone, so the
+            // new space is the only empty card and the hint has exactly one place to appear.
+            val emptySpace = runCatching { spaces.createNextSpace() }.getOrNull()
+            if (emptySpace != null) {
+                showHome(label)
+                // Swipe to the new space and measure the hint where it is supposed to exist.
+                val swiped = runCatching {
+                    device.findObject(By.res(appId, "viewPagerSpaces"))?.swipe(
+                        androidx.test.uiautomator.Direction.LEFT, 0.9f
+                    )
+                    SystemClock.sleep(SETTLE_MS)
+                }
+                val hintEmpty = runCatching { boundsOf(resourceId = "tvEmptySpaceHint") }.getOrNull()
+                Log.i(
+                    TAG,
+                    "PHONE_UI config=$label emptyHint emptySpace=${emptySpace.spaceId} " +
+                        "swiped=${swiped != null} bounds=$hintEmpty"
+                )
+                if (hintEmpty != null) {
+                    assertInside("tvEmptySpaceHint", hintEmpty, screenWidth, safeTop, bottomLimit)
+                    assertTrue(
+                        "The empty-space hint does not clear the 48dp touch rule as text: $hintEmpty",
+                        hintEmpty.height > 0 && hintEmpty.width > 0
+                    )
+                }
             }
 
             // 4e. Long-press actions: the sheet fits, its rows meet the touch target, and the

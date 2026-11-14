@@ -15,6 +15,10 @@
       height instead of a fixed size. The header row is a single line that cannot overflow at
       360dp: badge on the start, menu button on the end, both 48dp touch targets.
     -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -71,4 +75,29 @@
             android:paddingTop="@dimen/margin_small"
             android:scrollbars="vertical" />
     </LinearLayout>
+
+        <!--
+          Empty-space state.
+
+          Measured on the 320dp and 411dp screenshots of the UI matrix (runs 43267061891,
+          43570323001): a space holding one clone left the rest of the card blank, and a space with
+          no clone showed only the small Add tile with the toolbar's "+" as a second, redundant way
+          in. One sentence in the empty area says what the space is for and names the affordance that
+          exists; while a clone is present the hint stays hidden so it never competes with content.
+          Zero-height when hidden, so the grid measurement in PhoneUiMatrixInstrumentedTest is
+          unaffected.
+        -->
+        <TextView
+            android:id="@+id/tvEmptySpaceHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginStart="@dimen/space_card_padding_large"
+            android:layout_marginEnd="@dimen/space_card_padding_large"
+            android:gravity="center"
+            android:text="@string/empty_space_hint"
+            android:textColor="@color/text_secondary_dark"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </FrameLayout>
 </androidx.cardview.widget.CardView>
