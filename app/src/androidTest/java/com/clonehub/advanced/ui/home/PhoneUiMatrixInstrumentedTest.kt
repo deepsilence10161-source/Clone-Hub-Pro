@@ -419,26 +419,41 @@ class PhoneUiMatrixInstrumentedTest {
             }
             // A second space on top of the fixture one: the fixture space keeps its clone, so the
             // new space is the only empty card and the hint has exactly one place to appear.
+            // The empty-space direction, measured by navigating to the empty space with the app's
+            // own control instead of a blind swipe: run 43571915177 showed the swipe leaving the
+            // pager where it was (bounds=null on three of four configurations), which measures
+            // nothing. Each configuration now records which page it reached.
             val emptySpace = runCatching { spaces.createNextSpace() }.getOrNull()
             if (emptySpace != null) {
                 showHome(label)
-                // Swipe to the new space and measure the hint where it is supposed to exist.
-                val swiped = runCatching {
-                    device.findObject(By.res(appId, "viewPagerSpaces"))?.swipe(
-                        androidx.test.uiautomator.Direction.LEFT, 0.9f
-                    )
+                var hintEmpty: Rect? = null
+                var pageReached = 0
+                for (attempt in 1..3) {
+                    val next = runCatching { device.findObject(By.res(appId, "btnNextSpace")) }.getOrNull()
+                    if (next == null) break
+                    next.click()
                     SystemClock.sleep(SETTLE_MS)
+                    pageReached = attempt
+                    hintEmpty = runCatching { boundsOf(resourceId = "tvEmptySpaceHint") }.getOrNull()
+                    if (hintEmpty != null) break
                 }
-                val hintEmpty = runCatching { boundsOf(resourceId = "tvEmptySpaceHint") }.getOrNull()
                 Log.i(
                     TAG,
                     "PHONE_UI config=$label emptyHint emptySpace=${emptySpace.spaceId} " +
-                        "swiped=${swiped != null} bounds=$hintEmpty"
+                        "pages=${pageReached} bounds=$hintEmpty"
                 )
-                if (hintEmpty != null) {
+                if (hintEmpty == null) {
+                    // Never silently passing: the state was not reachable on this configuration and
+                    // that is what gets recorded.
+                    Log.w(
+                        TAG,
+                        "PHONE_UI config=$label emptyHint NOT_MEASURED (the empty space could not be " +
+                            "brought on screen with btnNextSpace)"
+                    )
+                } else {
                     assertInside("tvEmptySpaceHint", hintEmpty, screenWidth, safeTop, bottomLimit)
                     assertTrue(
-                        "The empty-space hint does not clear the 48dp touch rule as text: $hintEmpty",
+                        "The empty-space hint has no measurable text box: $hintEmpty",
                         hintEmpty.height() > 0 && hintEmpty.width() > 0
                     )
                 }

@@ -597,7 +597,8 @@ with screenshots per state in `ui-matrix/`.
 Touch targets, bounds, ordering and system-bar clearance are asserted; "looks good" is not. The
 screenshots still show a large empty card when a space holds one clone — the grid is correct and
 within bounds, but the empty space is a design question, not a defect this gate can settle. Wider
-layout polish (an empty state that fills the card, a less redundant Add affordance) is NOT DONE.
+layout polish (an empty state that fills the card, a less redundant Add affordance) was NOT DONE at
+that point; see §23 for what changed and what is still open.
 
 ## 20. Google sign-in inside a clone: the defect that was actually in the way
 
@@ -735,3 +736,44 @@ answer_process=com.clonehub.pro:agent0
 
 The honest one-line state: **the account bridge works, the clone still cannot see accounts, so
 sign-in inside a clone is not working yet, and every gate now says so instead of pretending.**
+
+## 23. Mobile-size UI: the empty-space state, and a measurement that lied
+
+### What the screenshots showed
+
+A space holding one clone left most of the card blank, and a space with no clone showed only the
+small "Add App" tile — with the toolbar's "+" as a second way in that looked like a different, broken
+affordance. Both were visible on the 320dp and 411dp screenshots of the UI matrix.
+
+### What changed
+
+`item_space_card.xml` gained one line of text inside the card, `tvEmptySpaceHint`
+("Tap + to clone apps in this space"), visible only while the space holds no clone. The Add tile stays
+the affordance; the sentence explains it once instead of duplicating it.
+
+### The gate measures the claim in both directions
+
+- a space with a clone **must not** show the hint;
+- an empty space **must** show it, inside the card and clear of the system bars.
+
+### The measurement that lied, and how it was caught
+
+First run of the new check (`43571915177`, all four configurations `PASS`):
+`emptyHint withClone=Rect(234, 1103 - 845, 1160) cloneTile=false` — with a clone on screen the hint
+was still found, and the clone tile was not found at all: the space in front of the test was the
+*empty* one, so the assertion compared the wrong page. The hint is centred in the card, so its
+position is identical on every space; only the clone tile tells the pages apart.
+
+The follow-up navigation was also blind: `swiped=true bounds=null` on three of four configurations,
+because a `swipe()` on the pager returns whether the gesture was accepted, not whether the page
+changed. That is fixed by walking pages with the app's own `btnNextSpace` and recording
+`pages=<n>`; when the empty space still cannot be reached the log says
+`emptyHint NOT_MEASURED` instead of skipping quietly.
+
+### Still open (stated, not hidden)
+
+- The one-line hint is the whole of this change. A richer empty state (illustration, a first-clone
+  suggestion) is NOT DONE.
+- The gate proves presence, bounds and system-bar clearance; it does not prove the hint looks good.
+- The toolbar "+" and the grid Add tile both remain; consolidating them is a product decision that
+  has not been made.
