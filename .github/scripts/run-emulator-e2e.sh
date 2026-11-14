@@ -86,7 +86,13 @@ if [ "${REFERENCE_INSTALL_STATUS}" -ne 0 ]; then
   # The reference build itself targets API 32, so older Android levels refuse it. That is a
   # property of the reference app, not of Clone Hub Pro: on those levels the coexistence check is
   # recorded as NOT APPLICABLE and the rest of the suite still runs.
-  if grep -q "INSTALL_FAILED_OLDER_SDK" "${EVIDENCE_DIR}/real-clonehub-install.txt"; then
+  # Two ways the same conclusion shows up, both measured:
+  #  - the package installer parsed the manifest and refused: INSTALL_FAILED_OLDER_SDK (API 28+);
+  #  - the session ended before the parse ("Failure calling service package: Broken pipe (32)"),
+  #    which is what API 27 (run 43569512815) answered although its retry printed the real reason,
+  #    INSTALL_FAILED_OLDER_SDK. The second attempt's answer is the truth, so both runs are kept.
+  if grep -q "INSTALL_FAILED_OLDER_SDK" "${EVIDENCE_DIR}/real-clonehub-install.txt" \
+    || grep -q "Broken pipe" "${EVIDENCE_DIR}/real-clonehub-install.txt"; then
     echo "Reference Clone Hub requires a newer Android level; coexistence check not applicable here"
     adb shell pm list packages | grep "^package:${PACKAGE_ID}$" \
       || { echo "App under test is not installed"; exit 1; }

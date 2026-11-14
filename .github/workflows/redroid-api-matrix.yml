@@ -120,6 +120,12 @@ jobs:
         if: failure() && steps.runtime_retry.outputs.retrying == 'true'
         run: |
           echo "level=API $API_LEVEL retry=attempt ${{ github.run_attempt }}" >> evidence/retry.txt
+          # The first attempt's evidence is kept, not overwritten: on API 27 the retry printed the
+          # real reason (INSTALL_FAILED_OLDER_SDK) that the first attempt had reported only as a
+          # broken pipe, and the truncated log needed both attempts to be believed.
+          for f in evidence/*.txt evidence/*.log; do
+            [ -f "$f" ] && cp "$f" "$f.attempt1" || true
+          done
           bash .github/scripts/start-redroid-arm64.sh
           bash .github/scripts/run-emulator-e2e.sh
       - name: Collect evidence for API ${{ matrix.api }}
