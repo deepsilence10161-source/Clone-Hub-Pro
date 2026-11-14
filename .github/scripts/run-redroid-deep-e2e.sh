@@ -82,6 +82,10 @@ adb logcat -d -v threadtime > "$OUT/google-signin-logcat.txt" 2>/dev/null || tru
 adb logcat -d -v threadtime -s AccountManagerService:V Accounts:V AccountManager:V \
   > "$OUT/account-service-logcat.txt" 2>/dev/null || true
 cat "$OUT/account-service-logcat.txt" || true
+# How the clone's account answer changes over the life of one process: a timeline, not a verdict.
+adb logcat -d -v threadtime | grep "file=account_samples.txt" \
+  > "$OUT/account-samples.txt" 2>/dev/null || true
+cat "$OUT/account-samples.txt" || true
 # The probe reports the clone wrote about Google sign-in.
 adb shell run-as "$PACKAGE_ID" sh -c 'cat files/account_probe-*.txt files/token_probe-*.txt' \
   > "$OUT/google-signin-probes.txt" 2>&1 || true

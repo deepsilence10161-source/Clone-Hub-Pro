@@ -63,6 +63,13 @@ final class AccountProbe {
             try {
                 publish(context, "account_probe.txt", describeAccounts(context));
                 publish(context, "token_probe.txt", requestToken(context));
+                // The same process, asked again after waiting. Measured across runs 43578805921,
+                // 43582144297 and 43582950032: a clone sometimes lists the device's account and
+                // sometimes none, in the same build. Sampling one process over time separates
+                // "the container answers wrongly for a while after launch" (numbers grow) from
+                // "the container answers wrongly per process" (numbers stay flat), and only the
+                // first is something the app could work around.
+                sampleOverTime(context);
             } catch (Throwable error) {
                 Log.e(TAG, "Account probe failed", error);
             }
@@ -84,6 +91,40 @@ final class AccountProbe {
             return name == null ? "unavailable" : name;
         } catch (Throwable error) {
             return "unavailable";
+        }
+    }
+
+    /**
+     * The same account question asked at increasing delays inside one process.
+     *
+     * One line per sample, with the elapsed time since the process started, so the answer is a
+     * timeline rather than a verdict.
+     */
+    private static void sampleOverTime(Context context) {
+        long start = 0;
+        try {
+            if (Build.VERSION.SDK_INT >= 24) {
+                start = android.os.Process.getStartElapsedRealtime();
+            }
+        } catch (Throwable ignored) {
+            // Older images: fall back to now, which still orders the samples.
+            start = SystemClock.elapsedRealtime();
+        }
+        long base = SystemClock.elapsedRealtime();
+        for (int waitMs : new int[]{0, 1_000, 3_000, 6_000, 10_000}) {
+            try {
+                long target = base + waitMs;
+                long now = SystemClock.elapsedRealtime();
+                if (target > now) Thread.sleep(target - now);
+                AccountManager manager = AccountManager.get(context);
+                int count = manager.getAccountsByType(GOOGLE_ACCOUNT_TYPE).length;
+                Log.i(TAG, KV_PREFIX + " answer=sample-" + android.os.Process.myPid()
+                        + " file=account_samples.txt key=at_" + waitMs + "ms"
+                        + " value=accounts=" + count
+                        + " sinceProcessStartMs=" + (SystemClock.elapsedRealtime() - start));
+            } catch (Throwable error) {
+                Log.w(TAG, "Account sample at " + waitMs + "ms failed", error);
+            }
         }
     }
 
