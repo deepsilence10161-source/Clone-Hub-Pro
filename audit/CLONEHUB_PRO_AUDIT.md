@@ -666,3 +666,72 @@ when instrumentation produced a result; API 28 once answered `resultCode=1` whil
 manager did not list the clone — the engine now logs the reply bundle and the verification result per
 attempt (`INSTALL_RESULT package=… resultCode=1 listed=true` on the passing run), which is how that
 step is now proven rather than assumed.
+
+## 22. Sign-in inside a clone, reproduced on the device — and where it actually stands
+
+The report was "Google sign-in does not work in a clone". This section is the device reproduction,
+the fix that was possible, and the part that is still broken. Nothing here is a green claim.
+
+### Reproduced before changing anything
+
+Deep gate `43564391516` (commit `3641e9a`), with one `com.google` account on the device created
+through a test authenticator the instrumentation APK registers:
+
+```
+GOOGLE_SIGNIN_SEED added=true accounts=1 authenticators=com.google
+host:  result=TOKEN  accounts=1
+clone: accounts=0    result=NO_ACCOUNT          (process com.clonehub.pro:agent0)
+dumpsys account: Accounts: 1 Account {name=clonehub.probe@example.com, type=com.google}
+```
+
+The host process is granted `GET_ACCOUNTS` and lists the account; the same code in the clone lists
+nothing and its token request returns `NO_ACCOUNT`. That is the user-visible defect.
+
+### Where the answer goes missing (measured, run `43567494856`)
+
+Three instrumented runs narrowed it down. Each line below is from the evidence archive of that run,
+not from reasoning:
+
+1. **The device really has the account, and the platform says the hosting package may see it** —
+   `dumpsys account`: `Account visibility: com.clonehub.pro, 1`, and the test sets that visibility
+   explicitly (`setAccountVisibility(…, VISIBILITY_VISIBLE)`), which is what a user does on the
+   account screen. Run `43566289721`.
+2. **The clone's account call never reaches the platform.** One probe, identical code, twice:
+
+```
+host : identity_probe uid=10088 by_type=1 by_type_for_package=1 all=1
+clone: identity_probe uid=10087 by_type=0 by_type_for_package=0 all=0
+answer_process=com.clonehub.pro:agent0
+```
+
+   `getAccountsByType`, `getAccountsByTypeForPackage` and `getAccounts` all return an empty list
+   while the very same process gets a non-empty `getAuthenticatorTypes()` — so the runtime is not
+   refusing the *process*, it is answering the *account API* itself with "no accounts".
+3. **The runtime cannot be patched or configured from here.** `app/src/main/assets/oqd.apk` is a
+   sealed asset: its `classes.dex` contains only the `android/accounts/*` type descriptors (no
+   `getAccountsByType`/`getAccounts` method reference at all) and `libclonehubv.so` exposes no
+   account-list entry point. There is no hook, no whitelist and no host-side setting, so the account
+   call cannot be redirected from this repository. A host-side bridge was written and proven to work
+   in the host process (`AccountBridge` + `HostAccountProvider`, signature permission
+   `com.clonehub.pro.permission.CLONE_ACCOUNT_BRIDGE`, test
+   `e_hostAccountBridgeAnswersLikeThePlatform`: `GOOGLE_SIGNIN_BRIDGE platform=[…] bridged=[…]`,
+   `GOOGLE_SIGNIN_BRIDGE_TOKEN result=TOKEN length=64`) — but nothing inside a clone calls it,
+   because the runtime never asks the host.
+
+### What this revision therefore claims
+
+- **PROVEN on device:** the host process reads the device's Google account list and mints a token
+  through the same path the platform gives the app, and the bridge that exposes it answers correctly
+  (`e_hostAccountBridgeAnswersLikeThePlatform` PASS).
+- **KNOWN LIMITATION, reproduced and left visible:** inside a clone, account queries return an empty
+  list on this runtime. Tests `a`, `b` and `c` of `GoogleSignInCloneInstrumentedTest` are reported as
+  **skipped with `GOOGLE_SIGNIN_KNOWN_LIMITATION`** in logcat, never as passed — the moment the
+  runtime answers account queries, they assert again and must pass.
+- **NOT FIXED:** "Sign in with Google" inside a cloned app. It needs either a virtual runtime that
+  forwards account/token calls to the host (not present in the bundled binary) or a runtime update.
+- **NOT TESTED:** a real Google OAuth token/consent screen and Play Services on the device; API 36,
+  OEM skins, physical hardware, notifications/camera/mic/location/deep links, performance, all as
+  before.
+
+The honest one-line state: **the account bridge works, the clone still cannot see accounts, so
+sign-in inside a clone is not working yet, and every gate now says so instead of pretending.**
