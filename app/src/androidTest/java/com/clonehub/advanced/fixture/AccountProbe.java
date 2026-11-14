@@ -73,7 +73,18 @@ final class AccountProbe {
                         : "account_probe-raw-" + launch + ".txt";
                 String tokenFile = launch.isEmpty() ? "token_probe.txt"
                         : "token_probe-raw-" + launch + ".txt";
-                publish(context, "account_probe.txt", describeAccounts(context), accountFile);
+                Map<String, String> first = describeAccounts(context);
+                publish(context, "account_probe.txt", first, accountFile);
+                // The settled answer, published by the same process a moment later.
+                //
+                // Measured (deep run 43590481245): inside a clone whose process had just started,
+                // the account list was empty at +787 ms and complete at +887 ms, so the first
+                // answer — the one an app's sign-in screen gets on a cold start — can legitimately
+                // be empty on a device that has the account. Re-launching to get a better answer
+                // does not help: that is another cold process in the same window. Asking the same
+                // process again does, and it is what the app does (AccountBridge waits it out).
+                Map<String, String> settled = describeAccountsSettled(context, first);
+                publish(context, "account_probe_settled.txt", settled, settleFile(accountFile));
                 publish(context, "token_probe.txt", requestToken(context), tokenFile);
             } catch (Throwable error) {
                 Log.e(TAG, "Account probe failed", error);
@@ -97,6 +108,44 @@ final class AccountProbe {
         } catch (Throwable error) {
             return "unavailable";
         }
+    }
+
+    /** How long an empty answer is treated as possibly premature; mirrors AccountBridge. */
+    private static final long SETTLE_WINDOW_MS = 2_000L;
+    private static final long SETTLE_POLL_MS = 200L;
+
+    /** Keeps the launch identity in the name: account_probe-raw-1234.txt -> account_probe_settled-1234.txt */
+    private static String settleFile(String accountFile) {
+        String pid = String.valueOf(android.os.Process.myPid());
+        return accountFile.contains(pid)
+                ? accountFile.replace("account_probe-raw-", "account_probe_settled-")
+                : "account_probe_settled-" + pid + ".txt";
+    }
+
+    /**
+     * The account question asked again until the answer stops changing, or the window ends.
+     *
+     * Reports both readings and how long the second one took, so "the clone saw no account" can be
+     * told apart from "the clone was asked too early" without another CI run.
+     */
+    private static Map<String, String> describeAccountsSettled(
+            Context context, Map<String, String> first) {
+        long startedAt = SystemClock.elapsedRealtime();
+        int count = -1;
+        while (true) {
+            try {
+                count = AccountManager.get(context).getAccountsByType(GOOGLE_ACCOUNT_TYPE).length;
+            } catch (Throwable error) {
+                Log.w(TAG, "Settled account read failed", error);
+            }
+            long waited = SystemClock.elapsedRealtime() - startedAt;
+            if (count > 0 || waited >= SETTLE_WINDOW_MS) break;
+            SystemClock.sleep(SETTLE_POLL_MS);
+        }
+        Map<String, String> answer = describeAccounts(context);
+        answer.put("first_google_accounts", first.get("google_accounts"));
+        answer.put("settled_after_ms", String.valueOf(SystemClock.elapsedRealtime() - startedAt));
+        return answer;
     }
 
     /**
@@ -399,6 +448,17 @@ final class AccountProbe {
     }
 
     private static Map<String, String> requestToken(Context context) {
+        // A token request made during a clone's first second must not be answered NO_ACCOUNT when
+        // the device does have the account: measured as a 100 ms window on run 43590481245.
+        long waitingUntil = SystemClock.elapsedRealtime() + SETTLE_WINDOW_MS;
+        while (SystemClock.elapsedRealtime() < waitingUntil) {
+            try {
+                if (AccountManager.get(context).getAccountsByType(GOOGLE_ACCOUNT_TYPE).length > 0) break;
+            } catch (Throwable ignored) {
+                break;
+            }
+            SystemClock.sleep(SETTLE_POLL_MS);
+        }
         Map<String, String> out = new LinkedHashMap<>();
         out.put("pid", String.valueOf(android.os.Process.myPid()));
         out.put("reported_name", ownName());

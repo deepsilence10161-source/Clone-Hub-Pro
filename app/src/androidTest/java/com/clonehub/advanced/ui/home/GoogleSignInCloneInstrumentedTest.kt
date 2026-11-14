@@ -676,7 +676,23 @@ class GoogleSignInCloneInstrumentedTest {
         var realProcess = ""
         var attempt = 0
         while (SystemClock.elapsedRealtime() < deadline) {
-            answer = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+            val raw = parseProbe(device.executeShellCommand("logcat -d"), fileName)
+            // The account list is read the way the app reads it: settled. The first, immediate answer
+            // is kept beside it, because on a cold start it can legitimately be empty (measured:
+            // 0 at +787 ms, 1 at +887 ms, run 43590481245) and that difference is the finding.
+            val settled = parseProbe(device.executeShellCommand("logcat -d"), settleFileName(fileName))
+            answer = if (!token && settled["pid"] == raw["pid"] && settled.isNotEmpty()) {
+                LinkedHashMap(raw).apply {
+                    putAll(settled.filterKeys { it in setOf(
+                        "google_accounts", "all_accounts", "names", "identity_probe",
+                        "type_google", "platform_verdict"
+                    ) })
+                    put("first_google_accounts", raw["google_accounts"] ?: "")
+                    put("settled_after_ms", settled["settled_after_ms"] ?: "")
+                }
+            } else {
+                raw
+            }
             val candidatePid = answer["pid"]
             if (candidatePid != null) {
                 realProcess = resolveProcessName(candidatePid)
@@ -801,6 +817,10 @@ class GoogleSignInCloneInstrumentedTest {
     }
 
     /** Reads the key=value answer the probe published for one file from the device log. */
+    /** account_probe.txt -> account_probe_settled.txt (token probes have no settled twin). */
+    private fun settleFileName(fileName: String): String =
+        if (fileName.contains("account_probe")) "account_probe_settled.txt" else fileName
+
     private fun parseProbe(
         log: String,
         fileName: String,
