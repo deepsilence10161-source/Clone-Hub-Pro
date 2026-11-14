@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Measured on the phone UI matrix (run 43592167654, 720x360 landscape screenshot): the space
+      card is only ~590dp tall in landscape and the grid tile did not fit, so the "Add App" label
+      was cut in half. The tiles give back 16dp of icon box, which is what the label needed.
+    -->
+    <dimen name="grid_icon_box">40dp</dimen>
+    <dimen name="grid_icon_size">36dp</dimen>
+</resources>

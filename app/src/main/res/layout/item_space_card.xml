@@ -74,30 +74,30 @@
             android:overScrollMode="never"
             android:paddingTop="@dimen/margin_small"
             android:scrollbars="vertical" />
-    </LinearLayout>
 
         <!--
           Empty-space state.
 
-          Measured on the 320dp and 411dp screenshots of the UI matrix (runs 43267061891,
-          43570323001): a space holding one clone left the rest of the card blank, and a space with
-          no clone showed only the small Add tile with the toolbar's "+" as a second, redundant way
-          in. One sentence in the empty area says what the space is for and names the affordance that
-          exists; while a clone is present the hint stays hidden so it never competes with content.
-          Zero-height when hidden, so the grid measurement in PhoneUiMatrixInstrumentedTest is
-          unaffected.
+          Measured on the phone UI matrix (run 43592167654, screenshots at 320x640 and 411x891):
+          when this sentence was centred over the card as a FrameLayout child, it drew *through*
+          the Add tile on a short card — "Add App" and the sentence shared the same pixels. It is a
+          sibling of the grid now, in the card's own column, so it is laid out below the tiles and
+          cannot overlap them, and it keeps clear of the floating button that hangs over the card's
+          bottom corner. Zero-height while hidden.
         -->
         <TextView
             android:id="@+id/tvEmptySpaceHint"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
             android:layout_marginStart="@dimen/space_card_padding_large"
             android:layout_marginEnd="@dimen/space_card_padding_large"
+            android:layout_marginBottom="@dimen/empty_hint_bottom_space"
             android:gravity="center"
             android:text="@string/empty_space_hint"
             android:textColor="@color/text_secondary_dark"
             android:textSize="14sp"
             android:visibility="gone" />
+    </LinearLayout>
+
     </FrameLayout>
 </androidx.cardview.widget.CardView>

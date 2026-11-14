@@ -11,12 +11,12 @@
     android:paddingBottom="@dimen/margin_small">
 
     <FrameLayout
-        android:layout_width="@dimen/app_icon_box"
-        android:layout_height="@dimen/app_icon_box">
+        android:layout_width="@dimen/grid_icon_box"
+        android:layout_height="@dimen/grid_icon_box">
 
         <ImageView
-            android:layout_width="@dimen/app_icon_size"
-            android:layout_height="@dimen/app_icon_size"
+            android:layout_width="@dimen/grid_icon_size"
+            android:layout_height="@dimen/grid_icon_size"
             android:layout_gravity="center"
             android:contentDescription="@string/action_add"
             android:src="@drawable/ic_action_install"
@@ -29,6 +29,7 @@
         android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:gravity="center_horizontal"
+        android:includeFontPadding="false"
         android:maxLines="2"
         android:text="@string/action_add"
         android:textColor="@color/colorPrimary"

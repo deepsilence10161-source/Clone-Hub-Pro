@@ -13,13 +13,13 @@
     android:paddingEnd="@dimen/margin_micro">
 
     <FrameLayout
-        android:layout_width="@dimen/app_icon_box"
-        android:layout_height="@dimen/app_icon_box">
+        android:layout_width="@dimen/grid_icon_box"
+        android:layout_height="@dimen/grid_icon_box">
 
         <ImageView
             android:id="@+id/ivAppIcon"
-            android:layout_width="@dimen/app_icon_size"
-            android:layout_height="@dimen/app_icon_size"
+            android:layout_width="@dimen/grid_icon_size"
+            android:layout_height="@dimen/grid_icon_size"
             android:layout_gravity="center"
             android:contentDescription="@string/clone_app_icon" />
 

@@ -334,6 +334,28 @@ class PhoneUiMatrixInstrumentedTest {
             )
             assertInside("gridAddTile", tileBounds, screenWidth, safeTop, bottomLimit)
 
+            // 3b. The Add tile's label must be whole. Measured on run 43592167654: in landscape
+            //     (720x360) the tile's bottom edge sat on the card's edge and the label read
+            //     "Add A" with the rest cut off, while every assertion above passed — the tile's
+            //     *bounds* were on screen, its text was not. A label smaller than the font height
+            //     it was asked to draw is a clipped label, whatever the bounds say.
+            val labelBottom = runCatching { boundsOf(text = context.getString(R.string.action_add)) }.getOrNull()
+            val tileView = runCatching { boundsOf(resourceId = "recyclerAppsGrid") }.getOrNull()
+            if (labelBottom != null && tileView != null) {
+                val labelHeightPx = labelBottom.height()
+                val textSizePx = (11f * densityDpi / 160f).toInt()
+                Log.i(
+                    TAG,
+                    "PHONE_UI config=$label addTileLabel bounds=$labelBottom textHeightPx=$textSizePx " +
+                        "gridBounds=$tileView density=$densityDpi"
+                )
+                assertTrue(
+                    "The Add tile's label is only ${labelHeightPx}px tall for ${textSizePx}px text on " +
+                        "$label, so it is clipped: label=$labelBottom grid=$tileView",
+                    labelHeightPx >= textSizePx
+                )
+            }
+
             // 4. The space card must not be wider than the screen (a clipped card hides clones).
             val cardBounds = runCatching { boundsOf(resourceId = "cardSpace") }.getOrNull()
             if (cardBounds != null) {
@@ -482,6 +504,26 @@ class PhoneUiMatrixInstrumentedTest {
                         "The empty-space hint has no measurable text box: $hintEmpty",
                         hintEmpty.height() > 0 && hintEmpty.width() > 0
                     )
+                    // The hint must not draw through the Add tile. Measured on run 43592167654 at
+                    // 320x640: the sentence crossed the "Add App" label, so two texts shared the
+                    // same pixels. Bounds-only assertions could not see it, because both views were
+                    // inside the screen — they were on top of each other.
+                    val addLabel = runCatching { boundsOf(text = context.getString(R.string.action_add)) }
+                        .getOrNull()
+                    if (addLabel != null) {
+                        val overlaps = hintEmpty.left < addLabel.right && addLabel.left < hintEmpty.right &&
+                            hintEmpty.top < addLabel.bottom && addLabel.top < hintEmpty.bottom
+                        Log.i(
+                            TAG,
+                            "PHONE_UI config=$label emptyHintOverlap overlaps=$overlaps " +
+                                "hint=$hintEmpty addLabel=$addLabel"
+                        )
+                        assertTrue(
+                            "The empty-space hint overlaps the Add tile on $label: " +
+                                "hint=$hintEmpty addTileLabel=$addLabel",
+                            !overlaps
+                        )
+                    }
                 }
             }
 
