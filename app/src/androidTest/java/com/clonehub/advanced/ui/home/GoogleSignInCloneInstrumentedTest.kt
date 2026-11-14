@@ -459,7 +459,8 @@ class GoogleSignInCloneInstrumentedTest {
     private fun relaunchAndRead(fileName: String, log: String): Map<String, String>? {
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
         SystemClock.sleep(1_000)
-        device.executeShellCommand("logcat -c")
+        // logcat is deliberately not cleared: the first, cold launch is the measurement, and its
+        // warm-up timeline (account_samples.txt) would be wiped with the buffer.
         val app = ClonedApp(fixturePackage, "Google Sign-in Fixture", "SignIn", spaceId)
         val launched = runCatching { VirtualContainerEngine.launchApp(context, app, spaceId) }
             .getOrDefault(false)
@@ -547,7 +548,8 @@ class GoogleSignInCloneInstrumentedTest {
             runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
             SystemClock.sleep(500)
         }
-        device.executeShellCommand("logcat -c")
+        // logcat is deliberately not cleared: the first, cold launch is the measurement, and its
+        // warm-up timeline (account_samples.txt) would be wiped with the buffer.
         val accountsBeforeProbe = googleAccountCount()
         Log.i(TAG, "GOOGLE_SIGNIN_PRE_PROBE kind=$kind file=$fileName accounts_on_device=$accountsBeforeProbe")
         if (kind == "clone") {

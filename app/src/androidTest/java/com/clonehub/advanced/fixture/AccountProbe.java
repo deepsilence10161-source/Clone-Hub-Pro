@@ -111,7 +111,7 @@ final class AccountProbe {
             start = SystemClock.elapsedRealtime();
         }
         long base = SystemClock.elapsedRealtime();
-        for (int waitMs : new int[]{0, 1_000, 3_000, 6_000, 10_000}) {
+        for (int waitMs : new int[]{0, 1_000, 3_000, 6_000, 10_000, 20_000}) {
             try {
                 long target = base + waitMs;
                 long now = SystemClock.elapsedRealtime();
