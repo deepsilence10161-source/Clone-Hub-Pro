@@ -1004,3 +1004,58 @@ the evidence above says, and it is what the next change has to address.
 An end-to-end Google consent with a real Google account inside a clone remains **NOT TESTED**: this
 image has no Play services, and its `com.google` account comes from the test authenticator, which is
 labelled as such in every artefact.
+
+## 28. The web sign-in path inside a clone: measured, and the answer is not what was assumed
+
+Deep gate `43696006594` (commit `ec0d8a6`, API 34 ARM64, fixture hosted in the launcher activity so both
+sides take the same route) compared the WebView sign-in path un-cloned and inside the clone, step by
+step. Both runs reported every step, and the values are the same:
+
+| measured step | un-cloned app | inside the clone |
+|---|---|---|
+| WebView provider | `com.android.webview:125.0.6422.113` | `com.android.webview:125.0.6422.113` |
+| settings a sign-in page needs | js=true, domStorage=true, database=true, cookies=true | identical |
+| HTTPS page load | `page_finished title=Example Domain` | identical |
+| page context | `secure=true crypto=true localStorage=true cookieWrite=true` | identical |
+| cookie across a reload | `cookie_roundtrip=true` (`ch_probe=1`) | identical |
+| `accounts.google.com/gsi/client` | served, 279 858 chars | served, 279 889 chars |
+| https VIEW intent (Custom Tabs) | `unresolved` | `component=org.chromium.webview_shell.WebViewBrowserActivity` |
+
+Read honestly: **a web-based "Continue with Google" is not broken by cloning on this image.** The
+embedded browser loads, keeps its cookies across a redirect, counts as a secure context, and Google's
+own sign-in script is served inside the clone exactly as outside it.
+
+That relocates the defect. What *is* measured as broken inside a clone is the native path, still, in the
+same run (audit §22/§27): every `AccountManager` query inside the clone answers an empty list
+(`by_type=0`, `by_type_for_package=0`, `all=0`) while the host app lists the device's account and mints a
+token. So:
+
+- an app that signs in with **Android's account manager** (most native apps, Play Games, and any web app
+  asking Android to pick the account first) gets "no account" inside a clone — this is the confirmed,
+  reproduced defect, and the account bridge described in §27 is the fix that is still owed;
+- an app that signs in with a **plain WebView + Google Identity Services** has the whole path working in
+  the clone on this image, so a failure there comes from something the gate cannot yet see: a Google
+  account signed in on the device (this image has none — the seeded account comes from a test
+  authenticator), Play-services-dependent SDKs, or the app's own backend.
+
+## 29. Six defects in the measurement itself, all found by live runs and fixed
+
+None of these were product defects, and each one had been hiding the answer:
+
+1. `getWebViewProviderPackage()` does not exist and `WebResourceError.getDescription()` is a
+   `CharSequence` — the build failed (run `43689334131`). A local `javac` gate now catches that in
+   seconds instead of a thirteen-minute queue.
+2. The fixture APK had no `INTERNET` permission, so every WebView load died with `net::ERR_CACHE_MISS`
+   (`43690036509`). A baseline that cannot load now reports NOT TESTED.
+3. The parser looked for the marker at the start of a logcat line; the tag comes first, so every line
+   was missed (`43690036509`, `43690755006`). Now pinned by a unit test against real captured lines.
+4. The probe was a separate activity, and the container launches the package's launcher activity, so it
+   never ran inside a clone (`43691866202`); making the launcher activity start it then covered the
+   fixture screen and failed five unrelated deep tests (`43692624607`). It is now hosted inside the
+   launcher activity's own layout and dormant unless asked.
+5. A fixture process left alive answered `am start` with `onNewIntent`, so `onCreate` never ran
+   (`43693467484`). The gate now force-stops first.
+6. The environment cannot identify itself: inside a clone the process name read
+   `com.clonehub.pro.test` (`43694349589`) and a class-loader guess still said `native`
+   (`43695212616`). The gate now selects the run by position — it cleared the buffer and started exactly
+   one launch, which is stronger evidence than anything the process says about itself.

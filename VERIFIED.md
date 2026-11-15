@@ -1,6 +1,6 @@
 # Clone Hub Pro — verified state
 
-Current as of commit `315c7e0`. Everything below is a link to a run whose evidence is archived;
+Current as of commit `ec0d8a6`. Everything below is a link to a run whose evidence is archived;
 nothing here is a claim without a gate behind it, and what is **not** working says so in its own
 section.
 
@@ -12,6 +12,36 @@ which only publishes when both native ARM64 gates are green on the current `main
 name the commit: `ce6181a`. The published file was downloaded again afterwards and its `classes.dex`
 contains the sign-in fix, so the artifact is the fixed build and not an earlier one
 (sha256 starts `5d77299b…`).
+
+## Gates green on `ec0d8a6`
+
+| Gate | Run | Result |
+|---|---|---|
+| Deep clone testing — sign-in, updater, **web sign-in parity**, cold restart | `43696006594` | success — native sign-in suite, `webview-signin`, updater gate and cold restart all green |
+| API compatibility matrix | `43696006546` | success |
+| Strict E2E — API 34 | `43696006660` | success |
+| Real app compatibility smoke | `43696006581` | success |
+| Publish latest verified APK | `43696451670` | success |
+
+## Sign-in: what is proven, and what still fails
+
+**The web path works inside a clone.** Deep gate `43696006594` compared a web-based "Continue with
+Google" route un-cloned and inside a clone: same WebView provider, same settings, the HTTPS page
+loads, the page is a secure context with `crypto.subtle`, a cookie survives a reload
+(`cookie_roundtrip=true`), `accounts.google.com/gsi/client` is served (≈280 KB), and an https VIEW
+intent resolves to `org.chromium.webview_shell.WebViewBrowserActivity` — inside the clone too.
+
+**The native path still fails inside a clone.** In the same run every `AccountManager` query inside
+the clone answers empty (`by_type=0`, `by_type_for_package=0`, `all=0`) while the host app lists the
+device's account and receives a token. Any app that asks Android for the Google account before signing
+in therefore sees "no account". That is the reproduced defect; the host-side bridge
+(`AccountBridge` + `HostAccountProvider`) answers correctly from the host process, but the container's
+dispatch is not routed through it yet.
+
+**Not tested:** a real Google consent with a real Google account inside a clone (this image has no
+Play services and its `com.google` account comes from the test authenticator, labelled as such); any
+Play-services-dependent SDK (Games, Firebase Auth federated sign-in); and the app's own backend, which
+no gate here can see.
 
 ## Gates green on `315c7e0` (the commit the in-app updater ships in)
 
