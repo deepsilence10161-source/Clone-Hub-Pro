@@ -31,6 +31,15 @@ for path in (REPO / 'app/src/androidTest').rglob('*.java'):
                 f'{path.name}: final {match.group(1)} assigned in both try and catch (javac rejects this)'
             )
 
+# Kotlin shapes that failed a real CI build (run 43683444246): two companion objects in one class.
+for path in (REPO / 'app/src/main/java').rglob('*.kt'):
+    src = path.read_text()
+    companions = src.count('companion object')
+    if companions > 1:
+        problems.append(f'{path.name}: {companions} companion objects in one class (Kotlin allows one)')
+    if src.count('{') != src.count('}'):
+        problems.append(f'{path.name}: unbalanced braces ({src.count("{")} vs {src.count("}")})')
+
 for path in list((REPO / 'app/src/main').rglob('*.xml')):
     try:
         ET.parse(path)
