@@ -55,6 +55,7 @@ jobs:
           echo "publish=true" >> "$GITHUB_OUTPUT"
 
       - name: Download strict-gate verified APK
+        id: apk
         if: steps.verify.outputs.publish == 'true'
         shell: bash
         run: |
@@ -72,13 +73,74 @@ jobs:
           unzip -t CloneHub-Pro.apk > /dev/null
           sha256sum CloneHub-Pro.apk
 
+          # The in-app updater reads these two numbers out of the release, and neither may be guessed:
+          # the phone compares versionCodes, and sha256 is what it checks the download against.
+          #
+          # The APK's own manifest is decoded here rather than taken from the gradle file, because the
+          # value the phone sees is the one compiled into the binary. aapt2 ships with the SDK the
+          # runners already have; if it is missing the step fails instead of publishing an update the
+          # app cannot recognise.
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          AAPT2="$(find "$SDK/build-tools" -name aapt2 -type f 2>/dev/null | sort -V | tail -n 1)"
+          if [[ -z "$AAPT2" ]]; then
+            echo "No aapt2 found under $SDK; cannot decode versionCode, refusing to publish." >&2
+            exit 1
+          fi
+          chmod +x "$AAPT2" || true
+          "$AAPT2" dump badging CloneHub-Pro.apk > apk-badging.txt
+          # `aapt2 dump badging` prints:  package: name='com.clonehub.pro' versionCode='2001' versionName='2.0.1' …
+          # The apostrophes are quoted for the shell, not for sed: a pattern written with them stops
+          # being a valid regex and sed fails at runtime (caught by bash -n on this very step).
+          VERSION_CODE="$(grep -o "versionCode='[0-9]*'" apk-badging.txt | head -n 1 | tr -cd '0-9')"
+          VERSION_NAME="$(grep -o "versionName='[^']*'" apk-badging.txt | head -n 1 | sed 's/versionName=.//; s/.$//')"
+          PACKAGE_NAME="$(grep -o "^package: name='[^']*'" apk-badging.txt | head -n 1 | sed 's/^package: name=.//; s/.$//')"
+          SHA256="$(sha256sum CloneHub-Pro.apk | cut -d' ' -f1)"
+          SIZE="$(stat -c %s CloneHub-Pro.apk)"
+          if [[ -z "$VERSION_CODE" || -z "$PACKAGE_NAME" || -z "$SHA256" ]]; then
+            echo "Could not read versionCode/package from the APK; refusing to publish." >&2
+            cat apk-badging.txt >&2
+            exit 1
+          fi
+          printf '%s\n' "$VERSION_CODE" "$VERSION_NAME" "$PACKAGE_NAME" "$SHA256" "$SIZE" > verified-facts.txt
+          {
+            echo "version-code=$VERSION_CODE"
+            echo "version-name=$VERSION_NAME"
+            echo "package=$PACKAGE_NAME"
+            echo "sha256=$SHA256"
+            echo "size=$SIZE"
+          } >> "$GITHUB_OUTPUT"
+          cat verified-facts.txt
+
       - name: Publish or update stable latest release
         if: steps.verify.outputs.publish == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          title="CloneHub Pro - Latest Verified APK"
-          notes="Latest main APK published only after both native ARM64 test gates pass. Verified commit: $HEAD_SHA"
+          # The tag and notes are the update channel the app reads, so they must contain what the
+          # updater needs and nothing it would have to guess:
+          #   - `build-<versionCode>` in the title: the only field the app trusts for "is this newer";
+          #   - `sha256:` and the byte size in the notes: the digest the download is checked against,
+          #     and the size a truncated download is caught by;
+          #   - the commit, so a human can trace a build back to a gate run.
+          version_code="${{ steps.apk.outputs.version-code }}"
+          version_name="${{ steps.apk.outputs.version-name }}"
+          sha256="${{ steps.apk.outputs.sha256 }}"
+          size="${{ steps.apk.outputs.size }}"
+          title="CloneHub Pro - Latest Verified APK (build-$version_code)"
+          notes="$(printf '%s\n' \
+            "Clone Hub Pro $version_name, build-$version_code." \
+            "" \
+            "sha256:$sha256" \
+            "size:$size" \
+            "" \
+            "Published only after both native ARM64 test gates passed on main. Verified commit: $HEAD_SHA" \
+            "" \
+            "The in-app updater (overflow menu > App updates) reads this release: the build number in" \
+            "the title is compared with the installed versionCode, and the sha256 below is what the" \
+            "downloaded file is checked against before Android's installer sees it.")"
+          # Keep the old tag for existing links, and add a versioned one so each build stays
+          # addressable after the next release overwrites the latest APK.
+          versioned_tag="verified-build-$version_code"
           if gh release view latest-verified --repo "$REPO" > /dev/null 2>&1; then
             gh release upload latest-verified CloneHub-Pro.apk --repo "$REPO" --clobber
             gh release edit latest-verified --repo "$REPO" --latest --title "$title" --notes "$notes"
@@ -87,6 +149,16 @@ jobs:
               --target "$HEAD_SHA" --latest --title "$title" --notes "$notes"
           fi
           echo "Direct download: https://github.com/$REPO/releases/latest/download/CloneHub-Pro.apk"
+
+          # A permanent, addressable copy per build: "latest-verified" is overwritten every release,
+          # which is right for the updater's channel but useless as a record. A versioned tag keeps
+          # every build's exact bytes, digest and gate run traceable.
+          if gh release view "$versioned_tag" --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload "$versioned_tag" CloneHub-Pro.apk --repo "$REPO" --clobber
+          else
+            gh release create "$versioned_tag" CloneHub-Pro.apk --repo "$REPO" \
+              --target "$HEAD_SHA" --title "Clone Hub Pro build-$version_code" --notes "$notes"
+          fi
 
       - name: Say what happened
         if: always()

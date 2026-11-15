@@ -26,6 +26,10 @@
          Pro manifest declares the same permission the cloned app declares; without it the answer
          was an empty list and sign-in looked broken (see the sign-in gate). -->
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <!-- In-app updates: the app hands a verified APK to Android's installer. The permission is the
+         request; the grant is the user's, on a Settings screen this app sends them to, and Android
+         still refuses an APK signed with a different key. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -73,6 +77,31 @@
             android:authorities="com.clonehub.pro.accounts"
             android:exported="true"
             android:permission="com.clonehub.pro.permission.CLONE_ACCOUNT_BRIDGE" />
+
+        <!--
+          In-app updates. The screen reads the release channel, downloads the APK into this app's own
+          cache, checks it against the published SHA-256 and hands it to Android's installer.
+        -->
+        <activity
+            android:name="com.clonehub.advanced.ui.update.UpdateActivity"
+            android:exported="false"
+            android:label="@string/update_title"
+            android:theme="@style/Theme.CloneHub" />
+
+        <!--
+          The verified APK is shared with the system installer through this provider. `updates` is a
+          path in file_paths.xml pointing at the app's own cache directory; nothing else is exposed,
+          and the URI is per-file and read-only for the receiver.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
         <!-- Main Home Activity (SingleTask to avoid multiple launcher instances) -->
         <activity

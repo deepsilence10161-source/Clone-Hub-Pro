@@ -65,3 +65,41 @@ CloneHub_Advanced/
 ├── gradle.properties
 └── settings.gradle
 ```
+
+## In-app updates
+
+The app updates itself from its own release channel — no store, no sideloading by hand.
+
+**Where:** overflow menu → **App updates**. The screen shows the installed build, the offered build,
+the signing key this build carries, whether this device accepts an installer intent, and the SHA-256
+the downloaded file was checked against. A background check runs at most once every six hours and
+speaks at most once per `versionCode`.
+
+**How a release becomes an update:** `Publish latest verified APK` runs only after both native ARM64
+gates pass, decodes the APK's own `versionCode` with `aapt2`, computes its SHA-256 and publishes it
+with a title of `CloneHub Pro - Latest Verified APK (build-<versionCode>)` and a body containing
+`sha256:<hex>` and `size:<bytes>`. The app reads exactly those fields:
+
+```
+GET https://api.github.com/repos/deepsilence10161-source/Clone-Hub-Pro/releases/latest
+```
+
+**What the app refuses to do:**
+
+- it never compares version *names*; without a numeric `versionCode` in the release title/tag it says
+  it cannot tell, rather than offering a downgrade or hiding an update;
+- it never installs unverified bytes: if the release publishes a SHA-256, a mismatch deletes the
+  download and fails loudly;
+- it never claims an install path works when the platform refuses it. Android 14 rejects an APK
+  delivered by an intent URL (`INSTALL_FAILED_INVALID_APK: … intent-URL path`); the first attempt's
+  result is recorded and the panel switches to "open the verified APK as a file" instead.
+
+**One limitation, stated rather than papered over:** Android only installs an update signed with the
+*same key* as the installed app. Two CI runs of this repository were measured to carry different
+debug keys, so an APK from a different run can be refused with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+The panel shows the fingerprint so the reason is visible. Making every release share one key needs a
+signing key stored as a repository secret; until then, updates work between builds that share a key,
+and the app tells the user which key it has instead of pretending otherwise.
+
+A fork or a private build can point the checker at its own manifest instead of GitHub by setting
+`UpdateChecker.MANIFEST_URL`; the JSON shape is documented in `UpdateChecker.parseManifest`.

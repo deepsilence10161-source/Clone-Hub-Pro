@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
 import androidx.core.view.isVisible
 import androidx.viewpager2.widget.ViewPager2
@@ -17,10 +18,12 @@ import com.clonehub.advanced.R
 import com.clonehub.advanced.core.container.SpaceManager
 import com.clonehub.advanced.core.container.VirtualContainerEngine
 import com.clonehub.advanced.core.service.ContainerForegroundService
+import com.clonehub.advanced.core.update.UpdateScheduler
 import com.clonehub.advanced.data.model.ClonedApp
 import com.clonehub.advanced.ui.backup.BackupActivity
 import com.clonehub.advanced.ui.dialogs.AppActionsBottomSheet
 import com.clonehub.advanced.ui.picker.AppPickerActivity
+import com.clonehub.advanced.ui.update.UpdateActivity
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -65,6 +68,38 @@ class HomeActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         refreshSpaces()
+        checkForUpdatesQuietly()
+    }
+
+    /**
+     * The YMusic-style background check: at most one network call every six hours, and the result is
+     * spoken once per versionCode.
+     *
+     * It never installs anything and never blocks the screen — the work runs on IO, the only thing
+     * that touches the UI is a dialog the user can dismiss. A failed check is logged and swallowed:
+     * an app that is offline must not behave differently from one that is up to date.
+     */
+    private fun checkForUpdatesQuietly() {
+        if (!UpdateScheduler.shouldCheckNow(this, force = false)) return
+        lifecycleScope.launch {
+            val outcome = withContext(Dispatchers.IO) { UpdateScheduler.check(this@HomeActivity, force = false) }
+            val info = outcome.info
+            if (info == null || !outcome.shouldAnnounce) {
+                Log.i(TAG, "UPDATE_QUIET nothing_to_announce error=${outcome.error ?: "<none>"}")
+                return@launch
+            }
+            UpdateScheduler.markAnnounced(this@HomeActivity, info.versionCode ?: -1)
+            AlertDialog.Builder(this@HomeActivity)
+                .setTitle(getString(R.string.update_available, info.version))
+                .setMessage(
+                    getString(R.string.update_offered_line, info.version, info.versionCode ?: 0, info.source)
+                )
+                .setPositiveButton(R.string.update_action_install) { _, _ ->
+                    startActivity(Intent(this@HomeActivity, UpdateActivity::class.java))
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
     }
 
     private fun initViews() {
@@ -253,12 +288,17 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun showOverflowMenu() {
-        val items = arrayOf(getString(R.string.action_backup), getString(R.string.action_new_space))
+        val items = arrayOf(
+            getString(R.string.action_backup),
+            getString(R.string.action_new_space),
+            getString(R.string.update_menu_entry)
+        )
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> startActivity(BackupActivity.intent(this))
-                    else -> createSpaceAndShow()
+                    1 -> createSpaceAndShow()
+                    else -> startActivity(Intent(this, UpdateActivity::class.java))
                 }
             }
             .show()

@@ -95,7 +95,18 @@ adb shell setprop log.tag.AccountManagerService VERBOSE 2>/dev/null || true
 adb shell setprop log.tag.Accounts VERBOSE 2>/dev/null || true
 adb shell setprop log.tag.AccountManager VERBOSE 2>/dev/null || true
 run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
+
+# The in-app updater's gate: the installed build's own versionCode/signing key, the declared install
+# permission, the FileProvider the installer path depends on, and — when the device has a network —
+# that the release channel parses into a comparable versionCode. Run here because it is the same
+# ARM64 device the update is installed on, and because a FileProvider that only resolves on API 34
+# is exactly the kind of thing that ships broken.
+UPDATE_CLASS="com.clonehub.advanced.ui.update.UpdateFlowInstrumentedTest"
+update_status=0
 adb logcat -d -v threadtime > "$OUT/google-signin-logcat.txt" 2>/dev/null || true
+run_tests update-flow -e class "$UPDATE_CLASS" || update_status=$?
+adb logcat -d -v threadtime | grep "UPDATE_" > "$OUT/update-logcat.txt" 2>/dev/null || true
+cat "$OUT/update-logcat.txt" || true
 # Every line the account service wrote while the sign-in test ran, kept separately so the verdict is
 # readable without grepping 4 MB of logcat.
 adb logcat -d -v threadtime -s AccountManagerService:V Accounts:V AccountManager:V \
@@ -146,8 +157,8 @@ adb shell run-as "$PACKAGE_ID" cat shared_prefs/clone_spaces_db.xml \
 adb shell am force-stop "$PACKAGE_ID"
 cold_status=0
 run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
-if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ]; then
-  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status"
+if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ]; then
+  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status"
   exit 1
 fi
 
@@ -159,4 +170,6 @@ fi
 adb shell am start -W -S -n "$PACKAGE_ID/$MAIN_ACTIVITY"
 sleep 2
 adb shell pidof "$PACKAGE_ID" | grep -E '[0-9]+'
+echo "Updater gate: $(grep -c "UPDATE_GATE" "$OUT/update-logcat.txt" 2>/dev/null || echo 0) measured lines"
+grep -E "UPDATE_GATE (installed|install_permission|provider|channel)" "$OUT/update-logcat.txt" || true
 echo "Deep native ARM64 tests passed"

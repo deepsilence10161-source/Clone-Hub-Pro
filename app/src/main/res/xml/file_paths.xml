@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Files this app is willing to share with another app. Exactly one directory: the update cache that
+  holds a downloaded, digest-verified APK. No clone data, no databases, no user files.
+-->
+<paths>
+    <cache-path
+        name="updates"
+        path="updates/" />
+</paths>

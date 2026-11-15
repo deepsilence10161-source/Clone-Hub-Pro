@@ -112,4 +112,30 @@
     <string name="restore_safety_copy">\nSafety copy: %1$s</string>
     <string name="restore_failed">Restore failed: %1$s</string>
     <string name="action_backup">Backup &amp; restore</string>
+
+    <!-- Update channel (YMusic-style in-app updater). Every sentence here is shown to the user
+         verbatim, so the wording names what was measured rather than promising an outcome. -->
+    <string name="update_title">App updates</string>
+    <string name="update_action_check">Check for updates</string>
+    <string name="update_action_install">Download and install</string>
+    <string name="update_action_open_file">Open the verified APK</string>
+    <string name="update_action_allow_installs">Allow this app to install updates</string>
+    <string name="update_menu_entry">App updates</string>
+    <string name="update_checking">Checking the release channel…</string>
+    <string name="update_installed_placeholder">Reading the installed version…</string>
+    <string name="update_installed_line">Installed: %1$s (versionCode %2$d)\nSigning key: %3$s</string>
+    <string name="update_offered_line">Offered: %1$s (versionCode %2$d) from %3$s</string>
+    <string name="update_available">A newer build is available: %1$s</string>
+    <string name="update_cannot_tell">Not offered: %1$s</string>
+    <string name="update_check_failed">Could not read the release channel: %1$s</string>
+    <string name="update_no_notes">The release published no notes.</string>
+    <string name="update_downloading">Downloading and checking the APK…</string>
+    <string name="update_verified">Checked: SHA-256 matches the published digest (%1$s…)</string>
+    <string name="update_unverified">Downloaded, but the release published no SHA-256; Android\'s own signature check is the guard (%1$s…)</string>
+    <string name="update_install_started">Android\'s installer was opened. Confirm the update there.</string>
+    <string name="update_install_blocked">This device needs the APK opened as a file. Use the button below.</string>
+    <string name="update_download_failed">The download failed: %1$s</string>
+    <string name="update_file_location">The verified APK is at:\n%1$s</string>
+    <string name="update_permission_unavailable">This device has no screen for that setting.</string>
+    <string name="update_icon_description">Clone Hub Pro icon</string>
 </resources>

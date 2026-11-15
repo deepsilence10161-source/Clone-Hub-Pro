@@ -12,8 +12,11 @@ android {
         applicationId "com.clonehub.pro"
         minSdk 24
         targetSdk 35
-        versionCode 2001
-        versionName "2.0.1"
+        // The in-app updater compares THIS number with the build-<versionCode> in the release title,
+        // and the publish workflow reads the compiled value back out of the APK. Bumping it is the
+        // only way a new build reaches installed copies; a new versionName alone is not an update.
+        versionCode 2002
+        versionName "2.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -74,6 +77,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
 
     testImplementation 'junit:junit:4.13.2'
+    // org.json is a stub in the Android SDK: the updater's parser is pure Kotlin over it, so the unit
+    // tests need the real implementation rather than a class that throws "not mocked".
+    testImplementation 'org.json:json:20240303'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
     androidTestImplementation 'androidx.test:runner:1.6.2'
