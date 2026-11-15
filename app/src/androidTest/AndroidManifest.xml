@@ -23,14 +23,11 @@
         </activity>
 
         <!--
-          The WebView sign-in probe: the path a real web-based app uses for "Continue with Google".
-          Measured native vs inside a clone; see WebViewSignInProbe.java for what each marker means.
+          The WebView sign-in probe is not an activity of its own on purpose: it is hosted by the
+          fixture's launcher activity, because that is the route the container takes for a clone (run
+          43691866202) and because a second activity covered the fixture screen and failed five
+          unrelated deep tests (run 43692624607). See WebViewSignInProbe.java.
         -->
-        <activity
-            android:name="com.clonehub.advanced.fixture.WebViewSignInProbe"
-            android:exported="true"
-            android:hardwareAccelerated="true"
-            android:label="WebView Sign-in Probe" />
 
         <!--
           A test-only authenticator under the real com.google account type.

@@ -43,7 +43,7 @@ import org.json.JSONObject;
  * Deliberately dependency-free Java: inside the clone this runs under the container's runtime, and the
  * host's Kotlin stdlib is not the entry point.
  */
-public final class WebViewSignInProbe extends Activity {
+public final class WebViewSignInProbe {
 
     private static final String TAG = "WEBVIEW_SIGNIN";
     private static final String MARKER = "WEBVIEW_SIGNIN_MARKER";
@@ -55,6 +55,9 @@ public final class WebViewSignInProbe extends Activity {
     /** How long the whole probe may take before it reports what it has. */
     private static final long DEADLINE_MS = 45_000L;
 
+    /** The most recently attached probe, so the hosting activity can shut it down. */
+    static WebViewSignInProbe lastAttached;
+
     private final Handler main = new Handler(Looper.getMainLooper());
     private WebView webView;
     private String kind = "unknown";
@@ -64,30 +67,75 @@ public final class WebViewSignInProbe extends Activity {
     private String lastCookieStore = "";
     private long startedAt;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    /**
+     * Attaches the probe to [host]'s own view hierarchy, when and only when it has been asked for.
+     *
+     * The probe must run down the route the container actually takes, which is the package's launcher
+     * activity — so it lives inside that activity instead of being an activity of its own. It also must
+     * not change what every other gate measures, so it stays dormant unless asked.
+     *
+     * Three independent ways to ask, because the answer has to survive whatever the container does to
+     * this process's view of the device: an intent extra (used for the un-cloned run), the global
+     * setting `clonehub_webprobe` (readable without a permission) and the system property
+     * `debug.clonehub.webprobe`. The gate sets all three; the log says which one was seen, so a trigger
+     * that is invisible inside the clone is a finding rather than a mystery.
+     *
+     * @return the trigger that turned the probe on, or empty when it stayed off.
+     */
+    public static String attachIfAsked(Activity host, android.view.ViewGroup container) {
+        String trigger = askedBy(host);
+        if (trigger.isEmpty()) return "";
+        try {
+            WebViewSignInProbe probe = new WebViewSignInProbe(host, container);
+            lastAttached = probe;
+            probe.start();
+        } catch (Throwable error) {
+            android.util.Log.i(TAG, MARKER + " attach_failed error="
+                + error.getClass().getSimpleName() + ": " + error.getMessage());
+        }
+        return trigger;
+    }
+
+    /** Which of the three triggers is set, in the order they are cheapest to read. */
+    private static String askedBy(Activity host) {
+        android.content.Intent intent = host.getIntent();
+        if (intent != null && intent.getIntExtra("webview_probe", 0) == 1) return "intent";
+        try {
+            if (android.provider.Settings.Global.getInt(
+                    host.getContentResolver(), "clonehub_webprobe", 0) == 1) return "global_setting";
+        } catch (Throwable ignored) {
+            // a container that hides the settings provider simply skips this channel
+        }
+        try {
+            Class<?> properties = Class.forName("android.os.SystemProperties");
+            Object value = properties.getMethod("get", String.class).invoke(null, "debug.clonehub.webprobe");
+            if ("1".equals(value)) return "system_property";
+        } catch (Throwable ignored) {
+            // SystemProperties is a hidden API; reflection keeps the probe compiling and honest
+        }
+        return "";
+    }
+
+    private final Activity host;
+    private final android.view.ViewGroup container;
+
+    private WebViewSignInProbe(Activity host, android.view.ViewGroup container) {
+        this.host = host;
+        this.container = container;
+    }
+
+    private void start() {
         String process = android.os.Build.VERSION.SDK_INT >= 28
                 ? android.app.Application.getProcessName() : "";
         kind = process != null && process.contains(":agent") ? "clone" : "native";
         startedAt = android.os.SystemClock.elapsedRealtime();
-        Log.i(TAG, RUN + " process=" + process + " pid=" + android.os.Process.myPid() + " kind=" + kind);
-
-        LinearLayout layout = new LinearLayout(this);
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
-        layout.setBackgroundColor(Color.parseColor("#101014"));
-        TextView title = new TextView(this);
-        title.setText("WEBVIEW SIGN-IN PROBE\nkind=" + kind);
-        title.setTextColor(Color.parseColor("#B6FF6A"));
-        title.setTextSize(20f);
-        title.setGravity(Gravity.CENTER);
-        layout.addView(title);
-        setContentView(layout);
+        Log.i(TAG, RUN + " process=" + process + " pid=" + android.os.Process.myPid()
+            + " kind=" + kind + " trigger=" + askedBy(host));
 
         try {
-            webView = new WebView(this);
-            layout.addView(
+            webView = new WebView(host);
+            container.removeAllViews();
+            container.addView(
                 webView,
                 new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
@@ -201,7 +249,7 @@ public final class WebViewSignInProbe extends Activity {
             android.content.Intent intent = new android.content.Intent(
                 android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://accounts.google.com/"));
             intent.addCategory(android.content.Intent.CATEGORY_BROWSABLE);
-            android.content.pm.ResolveInfo resolved = getPackageManager().resolveActivity(intent, 0);
+            android.content.pm.ResolveInfo resolved = host.getPackageManager().resolveActivity(intent, 0);
             if (resolved == null) return "unresolved";
             String pkg = resolved.activityInfo == null ? "?" : resolved.activityInfo.packageName;
             return "component=" + (resolved.activityInfo == null ? "?" :
@@ -268,9 +316,6 @@ public final class WebViewSignInProbe extends Activity {
     }
 
     private void finishProbe() {
-        if (isFinishing() || steps == 0 && webView == null) {
-            // still report, so a failed construction is not silent
-        }
         Log.i(TAG, DONE + " kind=" + kind + " steps=" + steps
             + " elapsedMs=" + (android.os.SystemClock.elapsedRealtime() - startedAt));
     }
@@ -303,8 +348,8 @@ public final class WebViewSignInProbe extends Activity {
         }
     }
 
-    @Override
-    protected void onDestroy() {
+    /** Called by the host activity when it is being destroyed. */
+    void shutdown() {
         if (webView != null) {
             try {
                 webView.stopLoading();
@@ -314,6 +359,5 @@ public final class WebViewSignInProbe extends Activity {
             }
             webView = null;
         }
-        super.onDestroy();
     }
 }

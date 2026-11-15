@@ -42,6 +42,36 @@ class WebViewSignInCloneInstrumentedTest {
 
     @Test(timeout = 420_000)
     fun webSignInBehavesLikeTheNormalApp() {
+        enableProbeTriggers()
+        try {
+            compareBothRuns()
+        } finally {
+            restoreProbeTriggers()
+        }
+    }
+
+    /**
+     * Asks the fixture to run the probe, three ways at once.
+     *
+     * The un-cloned run is asked with an intent extra; the cloned run cannot be, because the container
+     * builds its own intent, so the global setting and the system property are set too. Which channel
+     * was seen is logged by the probe, so a channel that the container hides is a finding.
+     */
+    private fun enableProbeTriggers() {
+        device.executeShellCommand("settings put global clonehub_webprobe 1")
+        device.executeShellCommand("setprop debug.clonehub.webprobe 1")
+        Log.i(TAG, "WEBVIEW_GATE_TRIGGERS global=" +
+            device.executeShellCommand("settings get global clonehub_webprobe").trim() +
+            " property=" + device.executeShellCommand("getprop debug.clonehub.webprobe").trim())
+    }
+
+    private fun restoreProbeTriggers() {
+        device.executeShellCommand("settings delete global clonehub_webprobe")
+        device.executeShellCommand("setprop debug.clonehub.webprobe 0")
+        Log.i(TAG, "WEBVIEW_GATE_TRIGGERS_CLEARED")
+    }
+
+    private fun compareBothRuns() {
         val native = runProbe(native = true)
         Log.i(TAG, "WEBVIEW_GATE_NATIVE ${native.steps}")
         assertTrue(
@@ -127,7 +157,7 @@ class WebViewSignInCloneInstrumentedTest {
         device.executeShellCommand("logcat -c")
 
         if (native) {
-            device.executeShellCommand("am start -W -n $fixtureActivity")
+            device.executeShellCommand("am start -W -n $fixtureActivity --ei webview_probe 1")
         } else {
             val app = ClonedApp(fixturePackage, "WebView Sign-in Fixture", "WebViewSignIn", spaceId)
             val launched = runCatching { VirtualContainerEngine.launchApp(context, app, spaceId) }

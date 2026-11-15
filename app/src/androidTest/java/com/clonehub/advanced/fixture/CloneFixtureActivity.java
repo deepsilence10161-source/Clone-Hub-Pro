@@ -34,6 +34,8 @@ import java.util.Locale;
 public final class CloneFixtureActivity extends Activity {
     private TextView captureStatus;
     private boolean captureStarted;
+    /** Non-null only when the WebView sign-in probe was asked for; see the field below. */
+    private WebViewSignInProbe webViewProbe;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,14 +45,6 @@ public final class CloneFixtureActivity extends Activity {
         // virtual container after cloning. Reports are keyed by process kind so the two runs
         // cannot overwrite each other.
         AccountProbe.run(this);
-        // The WebView sign-in probe is a second activity in this same APK. Starting it from the
-        // launcher activity is what makes it run inside a clone as well: the container launches the
-        // app's launcher activity, not whichever activity a test names.
-        try {
-            startActivity(new android.content.Intent(this, WebViewSignInProbe.class));
-        } catch (Throwable error) {
-            android.util.Log.w("WEBVIEW_SIGNIN", "WEBVIEW_SIGNIN_START_FAILED " + error);
-        }
         android.content.SharedPreferences state = getSharedPreferences("fixture_state", MODE_PRIVATE);
         int launchCount = state.getInt("launch_count", 0) + 1;
         // Synchronous commit makes a force-stop/relaunch isolation check deterministic.
@@ -91,7 +85,35 @@ public final class CloneFixtureActivity extends Activity {
         content.addView(status);
         content.addView(details);
         content.addView(captureStatus);
+
+        // The WebView sign-in probe, when (and only when) the gate asks for it.
+        //
+        // It runs inside this activity rather than as an activity of its own for two measured reasons:
+        // the container launches the package's launcher activity, so an extra activity never runs
+        // inside a clone (run 43691866202); and an extra activity that *did* run covered this screen
+        // and failed five unrelated deep tests (run 43692624607). Hosting it here gives the gate the
+        // realistic route and costs every other gate nothing, because it stays dormant by default.
+        LinearLayout probeContainer = new LinearLayout(this);
+        probeContainer.setOrientation(LinearLayout.VERTICAL);
+        probeContainer.setGravity(Gravity.CENTER);
+        String probeTrigger = WebViewSignInProbe.attachIfAsked(this, probeContainer);
+        webViewProbe = probeTrigger.isEmpty() ? null : WebViewSignInProbe.lastAttached;
+        if (!probeTrigger.isEmpty()) {
+            content.addView(probeContainer, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, 720));
+        }
         setContentView(content);
+        android.util.Log.i("WEBVIEW_SIGNIN", "CLONE_FIXTURE probe_trigger="
+                + (probeTrigger.isEmpty() ? "none" : probeTrigger));
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webViewProbe != null) {
+            webViewProbe.shutdown();
+            webViewProbe = null;
+        }
+        super.onDestroy();
     }
 
     @Override
