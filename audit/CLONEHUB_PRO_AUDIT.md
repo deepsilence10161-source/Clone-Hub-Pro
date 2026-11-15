@@ -887,3 +887,81 @@ all pass with `gridBounds=Rect(40, 346 - 1144, 478)`, `addTileLabel bounds=Rect(
 Tablets and foldables wider than 411dp, font scale above 1.0 (the labels are capped at two lines and
 10–11sp in landscape, which is the tightest case measured), right-to-left locales, and any OEM skin's
 system-bar geometry.
+
+## 26. In-app updater (YMusic-style): what was built, what the device measured
+
+### The piece that decides whether this feature can exist at all
+
+An in-app updater only works if Android will install the downloaded APK **over** the running one, and
+Android only does that when both are signed with the same key. This project had no stable key: every
+CI runner generated its own. Measured, three builds, three keys:
+
+| build | signing certificate SHA-256 prefix |
+|---|---|
+| strict run `43668222178` (commit `c90418d`) | `f4de4c14cbac15a36d1b7bf494e18a26` |
+| published APK of `ce6181a` | `7d45e14ccb62d19f8168006b50d20ae7` |
+| deep gate `43684094881` (`versionCode 2002`) | `aaa69af9f1544039ae1fa849333b9476` |
+
+Under those rules every update the app offered would have been refused with
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE`. The fix is `.github/signing/clonehub-signing.p12`, a PKCS12
+keystore committed on purpose and used by the debug build type. It is a public, debug-grade key —
+the previous keys were public defaults too, only *unstable* ones — and `.github/signing/README.md`
+states that, lists the three measured keys, and says what a release pipeline would do differently.
+
+The gate now proves the key is stable across runs, not just present in one: deep gate `43686358334`
+logged `UPDATE_GATE signing_key stable=e2f0843c8f5cc9e8dc67a7af860815d6
+actual=e2f0843c8f5cc9e8dc67a7af860815d6 matches=true`.
+
+### What the feature does
+
+`App updates` in the overflow menu. It reads this repository's release channel, compares
+**versionCode only**, downloads into the app's own cache, checks the bytes against the published
+SHA-256, and hands them to Android's installer through a `FileProvider` scoped to `cache/updates`.
+A background check runs at most once every six hours and announces at most once per versionCode;
+nothing is ever installed without the user confirming in Android's own dialog.
+
+### What the device measured (deep gate `43686358334`, suite `OK (5 tests)`)
+
+```
+UPDATE_GATE installed name=2.0.2 code=2002
+UPDATE_GATE signing_key stable=e2f0843c… actual=e2f0843c… matches=true
+UPDATE_GATE install_permission declared=true canRequestInstalls=false sdk=34 path=UNKNOWN
+UPDATE_GATE provider authority=com.clonehub.pro.updates uri=content://…/updates/provider-probe.apk
+UPDATE_GATE icon=/data/user/0/com.clonehub.pro/cache/updates/icon.png bytes=9267
+UPDATE_GATE channel source=github version=CloneHub Pro - Latest Verified APK (build-2002)
+                    versionCode=2002 installed=2002 newer=false
+UPDATE_GATE installer_intent action=android.intent.action.VIEW type=application/vnd.android.package-archive
+UPDATE_GATE path_text=Not measured yet on this device…
+```
+
+The channel line is the whole feature working end to end on the device: the release title states
+`build-2002`, the parser turns that into `versionCode=2002`, and the installed build is also 2002, so
+the app correctly says there is nothing newer — instead of guessing from a version name.
+
+### Two defects the first runs found, both fixed with their cause recorded
+
+1. **The publish workflow and the app disagreed about "latest".** The workflow began creating a
+   versioned archive release per build and marked it latest, so `GET /releases/latest` — what the app
+   read — answered with an archive copy. The app now reads `releases/tags/latest-verified` (a tag
+   cannot drift), falls back to `/releases/latest` only if the tag is missing, and says so in the log;
+   the workflow publishes the archive first and marks the stable channel latest last.
+2. **`UpdateActivity` would not compile**: two `companion object`s, a Kotlin rule the local gate did
+   not check (run `43683444246`). `tools/precheck.py` now rejects that shape and was verified by
+   putting the duplicate back and watching the gate fail.
+
+### What is NOT tested, and cannot be tested this way
+
+- **A real update from an installed build to a newer one.** Every check above is about the pieces:
+  reading the channel, verifying a download, sharing the file, and what the platform says it allows.
+  Performing an update replaces the binary under the running test, so the honest end-to-end check is
+  the next gate run reading a higher `versionCode` from the device after installing over the previous
+  APK — that is the step still owed.
+- **The store-less first install.** Android asks the user to allow this app to install packages. On
+  the gate image `canRequestInstalls=false`; the app detects it and shows the Settings button, but the
+  dialog itself is a system UI the gates do not drive.
+- **API 36 and OEM skins' installer behaviour**, and the Android 14 rule that refuses APK installs
+  from an intent URL. That refusal was anticipated from the platform's documented error and handled
+  in code (`INSTALL_FAILED_INVALID_APK`, intent-URL path), but it has **not** been reproduced on a
+  device in this work: no attempt has been made yet to install through the intent on the gate image,
+  so the panel's `path=UNKNOWN` is the truth and the recorded-verdict path is yet to be exercised.
+- A fork's own manifest channel (`UpdateChecker.MANIFEST_URL`) — parsed and unit-tested, never served.

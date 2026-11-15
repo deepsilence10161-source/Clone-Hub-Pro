@@ -1,6 +1,6 @@
 # Clone Hub Pro — verified state
 
-Current as of commit `ce6181a`. Everything below is a link to a run whose evidence is archived;
+Current as of commit `315c7e0`. Everything below is a link to a run whose evidence is archived;
 nothing here is a claim without a gate behind it, and what is **not** working says so in its own
 section.
 
@@ -13,15 +13,46 @@ name the commit: `ce6181a`. The published file was downloaded again afterwards a
 contains the sign-in fix, so the artifact is the fixed build and not an earlier one
 (sha256 starts `5d77299b…`).
 
-## Gates green on `ce6181a`
+## Gates green on `315c7e0` (the commit the in-app updater ships in)
 
 | Gate | Run | Result |
 |---|---|---|
-| API compatibility matrix — API 27, 28, 30, 31, 34 (phone-UI), 35 (real ARM64 redroid images) | `43669108321` | success on every level |
-| Deep clone testing — sign-in + cold restart + deep suite | `43669108293` | success — sign-in `OK (6 tests)` |
-| Strict E2E — API 34 | `43669108324` | success |
-| Real app compatibility smoke | `43669108378` | success |
-| Publish latest verified APK | `43670062074` | success |
+| API compatibility matrix — API 27, 28, 30, 31, 34 (phone-UI), 35 (real ARM64 redroid images) | `43686358341` | success on every level |
+| Deep clone testing — sign-in + updater + cold restart + deep suite | `43686358334` | success — sign-in `OK (6 tests)`, updater `OK (5 tests)` |
+| Strict E2E — API 34 | `43686358429` | success |
+| Real app compatibility smoke | `43686358368` | success |
+| Publish latest verified APK | `43687313552` | success — release `build-2002`, `sha256:4bd0317…`, `size:7938150` |
+
+Earlier green set on `ce6181a` (sign-in and phone-UI fixes): matrix `43669108321`, deep `43669108293`,
+strict `43669108324`, smoke `43669108378`, publish `43670062074`.
+
+## In-app updates — how a new build reaches an installed copy
+
+The app updates itself from its own release, YMusic-style: **overflow menu → App updates**.
+
+- **Channel:** `GET /releases/tags/latest-verified` — read by tag because the "latest" endpoint was
+  measured pointing at an archive release. The release title carries `build-<versionCode>` and the
+  body carries `sha256:` and `size:`, written by the publish workflow from the APK itself (`aapt2`),
+  not from the gradle file.
+- **Comparison:** `versionCode` only. A release without one is reported as "cannot tell", never as
+  "up to date".
+- **Download:** into `cache/updates`, checked against the published SHA-256; a mismatch deletes the
+  file.
+- **Install:** handed to Android's installer through a `FileProvider` limited to `cache/updates`. The
+  app records whether the platform accepted the intent and switches to "open the verified APK" when it
+  does not.
+- **Signing:** every build is signed with the committed key at `.github/signing/clonehub-signing.p12`
+  (fingerprint `E2:F0:84:3C…`), which the deep gate verifies on the device
+  (`signing_key … matches=true`). Without a stable key Android refuses every update; three earlier CI
+  runs were measured carrying three different keys, which is why the key is now committed and
+  documented.
+
+**Still owed:** a real update from an installed build to a newer one. Everything around it is measured
+(versionCode, signature identity, digest, FileProvider, installer intent), but performing the update
+replaces the binary under the running test — the end-to-end proof is the next gate run reading a
+higher `versionCode` from the device after installing over the previous APK. The Android 14
+intent-URL refusal is handled in code and has not been reproduced on a device yet, which is why the
+panel reports `path=UNKNOWN` rather than claiming a working silent install.
 
 ## Google sign-in inside a clone — proven on the device
 
