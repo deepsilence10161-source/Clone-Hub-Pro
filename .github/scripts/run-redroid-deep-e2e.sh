@@ -96,6 +96,16 @@ adb shell setprop log.tag.Accounts VERBOSE 2>/dev/null || true
 adb shell setprop log.tag.AccountManager VERBOSE 2>/dev/null || true
 run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 
+# The other half of "sign-in inside a clone", and the half a field report actually came from: a
+# web-based app signing in with Google through a WebView. Nothing about that path touches
+# AccountManager, so the suite above cannot see it. Its own status, so a WebView failure names
+# itself instead of hiding inside the native suite.
+WEBVIEW_CLASS="com.clonehub.advanced.ui.home.WebViewSignInCloneInstrumentedTest"
+webview_status=0
+run_tests webview-signin -e class "$WEBVIEW_CLASS" || webview_status=$?
+adb logcat -d -v threadtime | grep -E "WEBVIEW_SIGNIN|WEBVIEW_GATE" > "$OUT/webview-signin-logcat.txt" 2>/dev/null || true
+cat "$OUT/webview-signin-logcat.txt" || true
+
 # The in-app updater's gate: the installed build's own versionCode/signing key, the declared install
 # permission, the FileProvider the installer path depends on, and — when the device has a network —
 # that the release channel parses into a comparable versionCode. Run here because it is the same
@@ -157,8 +167,8 @@ adb shell run-as "$PACKAGE_ID" cat shared_prefs/clone_spaces_db.xml \
 adb shell am force-stop "$PACKAGE_ID"
 cold_status=0
 run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
-if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ]; then
-  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status"
+if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ] || [ "$webview_status" -ne 0 ]; then
+  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status webview-signin=$webview_status"
   exit 1
 fi
 
@@ -170,6 +180,8 @@ fi
 adb shell am start -W -S -n "$PACKAGE_ID/$MAIN_ACTIVITY"
 sleep 2
 adb shell pidof "$PACKAGE_ID" | grep -E '[0-9]+'
+echo "WebView sign-in gate: $(grep -c "WEBVIEW_SIGNIN_MARKER" "$OUT/webview-signin-logcat.txt" 2>/dev/null || echo 0) measured markers"
+grep -E "WEBVIEW_GATE_(PARITY|VERDICT|STEP)" "$OUT/webview-signin-logcat.txt" || true
 echo "Updater gate: $(grep -c "UPDATE_GATE" "$OUT/update-logcat.txt" 2>/dev/null || echo 0) measured lines"
 grep -E "UPDATE_GATE (installed|install_permission|provider|channel)" "$OUT/update-logcat.txt" || true
 echo "Deep native ARM64 tests passed"

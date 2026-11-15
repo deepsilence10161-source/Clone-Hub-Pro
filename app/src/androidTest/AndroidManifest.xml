@@ -19,6 +19,16 @@
         </activity>
 
         <!--
+          The WebView sign-in probe: the path a real web-based app uses for "Continue with Google".
+          Measured native vs inside a clone; see WebViewSignInProbe.java for what each marker means.
+        -->
+        <activity
+            android:name="com.clonehub.advanced.fixture.WebViewSignInProbe"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:label="WebView Sign-in Probe" />
+
+        <!--
           A test-only authenticator under the real com.google account type.
 
           The device gates run on an image with no Play services, so there is no authenticator for
