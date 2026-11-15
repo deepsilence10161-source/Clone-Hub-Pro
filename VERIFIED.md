@@ -7,11 +7,12 @@ section.
 ## The shipped APK
 
 [`CloneHub-Pro.apk`](https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk)
-— **7,905,790 bytes**, published 2026-11-15 by `Publish latest verified APK` (run `43670062074`),
-which only publishes when both native ARM64 gates are green on the current `main`. The release notes
-name the commit: `ce6181a`. The published file was downloaded again afterwards and its `classes.dex`
-contains the sign-in fix, so the artifact is the fixed build and not an earlier one
-(sha256 starts `5d77299b…`).
+— published 2026-11-15 by `Publish latest verified APK` (run `43696451670`), which only publishes
+when both native ARM64 gates are green on the current `main`. The workflow decodes the APK's own
+`versionCode` with `aapt2` and writes it, with the `sha256` and size it computed from the file, into
+the release notes; the app reads exactly those fields. The published file's signing certificate was
+verified to be the committed one (`E2:F0:84:3C…`), which is what makes an in-app update installable
+over a previous build.
 
 ## Gates green on `ec0d8a6`
 
