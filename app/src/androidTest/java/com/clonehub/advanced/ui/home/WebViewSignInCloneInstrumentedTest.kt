@@ -151,7 +151,6 @@ class WebViewSignInCloneInstrumentedTest {
 
     /** One probe run, launched exactly the way the app launches a clone. */
     private fun runProbe(native: Boolean): ProbeResult {
-        val wantedKind = if (native) "native" else "clone"
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
         // A fixture process that is still alive would answer `am start` with onNewIntent and never run
         // onCreate, which is how an earlier run produced no probe line at all (43693467484).
@@ -172,11 +171,15 @@ class WebViewSignInCloneInstrumentedTest {
         val deadline = SystemClock.elapsedRealtime() + RUN_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
             val log = device.executeShellCommand("logcat -d")
-            val parsed = parse(log, wantedKind)
-            if (parsed.run != null && log.contains("WEBVIEW_SIGNIN_DONE")) return parsed
+            val runs = parse(log)
+            val parsed = runs.firstOrNull()
+            if (parsed?.run != null && runs.size == 1 && log.contains("WEBVIEW_SIGNIN_DONE")) {
+                return parsed
+            }
+            if (runs.size > 1) return runs.last()
             SystemClock.sleep(2_000)
         }
-        return parse(device.executeShellCommand("logcat -d"), wantedKind)
+        return parse(device.executeShellCommand("logcat -d")).lastOrNull() ?: ProbeResult(null, emptyMap())
     }
 
     private data class ProbeResult(val run: Map<String, String>?, val steps: Map<String, String>)
@@ -194,32 +197,28 @@ class WebViewSignInCloneInstrumentedTest {
      * share one process name, so a run has to be chosen by the kind the probe itself reported rather
      * than by whichever answer arrived last.
      */
-    private fun parse(log: String, wantedKind: String): ProbeResult {
+    private fun parse(log: String): List<ProbeResult> {
+        val runs = ArrayList<ProbeResult>()
         var run: Map<String, String>? = null
         var steps = LinkedHashMap<String, String>()
-        var fresh = false
         for (line in log.lineSequence()) {
             val runAt = line.indexOf(RUN_PREFIX)
             val markerAt = line.indexOf(MARKER_PREFIX)
             when {
                 runAt >= 0 -> {
-                    val candidate = line.substring(runAt + RUN_PREFIX.length).toMarkerMap()
-                    if (candidate["kind"] == wantedKind) {
-                        run = candidate
-                        steps = LinkedHashMap()
-                        fresh = true
-                    } else {
-                        fresh = false
-                    }
+                    if (run != null) runs.add(ProbeResult(run, steps))
+                    run = line.substring(runAt + RUN_PREFIX.length).toMarkerMap()
+                    steps = LinkedHashMap()
                 }
-                markerAt >= 0 && fresh -> {
+                markerAt >= 0 && run != null -> {
                     val rest = line.substring(markerAt + MARKER_PREFIX.length)
                     val step = rest.substringBefore(' ')
                     steps[step] = rest.removePrefix(step).trim()
                 }
             }
         }
-        return ProbeResult(run, steps)
+        if (run != null) runs.add(ProbeResult(run, steps))
+        return runs
     }
 
     private fun String.toMarkerMap(): Map<String, String> =

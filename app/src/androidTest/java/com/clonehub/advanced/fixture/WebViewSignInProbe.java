@@ -116,6 +116,16 @@ public final class WebViewSignInProbe {
         }
     }
 
+    /** The class loader's own name, recorded because it is what identifies a container environment. */
+    static String loaderName() {
+        try {
+            ClassLoader loader = WebViewSignInProbe.class.getClassLoader();
+            return loader == null ? "null" : loader.getClass().getName();
+        } catch (Throwable error) {
+            return "error=" + error.getClass().getSimpleName();
+        }
+    }
+
     /** Whether any trigger is set, for a host that was re-launched rather than created. */
     static boolean hasTrigger(Activity host) {
         return !askedBy(host).isEmpty();
@@ -163,7 +173,10 @@ public final class WebViewSignInProbe {
         kind = isClone() ? "clone" : "native";
         startedAt = android.os.SystemClock.elapsedRealtime();
         Log.i(TAG, RUN + " process=" + process + " pid=" + android.os.Process.myPid()
-            + " kind=" + kind + " trigger=" + askedBy(host));
+            + " kind=" + kind
+            + " loader=" + loaderName()
+            + " application=" + host.getApplication().getClass().getName()
+            + " trigger=" + askedBy(host));
 
         try {
             webView = new WebView(host);

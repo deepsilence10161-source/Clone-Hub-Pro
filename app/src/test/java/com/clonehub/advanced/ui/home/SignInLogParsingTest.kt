@@ -19,32 +19,28 @@ class SignInLogParsingTest {
     private val markerPrefix = "WEBVIEW_SIGNIN_MARKER "
 
     /** The production rule, kept in one place so a change to it fails this test. */
-    private fun parse(log: String, wantedKind: String): Pair<Map<String, String>?, Map<String, String>> {
+    private fun parse(log: String): List<Pair<Map<String, String>, Map<String, String>>> {
+        val runs = ArrayList<Pair<Map<String, String>, Map<String, String>>>()
         var run: Map<String, String>? = null
         var steps = LinkedHashMap<String, String>()
-        var fresh = false
         for (line in log.lineSequence()) {
             val runAt = line.indexOf(runPrefix)
             val markerAt = line.indexOf(markerPrefix)
             when {
                 runAt >= 0 -> {
-                    val candidate = line.substring(runAt + runPrefix.length).toMarkerMap()
-                    if (candidate["kind"] == wantedKind) {
-                        run = candidate
-                        steps = LinkedHashMap()
-                        fresh = true
-                    } else {
-                        fresh = false
-                    }
+                    if (run != null) runs.add(run to steps)
+                    run = line.substring(runAt + runPrefix.length).toMarkerMap()
+                    steps = LinkedHashMap()
                 }
-                markerAt >= 0 && fresh -> {
+                markerAt >= 0 && run != null -> {
                     val rest = line.substring(markerAt + markerPrefix.length)
                     val step = rest.substringBefore(' ')
                     steps[step] = rest.removePrefix(step).trim()
                 }
             }
         }
-        return run to steps
+        if (run != null) runs.add(run to steps)
+        return runs
     }
 
     private fun String.toMarkerMap(): Map<String, String> =
@@ -62,7 +58,7 @@ class SignInLogParsingTest {
 
     @Test
     fun `a marker is found even though the tag precedes it on the line`() {
-        val (run, steps) = parse(realLog, "native")
+        val (run, steps) = parse(realLog).single()
         assertEquals("com.clonehub.pro.test", run?.get("process"))
         assertEquals("native", run?.get("kind"))
         assertEquals(3, steps.size)
@@ -74,33 +70,33 @@ class SignInLogParsingTest {
     fun `markers before the run line are ignored, so a previous process cannot answer`() {
         val stale =
             "11-15 07:40:00.000  1111  1111 I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_MARKER verdict webview=true cookie_roundtrip=false"
-        val (run, steps) = parse(stale + "\n" + realLog, "native")
+        val (run, steps) = parse(stale + "\n" + realLog).single()
         assertEquals("native", run?.get("kind"))
         assertTrue(steps.getValue("verdict").contains("cookie_roundtrip=true"))
         assertEquals(3, steps.size)
     }
 
     @Test
-    fun `a clone run answers the clone question, never the native one`() {
-        // The fixture and the clone share one process name in the wild; only the probe's own `kind`
-        // tells them apart, and picking the wrong one would let a working native run answer for a
-        // broken clone (run 43691866202 reported the clone as silent for exactly that reason).
-        val both = realLog + "\n" +
-            "11-15 07:58:00.000  4331  4357 I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_RUN process=com.clonehub.pro:agent0 pid=4331 kind=clone" + "\n" +
-            "11-15 07:58:00.500  4331  4357 I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_MARKER page_finished url=https://example.com/ title=Example Domain"
-        val (cloneRun, cloneSteps) = parse(both, "clone")
-        assertEquals("clone", cloneRun?.get("kind"))
-        assertEquals(1, cloneSteps.size)
-        assertTrue(cloneSteps.containsKey("page_finished"))
-        val (nativeRun, nativeSteps) = parse(both, "native")
-        assertEquals("native", nativeRun?.get("kind"))
-        assertEquals(3, nativeSteps.size)
+    fun `several runs are returned in order, so the gate can pick the one it launched`() {
+        // Measured twice: inside a clone the probe reported the process as com.clonehub.pro.test
+        // (run 43694349589), and a class-loader guess then still reported 'native'
+        // (run 43695212616). Environment-based identification is therefore not dependable, so the
+        // reader returns every run in order and the gate - which knows which side it started after
+        // clearing the buffer - picks by position.
+        val twoRuns = realLog + "\n" +
+            "11-15 08:40:50.000  4582  4582 I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_RUN " +
+            "process=com.clonehub.pro.test pid=4582 kind=native loader=dalvik.system.PathClassLoader" + "\n" +
+            "11-15 08:40:50.500  4582  4582 I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_MARKER " +
+            "page_finished url=https://example.com/ title=Example Domain"
+        val runs = parse(twoRuns)
+        assertEquals(2, runs.size)
+        assertEquals("3523", runs[0].first["pid"])
+        assertEquals("4582", runs[1].first["pid"])
+        assertEquals(1, runs[1].second.size)
     }
 
     @Test
     fun `a probe that never ran yields no run line, which the gate must treat as not tested`() {
-        val (run, steps) = parse("nothing here\n", "clone")
-        assertEquals(null, run)
-        assertTrue(steps.isEmpty())
+        assertTrue(parse("nothing here\n").isEmpty())
     }
 }
