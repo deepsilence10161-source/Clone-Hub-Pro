@@ -32,6 +32,8 @@
     <dimen name="fab_clearance">88dp</dimen>
     <!-- Keeps the empty-space sentence above the floating button that overlaps the card. -->
     <dimen name="empty_hint_bottom_space">64dp</dimen>
+    <!-- One row of tiles must always survive, whatever the hint and the floating button take. -->
+    <dimen name="grid_min_height">96dp</dimen>
     <dimen name="list_row_min_height">64dp</dimen>
     <dimen name="picker_horizontal_padding">12dp</dimen>
 </resources>

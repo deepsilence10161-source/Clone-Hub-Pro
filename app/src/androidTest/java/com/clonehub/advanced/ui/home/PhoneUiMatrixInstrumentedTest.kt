@@ -325,6 +325,27 @@ class PhoneUiMatrixInstrumentedTest {
                 }
             }
 
+            // 3a. The grid must be tall enough to draw a row of tiles.
+            //     Measured on run 43593168736 (720x360): the grid was squeezed to zero height and no
+            //     Add tile existed at all, which the "is the tile on screen" assertion below could
+            //     only report as a missing node — a symptom, not the cause. This is the cause.
+            val gridBounds = runCatching { boundsOf(resourceId = "recyclerAppsGrid") }.getOrNull()
+            if (gridBounds != null) {
+                val minRowPx = (56f * densityDpi / 160f).toInt()
+                Log.i(
+                    TAG,
+                    "PHONE_UI config=$label gridBounds=$gridBounds minRowPx=$minRowPx " +
+                        "density=$densityDpi"
+                )
+                assertTrue(
+                    "The app grid is only ${gridBounds.height()}px tall on $label and cannot draw a " +
+                        "tile row (needs ${minRowPx}px): grid=$gridBounds",
+                    gridBounds.height() >= minRowPx
+                )
+            } else {
+                Log.w(TAG, "PHONE_UI config=$label gridBounds NOT_FOUND")
+            }
+
             // 3. The grid: a clone tile is square-ish, fully visible and tappable.
             val tileBounds = boundsOf(text = context.getString(R.string.action_add))
             logBounds(label, "gridAddTile", tileBounds)

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Measured on the phone UI matrix (run 43592167654, 720x360 landscape screenshot): the space
-      card is only ~590dp tall in landscape and the grid tile did not fit, so the "Add App" label
-      was cut in half. The tiles give back 16dp of icon box, which is what the label needed.
+      Measured on the phone UI matrix (run 43593168736, 720x360 screenshot): after the empty-space
+      sentence moved under the grid, the sentence's 64dp clearance plus its text took the whole card
+      and the grid was squeezed to zero height, so no Add tile was drawn at all — the gate failed with
+      "Node not in the hierarchy: text=Add App".
+      In a short window the sentence keeps one line and a small gap, and the grid keeps one tile row.
     -->
+    <dimen name="empty_hint_bottom_space">8dp</dimen>
+    <dimen name="grid_min_height">56dp</dimen>
     <dimen name="grid_icon_box">40dp</dimen>
     <dimen name="grid_icon_size">36dp</dimen>
 </resources>
