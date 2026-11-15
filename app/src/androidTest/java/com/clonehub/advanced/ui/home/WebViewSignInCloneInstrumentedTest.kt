@@ -107,7 +107,6 @@ class WebViewSignInCloneInstrumentedTest {
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
         SystemClock.sleep(1_000)
         device.executeShellCommand("logcat -c")
-        val startedAt = System.currentTimeMillis()
 
         if (native) {
             device.executeShellCommand("am start -W -n $fixtureActivity")
@@ -122,11 +121,11 @@ class WebViewSignInCloneInstrumentedTest {
         val deadline = SystemClock.elapsedRealtime() + RUN_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
             val log = device.executeShellCommand("logcat -d -s WEBVIEW_SIGNIN:*")
-            val parsed = parse(log, startedAt)
+            val parsed = parse(log)
             if (parsed.run != null && log.contains("WEBVIEW_SIGNIN_DONE")) return parsed
             SystemClock.sleep(2_000)
         }
-        return parse(device.executeShellCommand("logcat -d -s WEBVIEW_SIGNIN:*"), startedAt)
+        return parse(device.executeShellCommand("logcat -d -s WEBVIEW_SIGNIN:*"))
     }
 
     private data class ProbeResult(val run: Map<String, String>?, val steps: Map<String, String>)
@@ -136,7 +135,7 @@ class WebViewSignInCloneInstrumentedTest {
      * process name, and every marker after it belongs to that run, so a stale process from an earlier
      * test cannot be mistaken for this one's answer.
      */
-    private fun parse(log: String, since: Long): ProbeResult {
+    private fun parse(log: String): ProbeResult {
         var run: Map<String, String>? = null
         val steps = LinkedHashMap<String, String>()
         var fresh = false

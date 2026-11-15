@@ -93,8 +93,7 @@ public final class WebViewSignInProbe extends Activity {
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.MATCH_PARENT)
             );
-            marker("webview_created", "package=" + webView.getWebViewProviderPackage()
-                + " version=" + WebView.getCurrentWebViewPackageName());
+            marker("webview_created", "provider=" + describeWebViewProvider());
             configure(webView.getSettings());
             webView.setWebViewClient(client);
             webView.setWebChromeClient(chrome);
@@ -281,9 +280,27 @@ public final class WebViewSignInProbe extends Activity {
         Log.i(TAG, MARKER + " " + step + " " + detail);
     }
 
-    private static String safe(String value) {
+    private static String safe(CharSequence value) {
         if (value == null) return "null";
-        return value.replace('\n', ' ').replace('\r', ' ');
+        return value.toString().replace('\n', ' ').replace('\r', ' ');
+    }
+
+    /**
+     * Which package implements WebView here.
+     *
+     * `WebView.getCurrentWebViewPackage()` is API 26+, so it is asked only on those platforms and the
+     * answer is recorded either way: a container that ships no WebView provider, or one whose provider
+     * is unreachable from the clone, is exactly what a web sign-in would trip over.
+     */
+    private static String describeWebViewProvider() {
+        if (android.os.Build.VERSION.SDK_INT < 26) return "unavailable_on_sdk_" + android.os.Build.VERSION.SDK_INT;
+        try {
+            android.content.pm.PackageInfo info = WebView.getCurrentWebViewPackage();
+            if (info == null) return "none";
+            return info.packageName + ":" + info.versionName;
+        } catch (Throwable error) {
+            return "error=" + error.getClass().getSimpleName() + ": " + error.getMessage();
+        }
     }
 
     @Override
