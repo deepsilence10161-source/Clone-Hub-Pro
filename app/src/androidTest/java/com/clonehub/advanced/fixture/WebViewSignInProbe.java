@@ -96,6 +96,26 @@ public final class WebViewSignInProbe {
         return trigger;
     }
 
+    /**
+     * Whether this code is running inside the virtual container.
+     *
+     * Measured (run 43694349589): a clone reports its own process as `com.clonehub.pro.test`, the same
+     * name the un-cloned fixture uses, so the name cannot answer this. What does answer it is where the
+     * classes come from: in a clone this fixture's own code was loaded by the container's class loader,
+     * from the container's runtime, not by the app's own PathClassLoader.
+     */
+    static boolean isClone() {
+        try {
+            ClassLoader loader = WebViewSignInProbe.class.getClassLoader();
+            if (loader == null) return false;
+            String name = loader.getClass().getName();
+            if (name.equals("dalvik.system.PathClassLoader")) return false;
+            return true;
+        } catch (Throwable error) {
+            return false;
+        }
+    }
+
     /** Whether any trigger is set, for a host that was re-launched rather than created. */
     static boolean hasTrigger(Activity host) {
         return !askedBy(host).isEmpty();
@@ -118,9 +138,7 @@ public final class WebViewSignInProbe {
         } catch (Throwable ignored) {
             // a container that hides the settings provider simply skips this channel
         }
-        String process = android.os.Build.VERSION.SDK_INT >= 28
-            ? android.app.Application.getProcessName() : "";
-        if (process != null && process.contains(":agent")) return "clone_process";
+        if (isClone()) return "clone_process";
         try {
             Class<?> properties = Class.forName("android.os.SystemProperties");
             Object value = properties.getMethod("get", String.class).invoke(null, "debug.clonehub.webprobe");
@@ -142,7 +160,7 @@ public final class WebViewSignInProbe {
     private void start() {
         String process = android.os.Build.VERSION.SDK_INT >= 28
                 ? android.app.Application.getProcessName() : "";
-        kind = process != null && process.contains(":agent") ? "clone" : "native";
+        kind = isClone() ? "clone" : "native";
         startedAt = android.os.SystemClock.elapsedRealtime();
         Log.i(TAG, RUN + " process=" + process + " pid=" + android.os.Process.myPid()
             + " kind=" + kind + " trigger=" + askedBy(host));
