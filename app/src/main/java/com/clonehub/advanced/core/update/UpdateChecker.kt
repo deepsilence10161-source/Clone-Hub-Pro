@@ -102,8 +102,19 @@ object UpdateChecker {
 
     private const val TAG = "UpdateChecker"
 
-    /** The channel: the release this repository publishes after its gates pass. */
+    /**
+     * The channel: the release this repository publishes after its gates pass.
+     *
+     * Read by tag, not by `/releases/latest`. That endpoint answers with whatever release GitHub
+     * considers newest, and it was measured returning the wrong one: after the publish workflow
+     * started creating a versioned archive release per build, the archive became "latest" and the
+     * channel endpoint pointed at it. A tag is deterministic — it names the release the app means.
+     */
     const val RELEASE_API =
+        "https://api.github.com/repos/deepsilence10161-source/Clone-Hub-Pro/releases/tags/latest-verified"
+
+    /** Used only if the stable tag is missing (a fresh fork), and logged when it happens. */
+    const val RELEASE_API_FALLBACK =
         "https://api.github.com/repos/deepsilence10161-source/Clone-Hub-Pro/releases/latest"
 
     /** Optional override for forks/self-hosting; see [parseManifest] for the shape. */
@@ -130,11 +141,15 @@ object UpdateChecker {
             )
         }
         Log.i(TAG, "UPDATE_SOURCE github=$RELEASE_API installed=$installedName ($installedCode)")
-        parseGitHubRelease(
-            body = httpGet(RELEASE_API),
-            installedName = installedName,
-            installedCode = installedCode
-        )
+        val body = try {
+            httpGet(RELEASE_API)
+        } catch (error: Throwable) {
+            // A missing tag is not a network failure, and it must be visible in the log rather than
+            // silently answered from another release.
+            Log.w(TAG, "UPDATE_SOURCE stable tag unreadable (${error.message}); trying /releases/latest")
+            httpGet(RELEASE_API_FALLBACK)
+        }
+        parseGitHubRelease(body = body, installedName = installedName, installedCode = installedCode)
     }
 
     private fun httpGet(url: String): String {

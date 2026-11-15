@@ -138,9 +138,24 @@ jobs:
             "The in-app updater (overflow menu > App updates) reads this release: the build number in" \
             "the title is compared with the installed versionCode, and the sha256 below is what the" \
             "downloaded file is checked against before Android's installer sees it.")"
-          # Keep the old tag for existing links, and add a versioned one so each build stays
-          # addressable after the next release overwrites the latest APK.
+          # A permanent, addressable copy per build: "latest-verified" is overwritten every release,
+          # which is right for the updater's channel but useless as a record. A versioned tag keeps
+          # every build's exact bytes, digest and gate run traceable.
           versioned_tag="verified-build-$version_code"
+          if gh release view "$versioned_tag" --repo "$REPO" > /dev/null 2>&1; then
+            gh release upload "$versioned_tag" CloneHub-Pro.apk --repo "$REPO" --clobber
+            gh release edit "$versioned_tag" --repo "$REPO" --title "Clone Hub Pro build-$version_code" --notes "$notes"
+          else
+            gh release create "$versioned_tag" CloneHub-Pro.apk --repo "$REPO" \
+              --target "$HEAD_SHA" --title "Clone Hub Pro build-$version_code" --notes "$notes"
+          fi
+          echo "Permanent build: https://github.com/$REPO/releases/tag/$versioned_tag"
+
+          # Published LAST and marked --latest on purpose. Measured after this workflow first ran
+          # (release created 2026-11-15): creating the versioned release afterwards made *it* the
+          # repository's "latest", so `GET /releases/latest` — the endpoint the app reads — answered
+          # with the archive copy instead of the channel. Doing it in this order keeps one answer:
+          # the stable tag is always what /releases/latest returns.
           if gh release view latest-verified --repo "$REPO" > /dev/null 2>&1; then
             gh release upload latest-verified CloneHub-Pro.apk --repo "$REPO" --clobber
             gh release edit latest-verified --repo "$REPO" --latest --title "$title" --notes "$notes"
@@ -149,16 +164,6 @@ jobs:
               --target "$HEAD_SHA" --latest --title "$title" --notes "$notes"
           fi
           echo "Direct download: https://github.com/$REPO/releases/latest/download/CloneHub-Pro.apk"
-
-          # A permanent, addressable copy per build: "latest-verified" is overwritten every release,
-          # which is right for the updater's channel but useless as a record. A versioned tag keeps
-          # every build's exact bytes, digest and gate run traceable.
-          if gh release view "$versioned_tag" --repo "$REPO" > /dev/null 2>&1; then
-            gh release upload "$versioned_tag" CloneHub-Pro.apk --repo "$REPO" --clobber
-          else
-            gh release create "$versioned_tag" CloneHub-Pro.apk --repo "$REPO" \
-              --target "$HEAD_SHA" --title "Clone Hub Pro build-$version_code" --notes "$notes"
-          fi
 
       - name: Say what happened
         if: always()

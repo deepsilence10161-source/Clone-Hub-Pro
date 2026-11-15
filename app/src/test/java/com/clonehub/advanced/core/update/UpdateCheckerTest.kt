@@ -117,5 +117,33 @@ class UpdateCheckerTest {
         assertNotNull(info.blockedReason)
     }
 
+    @Test
+    fun `the channel is read by tag, not by whatever github calls latest`() {
+        // Measured 2026-11-15: creating a versioned release per build made the archive release the
+        // repository's "latest", so /releases/latest answered with the wrong one. The stable tag is
+        // the only deterministic answer, and the fallback exists for a fork without it.
+        assertTrue(UpdateChecker.RELEASE_API.endsWith("/releases/tags/latest-verified"))
+        assertTrue(UpdateChecker.RELEASE_API_FALLBACK.endsWith("/releases/latest"))
+        assertFalse(UpdateChecker.RELEASE_API == UpdateChecker.RELEASE_API_FALLBACK)
+    }
+
+    @Test
+    fun `the digest in a release body is the one the download is checked against`() {
+        // The publish workflow writes `sha256:<hex>` and `size:<bytes>` into the release body; the
+        // app reads the digest from the asset metadata, and this asserts the two agree in the shape
+        // the workflow produces.
+        val body = "Clone Hub Pro 2.0.2, build-2002.\n\nsha256:4bd0317342a29a494bf5b2ee930a3232871ec51b79c6bcb0644855f346abd942\nsize:7938150"
+        val digest = Regex("""sha256:([0-9a-f]{64})""").find(body)?.groupValues?.get(1)
+        val size = Regex("""size:(\d+)""").find(body)?.groupValues?.get(1)?.toLong()
+        assertEquals("4bd0317342a29a494bf5b2ee930a3232871ec51b79c6bcb0644855f346abd942", digest)
+        assertEquals(7938150L, size)
+        val info = UpdateChecker.parseGitHubRelease(
+            realRelease.replace("abc123", digest!!).replace("7905790", size.toString()),
+            installedName = "2.0.1", installedCode = 2001
+        )
+        assertEquals(digest, info.sha256)
+        assertEquals(size, info.sizeBytes)
+    }
+
     private fun assertNotNull(value: Any?) = assertTrue("expected a value", value != null)
 }
