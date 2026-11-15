@@ -43,6 +43,14 @@ public final class CloneFixtureActivity extends Activity {
         // virtual container after cloning. Reports are keyed by process kind so the two runs
         // cannot overwrite each other.
         AccountProbe.run(this);
+        // The WebView sign-in probe is a second activity in this same APK. Starting it from the
+        // launcher activity is what makes it run inside a clone as well: the container launches the
+        // app's launcher activity, not whichever activity a test names.
+        try {
+            startActivity(new android.content.Intent(this, WebViewSignInProbe.class));
+        } catch (Throwable error) {
+            android.util.Log.w("WEBVIEW_SIGNIN", "WEBVIEW_SIGNIN_START_FAILED " + error);
+        }
         android.content.SharedPreferences state = getSharedPreferences("fixture_state", MODE_PRIVATE);
         int launchCount = state.getInt("launch_count", 0) + 1;
         // Synchronous commit makes a force-stop/relaunch isolation check deterministic.

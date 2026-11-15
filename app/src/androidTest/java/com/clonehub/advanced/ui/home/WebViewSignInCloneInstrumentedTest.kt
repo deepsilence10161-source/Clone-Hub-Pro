@@ -28,7 +28,9 @@ class WebViewSignInCloneInstrumentedTest {
     private val context = instrumentation.targetContext
     private val device = UiDevice.getInstance(instrumentation)
     private val fixturePackage = "com.clonehub.pro.test"
-    private val fixtureActivity = "$fixturePackage/com.clonehub.advanced.fixture.WebViewSignInProbe"
+    // Deliberately the launcher activity, on both sides: the container launches the launcher
+    // activity, so naming any other activity here would measure a route only the test can use.
+    private val fixtureActivity = "$fixturePackage/com.clonehub.advanced.fixture.CloneFixtureActivity"
     private val spaceId = 92
 
     private companion object {
@@ -119,6 +121,7 @@ class WebViewSignInCloneInstrumentedTest {
 
     /** One probe run, launched exactly the way the app launches a clone. */
     private fun runProbe(native: Boolean): ProbeResult {
+        val wantedKind = if (native) "native" else "clone"
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
         SystemClock.sleep(1_000)
         device.executeShellCommand("logcat -c")
@@ -136,11 +139,11 @@ class WebViewSignInCloneInstrumentedTest {
         val deadline = SystemClock.elapsedRealtime() + RUN_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
             val log = device.executeShellCommand("logcat -d")
-            val parsed = parse(log)
+            val parsed = parse(log, wantedKind)
             if (parsed.run != null && log.contains("WEBVIEW_SIGNIN_DONE")) return parsed
             SystemClock.sleep(2_000)
         }
-        return parse(device.executeShellCommand("logcat -d"))
+        return parse(device.executeShellCommand("logcat -d"), wantedKind)
     }
 
     private data class ProbeResult(val run: Map<String, String>?, val steps: Map<String, String>)
@@ -150,21 +153,31 @@ class WebViewSignInCloneInstrumentedTest {
      * process name, and every marker after it belongs to that run, so a stale process from an earlier
      * test cannot be mistaken for this one's answer.
      */
-    private fun parse(log: String): ProbeResult {
+    /**
+     * Reads the probe's own log lines, keeping only the run whose `kind` matches the side being asked.
+     *
+     * Two properties matter and both were learned from live runs: the marker is not at the start of a
+     * logcat line (runs 43690036509/43690755006 lost every line to that), and the fixture and the clone
+     * share one process name, so a run has to be chosen by the kind the probe itself reported rather
+     * than by whichever answer arrived last.
+     */
+    private fun parse(log: String, wantedKind: String): ProbeResult {
         var run: Map<String, String>? = null
-        val steps = LinkedHashMap<String, String>()
+        var steps = LinkedHashMap<String, String>()
         var fresh = false
         for (line in log.lineSequence()) {
-            // A logcat line reads "<time> <pid> <tid> I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_MARKER …", so the
-            // marker is not at the start of the line — the tag comes first. Measured in runs
-            // 43690036509 and 43690755006, where a startsWith() test saw nothing and reported an empty
-            // map while the probe had answered every step. Find the marker, don't assume its position.
             val runAt = line.indexOf(RUN_PREFIX)
             val markerAt = line.indexOf(MARKER_PREFIX)
             when {
                 runAt >= 0 -> {
-                    run = line.substring(runAt + RUN_PREFIX.length).toMarkerMap()
-                    fresh = true
+                    val candidate = line.substring(runAt + RUN_PREFIX.length).toMarkerMap()
+                    if (candidate["kind"] == wantedKind) {
+                        run = candidate
+                        steps = LinkedHashMap()
+                        fresh = true
+                    } else {
+                        fresh = false
+                    }
                 }
                 markerAt >= 0 && fresh -> {
                     val rest = line.substring(markerAt + MARKER_PREFIX.length)
