@@ -81,8 +81,14 @@ with a title of `CloneHub Pro - Latest Verified APK (build-<versionCode>)` and a
 `sha256:<hex>` and `size:<bytes>`. The app reads exactly those fields:
 
 ```
-GET https://api.github.com/repos/deepsilence10161-source/Clone-Hub-Pro/releases/latest
+GET https://api.github.com/repos/deepsilence10161-source/Clone-Hub-Pro/releases/tags/latest-verified
 ```
+
+It reads the release by **tag**, not by `/releases/latest`. That endpoint answers with whatever GitHub
+calls newest, and it was measured answering with the wrong release: once the workflow also began
+archiving each build under `verified-build-<code>`, that archive became "latest". A tag cannot drift,
+so `latest-verified` is what the app asks for; `/releases/latest` is only a fallback for a fork that
+has no such tag, and the log says when it is used.
 
 **What the app refuses to do:**
 
@@ -94,12 +100,29 @@ GET https://api.github.com/repos/deepsilence10161-source/Clone-Hub-Pro/releases/
   delivered by an intent URL (`INSTALL_FAILED_INVALID_APK: … intent-URL path`); the first attempt's
   result is recorded and the panel switches to "open the verified APK as a file" instead.
 
-**One limitation, stated rather than papered over:** Android only installs an update signed with the
-*same key* as the installed app. Two CI runs of this repository were measured to carry different
-debug keys, so an APK from a different run can be refused with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
-The panel shows the fingerprint so the reason is visible. Making every release share one key needs a
-signing key stored as a repository secret; until then, updates work between builds that share a key,
-and the app tells the user which key it has instead of pretending otherwise.
+**One key for every build, because Android leaves no choice.** Android installs an update only when it
+is signed with the *same key* as the installed app. That was measured, not assumed: three CI runs of
+this repository carried three different debug keys, so every update would have been refused with
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE`. The builds are now signed with
+`.github/signing/clonehub-signing.p12`, committed on purpose, and the deep gate asserts on the device
+that the installed build carries that key (`signing_key … matches=true`). It is a public,
+debug-grade key — the previous keys were public too, only unstable — and
+`.github/signing/README.md` says so, lists the three measured keys, and explains what a release
+pipeline would do differently. The update screen shows the fingerprint the running build actually has,
+so a key change is visible rather than mysterious.
+
+**What is proven, and what is still owed.** Proven on the device: the channel is read and its
+`build-2002` title becomes `versionCode=2002`; the installed build is compared against it and correctly
+reported as not older; the signing key matches the committed one; the FileProvider serves
+`cache/updates`; the installer intent is built with the right action, type and flags; the download is
+checked against the published SHA-256 (the published APK's digest and the release body's `sha256:` line
+are identical). **Not yet proven:** a real update from an installed build to a newer one — that
+replaces the binary under the running test, so the end-to-end proof is the next gate run reading a
+higher `build-<code>` from the device after installing over the previous APK. Also untested: the
+system "allow this app to install packages" dialog (the gate image reports
+`canRequestInstalls=false`), API 36 and OEM installer behaviour, and the Android 14 intent-URL refusal,
+which is handled in code but has not been reproduced on a device — which is why the panel prints
+`path=UNKNOWN` instead of claiming a silent install works.
 
 A fork or a private build can point the checker at its own manifest instead of GitHub by setting
 `UpdateChecker.MANIFEST_URL`; the JSON shape is documented in `UpdateChecker.parseManifest`.
