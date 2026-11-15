@@ -33,6 +33,8 @@ class WebViewSignInCloneInstrumentedTest {
 
     private companion object {
         const val TAG = "WEBVIEW_SIGNIN_GATE"
+        const val RUN_PREFIX = "WEBVIEW_SIGNIN_RUN "
+        const val MARKER_PREFIX = "WEBVIEW_SIGNIN_MARKER "
         const val RUN_TIMEOUT_MS = 120_000L
     }
 
@@ -153,18 +155,19 @@ class WebViewSignInCloneInstrumentedTest {
         val steps = LinkedHashMap<String, String>()
         var fresh = false
         for (line in log.lineSequence()) {
-            // logcat -d without -v stamps the format "MM-DD HH:MM:SS.mmm ..."; a line older than the
-            // cleared buffer is impossible, so the buffer clear is what bounds the window.
-            val idx = line.indexOf("WEBVIEW_SIGNIN")
-            if (idx < 0) continue
-            val body = line.substring(idx)
+            // A logcat line reads "<time> <pid> <tid> I WEBVIEW_SIGNIN: WEBVIEW_SIGNIN_MARKER …", so the
+            // marker is not at the start of the line — the tag comes first. Measured in runs
+            // 43690036509 and 43690755006, where a startsWith() test saw nothing and reported an empty
+            // map while the probe had answered every step. Find the marker, don't assume its position.
+            val runAt = line.indexOf(RUN_PREFIX)
+            val markerAt = line.indexOf(MARKER_PREFIX)
             when {
-                body.startsWith("WEBVIEW_SIGNIN_RUN ") -> {
-                    run = body.removePrefix("WEBVIEW_SIGNIN_RUN ").toMarkerMap()
+                runAt >= 0 -> {
+                    run = line.substring(runAt + RUN_PREFIX.length).toMarkerMap()
                     fresh = true
                 }
-                body.startsWith("WEBVIEW_SIGNIN_MARKER ") && fresh -> {
-                    val rest = body.removePrefix("WEBVIEW_SIGNIN_MARKER ")
+                markerAt >= 0 && fresh -> {
+                    val rest = line.substring(markerAt + MARKER_PREFIX.length)
                     val step = rest.substringBefore(' ')
                     steps[step] = rest.removePrefix(step).trim()
                 }
