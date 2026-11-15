@@ -719,23 +719,76 @@ answer_process=com.clonehub.pro:agent0
    `GOOGLE_SIGNIN_BRIDGE_TOKEN result=TOKEN length=64`) — but nothing inside a clone calls it,
    because the runtime never asks the host.
 
+### Correction: what later measurement showed (supersedes the paragraph above)
+
+The claim above — "the runtime answers account queries itself, so the clone can never see an
+account" — was **wrong**, and the evidence that disproves it is in this repository's own gate
+archives. It is kept here as the record of a hypothesis that was tested and failed, because the
+thing it got wrong is instructive: it was inferred from logcat, not from what the clone itself
+wrote down.
+
+Four runs measured it properly (deep gates `43578805921`, `43582144297`, `43586239139`,
+`43590481245`, commits `27d7ec0`…`52adee9`):
+
+1. **The clone does list the device's account.** The probe writes its answer to a file inside the
+   clone as well as to logcat; read from that file, `ev-t5` says
+   `pid=3634 google_accounts=1 names=clonehub.probe@example.com`, and the platform answers it:
+   `AccountManagerService: getAccounts: accountType com.google, caller's uid 10087, pid 2809`.
+   The earlier `accounts=0` readings were a **bookkeeping bug in the probe**, not a container
+   behaviour: two probes publish identical key names, and the reader took the last line of each key
+   instead of the last complete answer. Every answer is now stamped with `answer=<pid>-<elapsed>`.
+2. **A first answer can be empty, and only a first answer.** Sampled at 100 ms resolution inside the
+   clone's own process (`account-samples.txt`): pid 3177 answered `0` at +787 ms and `1` at +887 ms,
+   while twelve other launches answered `1` at their first sample (+682…+716 ms). Six consecutive
+   launches in one run later answered `1` six times (`GOOGLE_SIGNIN_REPEAT_SUMMARY launches=6
+   answered=6 with_account=6`). It is a start-up window, not a missing account.
+3. **The container claims the query as the host package.** `caller_identity=uid=10087
+   packages=com.clonehub.pro.test` and `by_type_for_package` with `op_package=com.clonehub.pro.test`,
+   while the agent's real uid is 10088 (`u0a88`). The platform's answer is therefore the *host*
+   package's answer, which is why the host holds `GET_ACCOUNTS` and why `AccountBridge` answers the
+   same question from the host process.
+4. **The host ContentProvider bridge is not reachable from inside the clone** —
+   `bridge_error=IllegalArgumentException: Unknown authority com.clonehub.pro.accounts`, in every
+   probe. `AccountBridge`/`HostAccountProvider` remain correct and are exercised by test `e`, but
+   they are not the path the clone uses.
+
+### What changed because of that measurement
+
+- `AccountBridge.accountNames` no longer reads once. An empty answer is re-asked for up to
+  `SETTLE_WINDOW_MS = 2 s` (2× the only late answer measured) and the wait is logged; a non-empty
+  answer costs nothing. The token path uses the same settled read, so a sign-in pressed during a
+  cold start is not told `NO_ACCOUNT` on a device that has the account.
+- The sign-in probe publishes `account_probe_settled.txt` from the same process
+  (`first_google_accounts`, `settled_after_ms`) and the test compares that, keeping the raw first
+  answer as evidence.
+- A retry was added and then **fixed twice** after the device showed it was wrong: it prefixed every
+  key in place (making `ok=retry:true`, run `43582950032`), and with logcat no longer wiped it read
+  the *previous* process's answer (run `43586239139`, `second_attempt_accounts=0 pid=3065` while the
+  process it had started was 3147). It now ignores answers published before its own launch, by
+  comparing logcat's own threadtime stamp.
+- The comment in `AccountBridge.kt` that asserted the container answers account calls itself was
+  replaced with the measurement above. A comment that misleads the next reader is a defect.
+
 ### What this revision therefore claims
 
-- **PROVEN on device:** the host process reads the device's Google account list and mints a token
-  through the same path the platform gives the app, and the bridge that exposes it answers correctly
-  (`e_hostAccountBridgeAnswersLikeThePlatform` PASS).
-- **KNOWN LIMITATION, reproduced and left visible:** inside a clone, account queries return an empty
-  list on this runtime. Tests `a`, `b` and `c` of `GoogleSignInCloneInstrumentedTest` are reported as
-  **skipped with `GOOGLE_SIGNIN_KNOWN_LIMITATION`** in logcat, never as passed — the moment the
-  runtime answers account queries, they assert again and must pass.
-- **NOT FIXED:** "Sign in with Google" inside a cloned app. It needs either a virtual runtime that
-  forwards account/token calls to the host (not present in the bundled binary) or a runtime update.
-- **NOT TESTED:** a real Google OAuth token/consent screen and Play Services on the device; API 36,
-  OEM skins, physical hardware, notifications/camera/mic/location/deep links, performance, all as
-  before.
+- **PROVEN on device (deep gate `43669108293`, commit `ce6181a`, API 34 ARM64):** sign-in data path
+  inside a clone. `google-signin` suite `OK (6 tests)`: clone `google_accounts=1
+  names=clonehub.probe@example.com`, `result=TOKEN token_length=64` — the same account and the same
+  token length the un-cloned app gets — and six launches in one run all answered with the account.
+- **PROVEN on device:** the host-side answer (`e_hostAccountBridgeAnswersLikeThePlatform`) and the
+  "no account configured" behaviour (`d_accountChooserAnsweredInsideTheClone`).
+- **NOT TESTED:** a real Google OAuth consent screen and token against Google's servers, Play
+  Services / GMS on the device, a physical phone, API 36, OEM skins, notifications, camera, mic,
+  location, deep links, performance. The account in these gates is a seeded `com.google`-typed
+  account answered by a test authenticator the instrumentation APK registers: the *code path* is
+  real, the credential is fake and labelled as such.
+- **NOT MEASURED:** how often a real user's cold start lands inside the <1 s window. The window is
+  measured; its frequency across devices is not, and `AccountBridge`'s 2 s wait is a margin, not a
+  distribution.
 
-The honest one-line state: **the account bridge works, the clone still cannot see accounts, so
-sign-in inside a clone is not working yet, and every gate now says so instead of pretending.**
+The honest one-line state: **the clone can read the device's Google account and receive a token
+through the platform, proven on the ARM64 device gate; the remaining risk is a cold-start timing
+window, which the bridge waits out and the gate measures on every run.**
 
 ## 23. Mobile-size UI: the empty-space state, and a measurement that lied
 
@@ -777,3 +830,60 @@ changed. That is fixed by walking pages with the app's own `btnNextSpace` and re
 - The gate proves presence, bounds and system-bar clearance; it does not prove the hint looks good.
 - The toolbar "+" and the grid Add tile both remain; consolidating them is a product decision that
   has not been made.
+
+## 24. Gate state for commit `ce6181a` (the commit the published APK is built from)
+
+| Gate | Run | Result |
+|---|---|---|
+| API compatibility matrix — API 27, 28, 30, 31, 34 (phone-UI matrix), 35 | `43669108321` | success on every level, including the landscape leg that failed twice before |
+| Deep clone testing (sign-in suite) | `43669108293` | success — `OK (6 tests)`, `launches=6 answered=6 with_account=6` |
+| Strict E2E | `43669108324` | success |
+| Real app compatibility smoke | `43669108378` | success |
+| Publish latest verified APK | `43670062074` | success — `CloneHub-Pro.apk`, 7,905,790 bytes, notes name `ce6181a` |
+
+The published APK was downloaded again after publishing and its `classes.dex` contains the settled
+read (`AccountBridge`, `accountNamesSettled`, `settled after`), so the artifact is the fixed build and
+not an earlier one.
+
+### Two failures in this stretch were the harness, not the app — both fixed
+
+- Run `43668222165`: both sign-in suites passed (`OK (5 tests)`, `OK (6 tests)`) and then every
+  evidence command answered `Can't find service: package/account` because the emulator was
+  restarting; the job died on the evidence step with exit code 20. The deep script now waits for the
+  package and account services to answer before recording evidence, and records what the device said
+  if it never comes back.
+- Run `43668222149` (API 28): the app installed with `Success` twice, then `device offline` for
+  every command; no test ran. The retry decision now spends the level's one retry on that instead of
+  failing a level that never tested anything.
+- Run `43592167654` (API 27): the pinned reference app was refused (`INSTALL_FAILED_OLDER_SDK`,
+  its manifest says minSdk 32) and the retry of that install took the package service down for a
+  moment, so the single `pm list packages` after it answered "Could not access the Package Manager"
+  and was read as "app under test is missing". The script now waits for the service to answer.
+
+## 25. Mobile-size UI: what the phone matrix found after §23, and what it caught
+
+Three defects were found by reading the screenshots rather than the assertions, and each was then
+turned into an assertion so it cannot come back silently:
+
+1. **The empty-space sentence drew through the Add tile** (320×640, 411×891 in run `43592167654`).
+   Both views were inside the screen, so the bounds assertions passed. The sentence is now a sibling
+   of the grid inside the card's column, and the gate asserts the two boxes do not intersect.
+2. **The Add tile's label was cut off in landscape** (720×360, same run): the tile's bounds were on
+   screen, its text was not. The gate now asserts the label's measured height is at least the text
+   height it was asked to draw.
+3. **The grid vanished entirely in landscape** (run `43593168736`, after fix 1): the sentence's 64dp
+   portrait clearance took the short card, the weighted grid collapsed to zero height and no tile was
+   drawn — the gate reported `Node not in the hierarchy: text=Add App`. The grid now carries
+   `minHeight` (96dp portrait / 64dp landscape), the tile's parts are dimens so the short window can
+   compact them (36dp icon box, 2dp gap, 4dp padding, 10sp label => 55dp in a 64dp grid), and the
+   gate asserts the grid itself is tall enough for a row before it looks for a tile.
+
+Final state on `ce6181a`, run `43669108321`, `OK (4 tests)`: 720×360, 320×640, 360×720 and 411×891
+all pass with `gridBounds=Rect(40, 346 - 1144, 478)`, `addTileLabel bounds=Rect(40, 446 - 224, 470)`
+(24px for 22px text) and `emptyHintOverlap overlaps=false`.
+
+### Still not tested in the UI work
+
+Tablets and foldables wider than 411dp, font scale above 1.0 (the labels are capped at two lines and
+10–11sp in landscape, which is the tightest case measured), right-to-left locales, and any OEM skin's
+system-bar geometry.

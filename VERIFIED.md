@@ -1,101 +1,73 @@
 # Clone Hub Pro — verified state
 
-Current as of commit `28a4641` (verified gate commit `6496d23` — the two later commits touch only the
-publish workflow). Everything below is a link to a run whose evidence is archived; nothing here is a
-claim without a gate behind it, and the parts that are **not** working say so in their own section.
+Current as of commit `ce6181a`. Everything below is a link to a run whose evidence is archived;
+nothing here is a claim without a gate behind it, and what is **not** working says so in its own
+section.
 
 ## The shipped APK
 
 [`CloneHub-Pro.apk`](https://github.com/deepsilence10161-source/Clone-Hub-Pro/releases/latest/download/CloneHub-Pro.apk)
-— 7,903,006 bytes, published 2026-11-14 by `Publish latest verified APK` (run `43576154418`) only after
-the native ARM64 gates passed on the same commit.
+— **7,905,790 bytes**, published 2026-11-15 by `Publish latest verified APK` (run `43670062074`),
+which only publishes when both native ARM64 gates are green on the current `main`. The release notes
+name the commit: `ce6181a`. The published file was downloaded again afterwards and its `classes.dex`
+contains the sign-in fix, so the artifact is the fixed build and not an earlier one
+(sha256 starts `5d77299b…`).
 
-## Gates green on `6496d23`
+## Gates green on `ce6181a`
 
 | Gate | Run | Result |
 |---|---|---|
-| API compatibility matrix — API 27, 28, 30, 31, 34, 35 (real ARM64 redroid images) | `43574316405` | every level success; API 34 = phone-UI matrix, 4/4 configurations PASS |
-| Strict E2E — API 34 | `43575172151` | success |
-| Deep clone testing | `43575172112` | success — suite `OK (5 tests)`, sign-in `OK (5 tests)` (2 skipped, see below), cold restart `OK (1 test)` |
-| Real app compatibility smoke | `43575172197` | success |
-| Publish latest verified APK | `43576154418` | success |
+| API compatibility matrix — API 27, 28, 30, 31, 34 (phone-UI), 35 (real ARM64 redroid images) | `43669108321` | success on every level |
+| Deep clone testing — sign-in + cold restart + deep suite | `43669108293` | success — sign-in `OK (6 tests)` |
+| Strict E2E — API 34 | `43669108324` | success |
+| Real app compatibility smoke | `43669108378` | success |
+| Publish latest verified APK | `43670062074` | success |
 
-## Google sign-in inside a clone — reproduced, part-fixed, still not working
+## Google sign-in inside a clone — proven on the device
 
-This is the honest headline: **sign-in inside a clone is not fixed**, and the gates now say so
-instead of passing on `0 == 0`.
+The clone receives the device's Google account and an auth token through the platform, with the same
+account name and the same token length the un-cloned app gets:
 
-Reproduced on device (deep run `43564391516`) with one `com.google` account present: the app process
-got `result=TOKEN` with `accounts=1`; the same code inside the clone got `accounts=0`,
-`result=NO_ACCOUNT`.
+```
+clone : google_accounts=1  names=clonehub.probe@example.com  result=TOKEN  token_length=64
+normal: google_accounts=1  names=clonehub.probe@example.com  result=TOKEN  token_length=64
+GOOGLE_SIGNIN_REPEAT_SUMMARY launches=6 answered=6 with_account=6
+```
 
-Where it was traced (runs `43566289721`, `43567494856`):
+What made it work was measured, not guessed: the platform answers a clone's account query **as the
+host package** (`caller_identity=uid=10087`, while the agent is `10088`), and that answer is empty
+for the first ~0.9 s of a clone's process — sampled at 100 ms resolution, one process answered `0` at
++787 ms and `1` at +887 ms while twelve others answered `1` at their first sample. `AccountBridge`
+now waits that window out (2 s, 2× the only late answer measured) instead of reporting `NO_ACCOUNT`,
+and the probe reads the answer the same way.
 
-1. The device really has the account and the platform grants the hosting package visibility —
-   `dumpsys account` shows `Account visibility: com.clonehub.pro, 1`.
-2. The clone's account call never reaches the platform: identical probe, `by_type=1
-   by_type_for_package=1 all=1` in the host process, `by_type=0 by_type_for_package=0 all=0` inside
-   `com.clonehub.pro:agent0`, while `getAuthenticatorTypes()` is non-empty there — the bundled runtime
-   answers the account API itself with "no accounts".
-3. The runtime is a sealed asset: `assets/oqd.apk`'s `classes.dex` contains only `android/accounts/*`
-   type descriptors (no `getAccountsByType`/`getAccounts` reference at all) and `libclonehubv.so`
-   exposes no account-list entry point, so it cannot be patched or configured from this repository.
+An earlier version of this document said the opposite — that the runtime answers account calls
+itself and sign-in could never work. That was wrong, and §22 of the audit records the measurement
+that disproved it and the bookkeeping bug in the probe that had produced the false reading.
 
-What **is** proven on device: the host-side bridge (`AccountBridge` + `HostAccountProvider`, signature
-permission `com.clonehub.pro.permission.CLONE_ACCOUNT_BRIDGE`) reads the device's account list and mints a
-token exactly as the platform does for the app — test `e_hostAccountBridgeAnswersLikeThePlatform` PASS
-(`GOOGLE_SIGNIN_BRIDGE platform=[…] bridged=[…]`, `GOOGLE_SIGNIN_BRIDGE_TOKEN result=TOKEN length=64`).
-Nothing inside a clone calls it, because the runtime never asks the host.
+## Mobile-size UI — four geometries, screenshots read by hand
 
-The clone-side assertions (`a`, `b`) are therefore **skipped** with a `GOOGLE_SIGNIN_KNOWN_LIMITATION`
-message in logcat — never green, and they will assert again the moment a runtime forwards account
-calls. Full write-up: audit §22.
+Run `43669108321` (API 34), `OK (4 tests)`: 320×640@2x, 360×720@2x, 411×891@3x and 720×360@2x
+(landscape) all pass. Three real defects were found by reading the screenshots and each is now an
+assertion: the empty-space sentence drew through the Add tile, the Add tile's label was clipped in
+landscape, and — after the first fix — the grid collapsed to zero height in landscape so no tile was
+drawn at all. Details in §25 of the audit.
 
-**Not tested:** a real Google OAuth token/consent screen, Play Services on the device, a signed-in
-physical device. Neither the fix nor the limitation hides that gap.
+## Not tested — stated, not implied
 
-## What the phone-UI gate measures (API 34, four configurations)
+- A real Google OAuth consent screen and token against Google's servers, and Play Services / GMS on
+  the device. The gates use a **seeded account of type `com.google`** answered by a test authenticator
+  the instrumentation APK registers: the code path is real, the credential is fake and labelled.
+- A physical phone. All device claims come from ARM64 redroid containers.
+- Android 16 / API 36 (redroid 16.0.0 never finishes booting on this runner), OEM skins, tablets and
+  foldables, font scale above 1.0, right-to-left locales.
+- Notifications, camera, microphone, location, deep links, and performance budgets.
+- How often a real cold start falls inside the <1 s account window. The window is measured; its
+  frequency across devices is not, and the 2 s wait is a margin rather than a distribution.
 
-320x640@2x, 360x720@2x, 411x891@3x portrait and 720x360@2x landscape; the display is set by the test,
-not inherited from the emulator. On each one: real system-bar geometry from the platform's windows, the
-Add action above the navigation bar, every named control inside the app window and inside the safe area,
-48dp touch targets, the space card against the screen, the overflow menu, a grid tile holding a real
-clone (the gate now walks to the space that holds it instead of assuming the first page), the empty-space
-hint in both directions, the long-press sheet, Backup & restore, and the App Picker.
+## Failures during this stretch that were the harness, not the app
 
-Two measurement bugs were found and fixed in this gate during this revision — both had been passing:
-
-* the check measured whichever space happened to be on screen (`cloneTile=false`,
-  `emptyHint` found with a clone present) until it started walking pages with the app's own chevrons;
-* a `swipe()` on the pager reported only that the gesture was accepted (`swiped=true` with the page
-  unchanged), which measured nothing.
-
-Current evidence (run `43574316405`): `cloneTile present=true pageTaps=1`, `emptyHint withClone=absent
-cloneTile=true`, `emptyHint landedOn=Space 78 bounds=Rect(…)`, 4/4 `outcome=PASS`.
-
-## What changed in the UI
-
-A space with no clone now shows one line — “Tap + to clone apps in this space” — inside the card, hidden
-while a clone is present. Wider empty-state design (illustration, first-clone suggestion) is **NOT
-DONE**, and the redundant second Add affordance (toolbar “+” and grid tile) is still there.
-
-## Not tested, stated plainly
-
-* Android 16 (API 36) — the redroid `16.0.0` image never finishes booting on this runner; recorded in
-  the workflow, not listed as supported.
-* OEM skins (MIUI / OneUI / ColorOS) and their background-kill behaviour.
-* Physical hardware: every measurement here is an emulated ARM64 redroid container.
-* Notifications, camera, microphone, location and deep links inside clones.
-* Cloning beyond the three pinned real apps (Markor, Calculator, Aegis) and the test fixture.
-* Performance benchmarks (cold start, clone time, memory) for this revision.
-
-## How to read a failure
-
-A level is retried automatically **only** when the evidence proves the Android runtime died before any
-test ran (`system_server` SIGABRT, dead emulator, no instrumentation output). A level whose
-instrumentation produced a result is never retried, so a real failure cannot be retried away. A test
-reported as skipped is a known limitation being stated, not a pass.
-
-The full audit, with the evidence numbers behind each claim, is in
-[`audit/CLONEHUB_PRO_AUDIT.md`](audit/CLONEHUB_PRO_AUDIT.md) (§22 sign-in, §23 mobile UI for this
-revision).
+Each is fixed, and each is recorded because the first symptom looked like a product failure:
+an emulator restarting mid-run after both sign-in suites had passed (run `43668222165`), an API 28
+leg that went `device offline` before any test ran (`43668222149`), and an API 27 leg that read a
+refused *reference* app install as "the app under test is missing" (`43592167654`). See §24.
