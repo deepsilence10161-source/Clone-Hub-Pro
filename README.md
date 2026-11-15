@@ -66,6 +66,29 @@ CloneHub_Advanced/
 └── settings.gradle
 ```
 
+## Sign-in inside a clone: what works and what does not
+
+This is measured on the ARM64 API 34 gate, not claimed (audit §27, §28; gate `43696006594`).
+
+**Web-based sign-in works inside a clone.** A page that loads Google Identity Services in a WebView
+gets the same environment in the clone as outside it: the same WebView provider
+(`com.android.webview:125.0.6422.113`), JavaScript, DOM storage and cookies enabled, an HTTPS page that
+loads, a secure context with `crypto.subtle`, a cookie that survives a reload, and
+`accounts.google.com/gsi/client` served (~280 KB). A link that opens a browser resolves inside the
+clone too.
+
+**Native sign-in still fails inside a clone.** Inside the clone every `AccountManager` query answers an
+empty list (`by_type=0`, `by_type_for_package=0`, `all=0`) while the host app lists the device's Google
+account and receives a token. An app that asks Android for the account before signing in — most native
+apps, Play Games, and many web apps that pick the account first — therefore sees "no account", which is
+what a failing "Sign in with Google" button looks like from the outside. The host-side bridge that can
+answer correctly exists and is proven (`AccountBridge` + `HostAccountProvider`); what is missing is
+routing the container's own account calls through it.
+
+**Not tested:** a real Google consent (this image has no Play services, so its `com.google` account is
+created by a test authenticator and labelled as such), Play-services-dependent SDKs (Games, Firebase
+federated sign-in), and the app's own backend.
+
 ## In-app updates
 
 The app updates itself from its own release channel — no store, no sideloading by hand.
