@@ -52,6 +52,16 @@ class UpdateFlowInstrumentedTest {
         val key = UpdateChecker.signingKeyKind(context)
         val fingerprint = UpdateChecker.signingFingerprint(context)
         Log.i(TAG, "UPDATE_GATE installed name=$name code=$code key=$key fingerprint=$fingerprint")
+        // The stable key committed at .github/signing/clonehub-signing.p12. If this line stops
+        // matching, every installed copy needs a manual reinstall before it can update again — so
+        // the gate says it out loud instead of letting a silent key change break updates.
+        val stableKeyPrefix = "e2f0843c8f5cc9e8dc67a7af860815d6"
+        val actualPrefix = fingerprint?.replace(":", "")?.lowercase()?.take(32)
+        Log.i(
+            TAG,
+            "UPDATE_GATE signing_key stable=$stableKeyPrefix actual=$actualPrefix " +
+                "matches=${actualPrefix == stableKeyPrefix}"
+        )
         assertTrue("The installed versionCode is unreadable: $code", code > 0)
         assertTrue("The installed versionName is unreadable: $name", name.isNotBlank() && name != "unknown")
         assertFalse("This build reports no signing key at all", key == "unsigned")

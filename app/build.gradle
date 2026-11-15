@@ -3,6 +3,18 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// The update signing key.
+//
+// Committed on purpose: Android only installs an update signed with the same key as the installed
+// app, and three separate CI runs of this project were measured to carry three different keys
+// (see .github/signing/README.md). A stable key is the one property an in-app updater needs.
+//
+// A missing keystore falls back to Gradle's own debug signing, which still builds: the app must not
+// become unbuildable for someone who cloned a branch without the file. It cannot update itself in
+// that case, and the update screen shows the key it actually has.
+def updateKeystore = rootProject.file('.github/signing/clonehub-signing.p12')
+def hasUpdateKeystore = updateKeystore.exists()
+
 android {
     namespace 'com.clonehub.advanced'
     compileSdk 35
@@ -21,6 +33,18 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasUpdateKeystore) {
+            update {
+                storeFile updateKeystore
+                storeType 'pkcs12'
+                storePassword 'clonehub'
+                keyAlias 'clonehub'
+                keyPassword 'clonehub'
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
@@ -31,6 +55,10 @@ android {
             // Keep the tested APK's package identical to the installable main app.
             // The bundled VM uses legacy JNI references in virtual agent processes.
             debuggable false
+            // One key for every machine, so a build can update the previous build.
+            if (hasUpdateKeystore) {
+                signingConfig signingConfigs.update
+            }
         }
     }
 
