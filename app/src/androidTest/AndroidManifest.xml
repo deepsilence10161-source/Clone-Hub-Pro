@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Asked for by every app that offers Google sign-in; the probe reports what the clone sees. -->
+    <!-- The WebView probe loads a real HTTPS page, so the fixture needs its own network permission:
+         measured in run 43690036509, its absence answers every load with net::ERR_CACHE_MISS. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.MANAGE_ACCOUNTS" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />

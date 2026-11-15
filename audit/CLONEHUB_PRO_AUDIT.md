@@ -965,3 +965,42 @@ the app correctly says there is nothing newer — instead of guessing from a ver
   device in this work: no attempt has been made yet to install through the intent on the gate image,
   so the panel's `path=UNKNOWN` is the truth and the recorded-verdict path is yet to be exercised.
 - A fork's own manifest channel (`UpdateChecker.MANIFEST_URL`) — parsed and unit-tested, never served.
+
+## 27. The sign-in failure a user sees, reproduced and named (2026-11-15)
+
+A screenshot from the field: a cloned web app ("Mini eSports") answering
+**"Google sign-in failed — dobara try karo"** on its "Continue with Google" button.
+
+### What the same failure looks like on the gate device
+
+Deep gate `43690036509` (commit `9a699bb`, API 34 ARM64, one `com.google` account seeded and shared
+with the host package) skipped the native sign-in parity test with its own words:
+
+```
+AssumptionViolatedException: KNOWN LIMITATION (audit §22): the bundled virtual runtime answers
+AccountManager inside the clone and returns an empty list for every account query
+(by_type=0, by_type_for_package=0, all=0) while the host process lists the device's account and
+mints a token. Sign-in inside a clone is therefore NOT fixed by this revision; the host-side bridge
+is proven separately by e_hostAccountBridgeAnswersLikeThePlatform.
+```
+
+Read plainly: the device has the account, the un-cloned app sees it and gets a token, and inside the
+clone **every** account query answers empty. Every "Sign in with Google" that asks Android for the
+account therefore sees no account, which is precisely a button that reports failure. This is the
+defect behind the field report, measured — not inferred.
+
+### What must be added, and why it is not a guess
+
+The bundle's runtime answers the account query itself instead of forwarding it: its binary is a
+sealed asset in which no account-list symbol exists, so this revision cannot reroute that call in
+place. The supported way to answer a clone's `AccountManager` call is the host bridge that already
+exists (`AccountBridge` + `HostAccountProvider`, proven by test `e_`), reached by the clone's agent
+process over the provider's `call()`. Until the container's dispatch is pointed at that provider, the
+clone answers "no accounts" and the button fails. The gap is the dispatch, not the data — that is what
+the evidence above says, and it is what the next change has to address.
+
+### Still not claimed
+
+An end-to-end Google consent with a real Google account inside a clone remains **NOT TESTED**: this
+image has no Play services, and its `com.google` account comes from the test authenticator, which is
+labelled as such in every artefact.

@@ -57,6 +57,19 @@ class WebViewSignInCloneInstrumentedTest {
             return
         }
 
+        val nativeError = native.steps.keys.firstOrNull {
+            it == "main_frame_error" || it == "ssl_error" || it == "http_error"
+        }
+        if (nativeError != null) {
+            Log.i(
+                TAG,
+                "WEBVIEW_GATE_INFRA the un-cloned app could not load a page either " +
+                    "($nativeError: ${native.steps[nativeError]}); the clone comparison is NOT TESTED " +
+                    "on this image"
+            )
+            return
+        }
+
         val cloned = runProbe(native = false)
         Log.i(TAG, "WEBVIEW_GATE_CLONE ${cloned.steps}")
 
@@ -120,12 +133,12 @@ class WebViewSignInCloneInstrumentedTest {
 
         val deadline = SystemClock.elapsedRealtime() + RUN_TIMEOUT_MS
         while (SystemClock.elapsedRealtime() < deadline) {
-            val log = device.executeShellCommand("logcat -d -s WEBVIEW_SIGNIN:*")
+            val log = device.executeShellCommand("logcat -d")
             val parsed = parse(log)
             if (parsed.run != null && log.contains("WEBVIEW_SIGNIN_DONE")) return parsed
             SystemClock.sleep(2_000)
         }
-        return parse(device.executeShellCommand("logcat -d -s WEBVIEW_SIGNIN:*"))
+        return parse(device.executeShellCommand("logcat -d"))
     }
 
     private data class ProbeResult(val run: Map<String, String>?, val steps: Map<String, String>)
