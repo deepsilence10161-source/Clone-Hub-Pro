@@ -35,10 +35,6 @@ import java.io.File
  */
 class UpdateActivity : AppCompatActivity() {
 
-    private companion object {
-        const val TAG = "UpdateActivity"
-    }
-
     private lateinit var tvInstalled: TextView
     private lateinit var tvOffered: TextView
     private lateinit var tvStatus: TextView
@@ -258,6 +254,8 @@ class UpdateActivity : AppCompatActivity() {
     private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_LONG).show()
 
     companion object {
+        private const val TAG = "UpdateActivity"
+
         fun intent(activity: Activity): Intent = Intent(activity, UpdateActivity::class.java)
     }
 }
