@@ -98,7 +98,7 @@
             android:maxLines="2"
             android:text="@string/empty_space_hint"
             android:textColor="@color/text_secondary_dark"
-            android:textSize="14sp"
+            android:textSize="@dimen/empty_hint_text_size"
             android:visibility="gone" />
     </LinearLayout>
 

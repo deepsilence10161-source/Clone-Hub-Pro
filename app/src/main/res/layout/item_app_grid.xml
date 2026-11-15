@@ -7,8 +7,8 @@
     android:background="?attr/selectableItemBackgroundBorderless"
     android:gravity="top|center_horizontal"
     android:orientation="vertical"
-    android:paddingTop="@dimen/margin_small"
-    android:paddingBottom="@dimen/margin_small"
+    android:paddingTop="@dimen/tile_padding_v"
+    android:paddingBottom="@dimen/tile_padding_v"
     android:paddingStart="@dimen/margin_micro"
     android:paddingEnd="@dimen/margin_micro">
 
@@ -52,11 +52,11 @@
         android:id="@+id/tvAppTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="@dimen/tile_label_gap"
         android:ellipsize="end"
         android:gravity="center_horizontal"
         android:maxLines="2"
         android:minLines="1"
         android:textColor="@color/text_primary_dark"
-        android:textSize="11sp" />
+        android:textSize="@dimen/tile_label_size" />
 </LinearLayout>

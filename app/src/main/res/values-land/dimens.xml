@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-      Measured on the phone UI matrix (run 43593168736, 720x360 screenshot): after the empty-space
-      sentence moved under the grid, the sentence's 64dp clearance plus its text took the whole card
-      and the grid was squeezed to zero height, so no Add tile was drawn at all — the gate failed with
-      "Node not in the hierarchy: text=Add App".
-      In a short window the sentence keeps one line and a small gap, and the grid keeps one tile row.
+      Landscape measurements come from the phone-UI matrix screenshots, not from guessing:
+        run 43592167654 (720x360): the Add tile's label was cut off at the card's edge;
+        run 43593168736 (720x360): after the hint moved under the grid, the grid collapsed and no
+                                    tile was drawn at all;
+        run 43667305566 (720x360): the tile was drawn but its label measured -8px tall, i.e. the
+                                    grid was still 30dp short of a whole tile.
+      A whole tile is icon box + gap + label + padding. In a short window each part gives a little:
+      36dp box, 2dp gap, 4dp padding => 55dp, which fits a 64dp grid with the one-line hint above it.
     -->
-    <dimen name="empty_hint_bottom_space">8dp</dimen>
-    <dimen name="grid_min_height">56dp</dimen>
-    <dimen name="grid_icon_box">40dp</dimen>
-    <dimen name="grid_icon_size">36dp</dimen>
+    <dimen name="empty_hint_bottom_space">4dp</dimen>
+    <dimen name="empty_hint_text_size">11sp</dimen>
+    <dimen name="grid_min_height">64dp</dimen>
+    <dimen name="grid_icon_box">36dp</dimen>
+    <dimen name="grid_icon_size">32dp</dimen>
+    <dimen name="tile_padding_v">4dp</dimen>
+    <dimen name="tile_label_gap">2dp</dimen>
+    <dimen name="tile_label_size">10sp</dimen>
 </resources>

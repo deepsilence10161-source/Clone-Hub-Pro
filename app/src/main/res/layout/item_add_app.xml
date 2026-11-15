@@ -7,8 +7,8 @@
     android:background="?attr/selectableItemBackgroundBorderless"
     android:gravity="top|center_horizontal"
     android:orientation="vertical"
-    android:paddingTop="@dimen/margin_small"
-    android:paddingBottom="@dimen/margin_small">
+    android:paddingTop="@dimen/tile_padding_v"
+    android:paddingBottom="@dimen/tile_padding_v">
 
     <FrameLayout
         android:layout_width="@dimen/grid_icon_box"
@@ -26,13 +26,13 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="@dimen/tile_label_gap"
         android:ellipsize="end"
         android:gravity="center_horizontal"
         android:includeFontPadding="false"
         android:maxLines="2"
         android:text="@string/action_add"
         android:textColor="@color/colorPrimary"
-        android:textSize="11sp"
+        android:textSize="@dimen/tile_label_size"
         android:textStyle="bold" />
 </LinearLayout>
