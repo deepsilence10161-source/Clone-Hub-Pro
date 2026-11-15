@@ -31,6 +31,16 @@ if [ -f "${EVIDENCE_DIR}/real-clonehub-install.txt" ] \
   exit 1
 fi
 
+# The platform went away during the run: measured on run 43668222149 (API 28), where Clone Hub Pro
+# installed with "Success" on two consecutive attempts and then every command answered "device
+# offline" / "cmd: Failure calling service activity: Broken pipe". That is the emulator, not the app
+# — no test ever ran — so the level deserves its one retry.
+if [ -f "${EVIDENCE_DIR}/live_test_logcat.txt" ] && \
+  grep -q "device offline" "${EVIDENCE_DIR}/live_test_logcat.txt" 2>/dev/null; then
+  echo "retry: the emulator went offline before any test ran"
+  exit 0
+fi
+
 # The platform itself crashed or never came up.
 if [ -f "${LOG}" ] && grep -qE ">>> system_server <<<|Fatal signal 11|Fatal signal 6 .* system_server" "${LOG}"; then
   echo "retry: the Android runtime crashed (system_server) before any test ran"

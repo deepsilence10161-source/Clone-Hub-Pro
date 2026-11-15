@@ -44,6 +44,25 @@ run_tests() {
   fi
 }
 
+# Waits for the device to answer again after a suite, and records what happened.
+#
+# Measured on run 43668222165: both sign-in suites passed ('OK (5 tests)', 'OK (6 tests)') and then
+# every evidence command answered 'Can't find service: package' / 'Can't find service: account' —
+# the emulator was restarting underneath the script, and the job died on the evidence step with
+# exit code 20, reporting a failure for a run whose tests had passed. The evidence is worth waiting
+# for: it is the only record of what the device said.
+wait_for_device_services() {
+  local tries=${1:-20}
+  for _ in $(seq 1 "$tries"); do
+    if adb shell pm list packages >/dev/null 2>&1 && adb shell dumpsys account >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "device is not answering (package/account service); waiting"
+    sleep 3
+  done
+  return 1
+}
+
 adb wait-for-device
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
@@ -92,6 +111,12 @@ adb shell run-as "$PACKAGE_ID" sh -c 'cat files/account_probe-*.txt files/token_
 cat "$OUT/google-signin-probes.txt" || true
 # Platform answers about accounts, from the device's own point of view.
 adb shell dumpsys account > "$OUT/account-service.txt" 2>&1 || true
+# The suites can outlive the emulator's patience: wait for it to answer before asking anything.
+if ! wait_for_device_services 20; then
+  echo "device did not come back after the suites; the evidence below is what it answered"
+  adb shell getprop sys.boot_completed > "$OUT/device-after-suites.txt" 2>&1 || true
+fi
+
 # Did the platform accept the seeded com.google account, and did a token request reach the
 # authenticator? Both answers are in the device's own words.
 adb shell dumpsys account | grep -A3 "Accounts: " > "$OUT/account-list.txt" 2>&1 || true
