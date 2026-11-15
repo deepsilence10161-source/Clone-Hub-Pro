@@ -153,6 +153,9 @@ class WebViewSignInCloneInstrumentedTest {
     private fun runProbe(native: Boolean): ProbeResult {
         val wantedKind = if (native) "native" else "clone"
         runCatching { VirtualContainerEngine.forceStopApp(context, fixturePackage, spaceId) }
+        // A fixture process that is still alive would answer `am start` with onNewIntent and never run
+        // onCreate, which is how an earlier run produced no probe line at all (43693467484).
+        device.executeShellCommand("am force-stop $fixturePackage")
         SystemClock.sleep(1_000)
         device.executeShellCommand("logcat -c")
 

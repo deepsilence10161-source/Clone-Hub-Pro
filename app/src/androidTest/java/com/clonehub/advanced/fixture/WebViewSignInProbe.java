@@ -96,7 +96,19 @@ public final class WebViewSignInProbe {
         return trigger;
     }
 
-    /** Which of the three triggers is set, in the order they are cheapest to read. */
+    /** Whether any trigger is set, for a host that was re-launched rather than created. */
+    static boolean hasTrigger(Activity host) {
+        return !askedBy(host).isEmpty();
+    }
+
+    /**
+     * Which trigger is set, cheapest first.
+     *
+     * Measured (run 43693467484): inside a clone neither the global setting nor the system property is
+     * visible — the probe reported `trigger=none` in the agent process, so a container that virtualises
+     * Settings cannot be asked that way. The process name still tells the truth there: a clone runs in
+     * `<package>:agentN`, which is what makes the clone side measurable at all.
+     */
     private static String askedBy(Activity host) {
         android.content.Intent intent = host.getIntent();
         if (intent != null && intent.getIntExtra("webview_probe", 0) == 1) return "intent";
@@ -106,6 +118,9 @@ public final class WebViewSignInProbe {
         } catch (Throwable ignored) {
             // a container that hides the settings provider simply skips this channel
         }
+        String process = android.os.Build.VERSION.SDK_INT >= 28
+            ? android.app.Application.getProcessName() : "";
+        if (process != null && process.contains(":agent")) return "clone_process";
         try {
             Class<?> properties = Class.forName("android.os.SystemProperties");
             Object value = properties.getMethod("get", String.class).invoke(null, "debug.clonehub.webprobe");

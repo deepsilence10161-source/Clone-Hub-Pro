@@ -116,6 +116,21 @@ public final class CloneFixtureActivity extends Activity {
         super.onDestroy();
     }
 
+    /**
+     * `am start` on an activity that is already showing delivers here instead of onCreate, which is
+     * how the gate's native run could be answered by a fixture started minutes earlier without the
+     * probe (measured in run 43693467484: the activity was reused, so no probe line appeared).
+     */
+    @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        if (webViewProbe == null && getWindow() != null && getWindow().getDecorView() != null) {
+            android.util.Log.i("WEBVIEW_SIGNIN", "CLONE_FIXTURE relaunch_trigger="
+                    + (WebViewSignInProbe.hasTrigger(this) ? "yes" : "no"));
+        }
+    }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
