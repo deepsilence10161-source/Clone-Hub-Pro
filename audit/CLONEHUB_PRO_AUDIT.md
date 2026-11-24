@@ -1059,3 +1059,51 @@ None of these were product defects, and each one had been hiding the answer:
    `com.clonehub.pro.test` (`43694349589`) and a class-loader guess still said `native`
    (`43695212616`). The gate now selects the run by position — it cleared the buffer and started exactly
    one launch, which is stronger evidence than anything the process says about itself.
+
+## 30. Native Google sign-in (the shape the user's app uses): what the device can and cannot show
+
+The field report was updated: the cloned app uses **native** Google login. That is a different path from
+both the AccountManager call tested in §22 and the WebView page tested in §28 — it goes through Google
+Play services, which asks for the account and then mints the token.
+
+Deep gate `45406446172` (commit `b96ce74`) added a per-process Play services probe. Both the host app and
+the clone reported, identically:
+
+```
+play_services value=installed=false (NameNotFoundException) signin_service=0 broker_class=false
+```
+
+**So the gate image cannot exercise native Google sign-in at all.** redroid `14.0.0_64only` ships no
+Google Play services, so there is no `GoogleSignInClient`, no account picker, and no token minting to
+measure. A green or red result here would be about the absence of an app, not about cloning.
+
+What the same run does establish, and what it means for a native sign-in on a real phone:
+
+| measured inside the clone | value | consequence for native sign-in |
+|---|---|---|
+| `getAccountsByType("com.google")` | `0` | Google's SDK finds no account, so the button has nothing to offer |
+| `by_type_for_package`, `all`, unknown type | `0`, `0`, `0` | not a type filter: the account layer answers empty for every query |
+| authenticator listed for `com.google` | `true` | the platform has a Google authenticator; the list is still empty |
+| account visibility to self / to host | `1` / `1` | the platform says the account is visible, so the empty answer is produced above it |
+| host bridge `content://com.clonehub.pro.accounts` from inside the clone | `IllegalArgumentException: Unknown authority` | the clone cannot reach the bridge over IPC, because the container resolves providers from the cloned app's own manifest |
+
+Reading these together: on a phone **with** Play services, a native Google sign-in inside a clone fails
+at the first step — the SDK cannot see a Google account — and the host-side bridge cannot fix it,
+because the clone cannot address the host's provider authority.
+
+### What a fix has to change, stated plainly
+
+1. The clone's `AccountManager` answer must come from the host's real account list instead of the
+   container's own empty one. The bridge for that exists and answers correctly from the host process
+   (§27), but the container's account layer intercepts before the call leaves the process and the IPC
+   route to the bridge is refused inside the clone.
+2. Google's SDK additionally requires the *authenticator* round trip and a GMS `GoogleSignInClient`,
+   which can only be verified on an image or phone that has Play services. This repository's gates do
+   not have it, so **native Google sign-in is NOT TESTED by any gate in this repository** — that is a
+   property of the test image, and no amount of code in this app changes it.
+
+The container's account layer is inside the sealed runtime (`assets/oqd.apk`). Its dex exposes an
+`IAccountManager`-shaped interface (`com.multibox.clone.hub.x4`, 31 methods whose signatures match
+Android's `IAccountManager`), and those methods carry **no bytecode in this dex**, so the behaviour that
+answers a clone's account query is not in the readable part of the runtime. Patching it by guesswork
+would be exactly the assumption this project does not ship.
