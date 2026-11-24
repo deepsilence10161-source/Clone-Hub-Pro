@@ -100,6 +100,24 @@ run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 # web-based app signing in with Google through a WebView. Nothing about that path touches
 # AccountManager, so the suite above cannot see it. Its own status, so a WebView failure names
 # itself instead of hiding inside the native suite.
+# Why a user's install-over-install fails, measured. The two artifacts are real: the legacy one is the
+# APK this project handed out as 2.0.2 (different applicationId, per-machine key), the current one is
+# the build under test. Both are staged as files because `pm install` needs a path, and every verdict
+# is recorded per case.
+LEGACY_CLASS="com.clonehub.advanced.ui.update.LegacyUpdateMigrationTest"
+legacy_status=0
+if [ -f artifacts/legacy-app-debug.apk ]; then
+  adb shell mkdir -p /data/local/tmp/legacy-update
+  adb push artifacts/legacy-app-debug.apk /data/local/tmp/legacy-update/legacy-debug.apk > /dev/null
+  adb push artifacts/app-debug.apk /data/local/tmp/legacy-update/new-pro.apk > /dev/null
+  adb shell chmod 644 /data/local/tmp/legacy-update/*.apk || true
+  run_tests legacy-update -e class "$LEGACY_CLASS" || legacy_status=$?
+  adb logcat -d -v threadtime | grep "LEGACY_UPDATE_GATE" > "$OUT/legacy-update-logcat.txt" 2>/dev/null || true
+  cat "$OUT/legacy-update-logcat.txt" || true
+else
+  echo "legacy APK not staged in artifacts/; the migration gate is NOT TESTED in this run"
+fi
+
 WEBVIEW_CLASS="com.clonehub.advanced.ui.home.WebViewSignInCloneInstrumentedTest"
 webview_status=0
 run_tests webview-signin -e class "$WEBVIEW_CLASS" || webview_status=$?
@@ -167,8 +185,8 @@ adb shell run-as "$PACKAGE_ID" cat shared_prefs/clone_spaces_db.xml \
 adb shell am force-stop "$PACKAGE_ID"
 cold_status=0
 run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
-if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ] || [ "$webview_status" -ne 0 ]; then
-  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status webview-signin=$webview_status"
+if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ] || [ "$webview_status" -ne 0 ] || [ "$legacy_status" -ne 0 ]; then
+  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status webview-signin=$webview_status legacy-update=$legacy_status"
   exit 1
 fi
 
@@ -180,6 +198,9 @@ fi
 adb shell am start -W -S -n "$PACKAGE_ID/$MAIN_ACTIVITY"
 sleep 2
 adb shell pidof "$PACKAGE_ID" | grep -E '[0-9]+'
+echo "Legacy update gate: $(grep -c "LEGACY_UPDATE_GATE" "$OUT/legacy-update-logcat.txt" 2>/dev/null || echo 0) measured cases"
+grep -E "LEGACY_UPDATE_GATE case=" "$OUT/legacy-update-logcat.txt" 2>/dev/null || true
+
 echo "WebView sign-in gate: $(grep -c "WEBVIEW_SIGNIN_MARKER" "$OUT/webview-signin-logcat.txt" 2>/dev/null || echo 0) measured markers"
 grep -E "WEBVIEW_GATE_(PARITY|VERDICT|STEP)" "$OUT/webview-signin-logcat.txt" || true
 echo "Updater gate: $(grep -c "UPDATE_GATE" "$OUT/update-logcat.txt" 2>/dev/null || echo 0) measured lines"

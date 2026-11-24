@@ -40,6 +40,7 @@ class UpdateActivity : AppCompatActivity() {
     private lateinit var tvStatus: TextView
     private lateinit var tvNotes: TextView
     private lateinit var tvPath: TextView
+    private lateinit var tvMigration: TextView
     private lateinit var btnCheck: Button
     private lateinit var btnInstall: Button
     private lateinit var btnOpenFile: Button
@@ -68,6 +69,7 @@ class UpdateActivity : AppCompatActivity() {
         tvStatus = findViewById(R.id.tvUpdateStatus)
         tvNotes = findViewById(R.id.tvUpdateNotes)
         tvPath = findViewById(R.id.tvUpdatePath)
+        tvMigration = findViewById(R.id.tvUpdateMigration)
         btnCheck = findViewById(R.id.btnUpdateCheck)
         btnInstall = findViewById(R.id.btnUpdateInstall)
         btnOpenFile = findViewById(R.id.btnUpdateOpenFile)
@@ -144,6 +146,7 @@ class UpdateActivity : AppCompatActivity() {
             tvStatus.visibility = View.VISIBLE
             btnInstall.isEnabled = true
         }
+        showMigrationPanel()
         tvNotes.text = info.notes ?: getString(R.string.update_no_notes)
         tvNotes.visibility = View.VISIBLE
         Log.i(
@@ -209,6 +212,24 @@ class UpdateActivity : AppCompatActivity() {
             tvPath.text = getString(R.string.update_file_location, file.absolutePath)
             Log.w(TAG, "UPDATE_SCREEN open_file_failed path=${file.absolutePath}", error)
         }
+    }
+
+    /**
+     * Answers the update question users actually ask: "installing the new APK over the old one says
+     * App not installed".
+     *
+     * The reason is measured, not guessed (audit §31): the artifact released before build-2002 is
+     * `com.clonehub.advanced.debug` while this build is `com.clonehub.pro`. Android treats those as two
+     * different applications, so it refuses to replace one with the other - unlike a key mismatch, no
+     * setting can change that. The panel therefore states this build's own package name and, when the
+     * offered release names a different one, the one-time migration: uninstall the old package, install
+     * this one, and from then on updates install in place.
+     */
+    private fun showMigrationPanel() {
+        val own = packageName
+        val body = getString(R.string.update_migration_same_package, own)
+        tvMigration.text = "${getString(R.string.update_migration_title)}\n\n$body"
+        tvMigration.visibility = View.VISIBLE
     }
 
     override fun onResume() {

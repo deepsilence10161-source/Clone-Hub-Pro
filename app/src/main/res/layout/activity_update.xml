@@ -72,6 +72,23 @@
             android:indeterminateTint="@color/colorPrimary"
             android:visibility="gone" />
 
+        <!--
+          The migration panel: answers "installing the new APK over my old one says App not installed",
+          with the measured reason and what to do, instead of leaving the user to guess.
+        -->
+        <TextView
+            android:id="@+id/tvUpdateMigration"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/margin_normal"
+            android:background="@color/surface_dark"
+            android:padding="@dimen/margin_small"
+            android:lineSpacingExtra="3dp"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textIsSelectable="true"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/tvUpdateNotes"
             android:layout_width="match_parent"
