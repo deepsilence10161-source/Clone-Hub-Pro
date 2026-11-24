@@ -1,4 +1,4 @@
-package com.clonehub.advanced.legacy;
+package com.clonehub.advanced.migrate;
 
 import android.app.Activity;
 import android.graphics.Color;
@@ -6,17 +6,17 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.widget.TextView;
 
-/** The old artifact's only screen. It reports its own identity and nothing else. */
-public class LegacyActivity extends Activity {
+/** Reports its own identity; the gate reads it from the package manager instead. */
+public class MigrateActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         TextView view = new TextView(this);
-        view.setText("LEGACY_CLONE_HUB\npackage=" + getPackageName() + "\nversion=2.0.1 (2001)");
+        view.setText("MIGRATE_PROBE\npackage=" + getPackageName());
         view.setTextSize(18f);
         view.setTextColor(Color.WHITE);
         view.setGravity(Gravity.CENTER);
-        view.setBackgroundColor(Color.rgb(20, 20, 24));
+        view.setBackgroundColor(Color.rgb(18, 18, 22));
         setContentView(view);
     }
 }

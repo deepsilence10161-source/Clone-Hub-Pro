@@ -1,14 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
-    <!-- One screen that says what it is. Nothing else: this APK exists only to be installed and then
-         updated over, so its behaviour must not be able to confuse any other verdict. -->
     <application
         android:allowBackup="false"
-        android:label="Legacy Clone Hub"
+        android:label="Migrate Probe"
         android:supportsRtl="true">
         <activity
-            android:name=".LegacyActivity"
+            android:name=".MigrateActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

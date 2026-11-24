@@ -14,5 +14,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "CloneHubAdvanced"
 include ':app'
-// The apk this project handed out before build-2002, built only so the update problem can be measured.
-include ':legacy-app'
+// Two builds of one package signed with two keys: the "App not installed" case, measured on a device.
+include ':migrate-app'

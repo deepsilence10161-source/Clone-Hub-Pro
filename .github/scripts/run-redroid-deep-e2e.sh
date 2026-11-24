@@ -106,16 +106,16 @@ run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 # is recorded per case.
 LEGACY_CLASS="com.clonehub.advanced.ui.update.LegacyUpdateMigrationTest"
 legacy_status=0
-if [ -f artifacts/legacy-app-debug.apk ]; then
+if [ -f artifacts/migrate-older.apk ] && [ -f artifacts/migrate-newer.apk ]; then
   adb shell mkdir -p /data/local/tmp/legacy-update
-  adb push artifacts/legacy-app-debug.apk /data/local/tmp/legacy-update/legacy-debug.apk > /dev/null
-  adb push artifacts/app-debug.apk /data/local/tmp/legacy-update/new-pro.apk > /dev/null
+  adb push artifacts/migrate-older.apk /data/local/tmp/legacy-update/migrate-older.apk > /dev/null
+  adb push artifacts/migrate-newer.apk /data/local/tmp/legacy-update/migrate-newer.apk > /dev/null
   adb shell chmod 644 /data/local/tmp/legacy-update/*.apk || true
   run_tests legacy-update -e class "$LEGACY_CLASS" || legacy_status=$?
   adb logcat -d -v threadtime | grep "LEGACY_UPDATE_GATE" > "$OUT/legacy-update-logcat.txt" 2>/dev/null || true
   cat "$OUT/legacy-update-logcat.txt" || true
 else
-  echo "legacy APK not staged in artifacts/; the migration gate is NOT TESTED in this run"
+  echo "migration probe APKs not staged in artifacts/; the migration gate is NOT TESTED in this run"
 fi
 
 WEBVIEW_CLASS="com.clonehub.advanced.ui.home.WebViewSignInCloneInstrumentedTest"

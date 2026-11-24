@@ -24,10 +24,10 @@ jobs:
       - name: Build, lint and unit test
         run: |
           set +e
-          # :legacy-app builds the artifact this project used to hand out (different applicationId,
-          # per-machine key); the migration gate installs it for real and measures why the new APK
-          # cannot replace it in place.
-          ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug assembleDebugAndroidTest :legacy-app:assembleDebug --stacktrace > gradle-build.log 2>&1
+          # :migrate-app builds one package twice, with two keys, so the "App not installed" refusal can
+          # be measured on a device instead of described.
+          ./gradlew --no-daemon lintDebug testDebugUnitTest assembleDebug assembleDebugAndroidTest \
+            :migrate-app:assembleOlder :migrate-app:assembleNewer --stacktrace > gradle-build.log 2>&1
           echo "GRADLE_EXIT=$?" | tee -a gradle-build.log
           tail -n 250 gradle-build.log
       # Same public diagnosis channel as the other gates: a failing gradle step must leave a
@@ -65,8 +65,9 @@ jobs:
       - run: |
           mkdir -p staged-apks
           cp app/build/outputs/apk/debug/app-debug.apk staged-apks/app-debug.apk
-          cp legacy-app/build/outputs/apk/debug/legacy-app-debug.apk staged-apks/legacy-app-debug.apk \
-            || echo "WARNING: :legacy-app APK not produced; the migration gate will report NOT TESTED"
+          cp migrate-app/build/outputs/apk/older/migrate-app-older.apk staged-apks/migrate-older.apk \
+            && cp migrate-app/build/outputs/apk/newer/migrate-app-newer.apk staged-apks/migrate-newer.apk \
+            || echo "WARNING: :migrate-app APKs not produced; the migration gate will report NOT TESTED"
           cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk staged-apks/app-debug-androidTest.apk
       - uses: actions/upload-artifact@v4
         with:

@@ -1,0 +1,62 @@
+// Two builds of ONE package, signed with two different keys - the situation behind "App not installed".
+//
+// A user who installed an earlier com.clonehub.pro build (signed with whatever key that build had)
+// cannot install a newer com.clonehub.pro build signed with the committed key: same package, different
+// key, and Android refuses. This module reproduces exactly that so the install path can be measured on
+// a device instead of described: identical code and versionCode, two keys.
+//
+// It is deliberately not named com.clonehub.pro: the gate must never uninstall or replace the app under
+// test (doing that killed the instrumentation process in run 45439011167).
+plugins {
+    id 'com.android.application'
+}
+
+def updateKeystore = rootProject.file('.github/signing/clonehub-signing.p12')
+def hasUpdateKeystore = updateKeystore.exists()
+
+android {
+    namespace 'com.clonehub.advanced.migrate'
+    compileSdk 35
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        applicationId "com.clonehub.pro.migrate"
+        minSdk 24
+        targetSdk 35
+        // Both builds share a versionCode on purpose: the ONLY difference must be the signing key.
+        versionCode 3001
+        versionName "3.0.1"
+    }
+
+    signingConfigs {
+        if (hasUpdateKeystore) {
+            committed {
+                storeFile updateKeystore
+                storeType 'pkcs12'
+                storePassword 'clonehub'
+                keyAlias 'clonehub'
+                keyPassword 'clonehub'
+            }
+        }
+    }
+
+    buildTypes {
+        // Signed with the committed key: what this project publishes now.
+        newer {
+            initWith debug
+            minifyEnabled false
+            if (hasUpdateKeystore) {
+                signingConfig signingConfigs.committed
+            }
+        }
+        // Signed with Gradle's per-machine debug key: what earlier builds carried.
+        older {
+            initWith debug
+            minifyEnabled false
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
