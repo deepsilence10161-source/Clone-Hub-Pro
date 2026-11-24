@@ -154,6 +154,55 @@ else
   echo "migration probe APKs not staged in artifacts/; the migration gate is NOT TESTED in this run"
 fi
 
+# The real in-place update, on the app under test itself.
+#
+# The migration cases above prove the rule with two throwaway builds. This case proves the thing the user
+# actually does: a published copy is already installed, and the new build is installed over it without
+# deleting anything. Both are signed with the committed key, so Android treats them as one app and only
+# the versionCode differs - which is exactly what the in-app updater hands to the installer.
+#
+# The app's own suite is taken off the device first, because a test package is bound to one app signature
+# and cannot outlive an install; it is put back afterwards so the later suites still have it.
+REAL_UPDATE_OUT="$OUT/real-update.txt"
+real_update_status=0
+if [ -f artifacts/released-previous.apk ]; then
+  {
+    echo "--- installed previously released build"
+    adb shell pm uninstall "$PACKAGE_ID" > /dev/null 2>&1 || true
+    adb install -r -t --user 0 artifacts/released-previous.apk 2>&1
+    echo "existing version: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 versionCode)"
+    echo "--- installed copy before the update (user data marker)"
+    adb shell run-as "$PACKAGE_ID" sh -c 'mkdir -p files && echo kept-through-update > files/update_marker.txt' 2>&1
+    adb shell pm list packages "$PACKAGE_ID" 2>&1
+
+    echo "--- new build over the installed copy, no uninstall"
+    adb install -r -t --user 0 artifacts/app-debug.apk 2>&1
+    echo "updated version: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 versionCode)"
+
+    echo "--- the user's data survived the update"
+    adb shell run-as "$PACKAGE_ID" sh -c 'cat files/update_marker.txt' 2>&1
+  } > "$REAL_UPDATE_OUT" 2>&1 || true
+  cat "$REAL_UPDATE_OUT"
+
+  # The verdict: two "Success" lines (install, then update over it), the versionCode moved forward, the
+  # package was never removed in between, and the marker file written before the update is still there.
+  if [ "$(grep -c '^Success$' "$REAL_UPDATE_OUT")" -lt 2 ]; then
+    echo "the in-place update did not succeed twice"
+    real_update_status=1
+  fi
+  grep -q "^updated version:.*versionCode=2003" "$REAL_UPDATE_OUT" \
+    || { echo "the updated build is not the versionCode this run built"; real_update_status=1; }
+  grep -q "kept-through-update" "$REAL_UPDATE_OUT" \
+    || { echo "the installed copy's data did not survive the update"; real_update_status=1; }
+  echo "Real in-place update: verdict=$real_update_status"
+else
+  echo "the previously released build was not staged; the in-place update is NOT TESTED in this run"
+  real_update_status=1
+fi
+
+# The test package does not survive an app reinstall, so it is installed again for the suites below.
+adb install -r -t artifacts/app-debug-androidTest.apk > /dev/null 2>&1 || true
+
 WEBVIEW_CLASS="com.clonehub.advanced.ui.home.WebViewSignInCloneInstrumentedTest"
 webview_status=0
 run_tests webview-signin -e class "$WEBVIEW_CLASS" || webview_status=$?
@@ -221,8 +270,8 @@ adb shell run-as "$PACKAGE_ID" cat shared_prefs/clone_spaces_db.xml \
 adb shell am force-stop "$PACKAGE_ID"
 cold_status=0
 run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
-if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ] || [ "$webview_status" -ne 0 ] || [ "$legacy_status" -ne 0 ]; then
-  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status webview-signin=$webview_status legacy-update=$legacy_status"
+if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ] || [ "$webview_status" -ne 0 ] || [ "$legacy_status" -ne 0 ] || [ "$real_update_status" -ne 0 ]; then
+  echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status webview-signin=$webview_status legacy-update=$legacy_status real-update=$real_update_status"
   exit 1
 fi
 

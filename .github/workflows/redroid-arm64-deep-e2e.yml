@@ -62,13 +62,29 @@ jobs:
       # A silently non-zero gradle exit would let every later step run against a stale APK.
       - name: Enforce build result
         run: grep -q "GRADLE_EXIT=0" gradle-build.log
-      - run: |
+      - name: Stage binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           mkdir -p staged-apks
           cp app/build/outputs/apk/debug/app-debug.apk staged-apks/app-debug.apk
           cp migrate-app/build/outputs/apk/older/migrate-app-older.apk staged-apks/migrate-older.apk \
             && cp migrate-app/build/outputs/apk/newer/migrate-app-newer.apk staged-apks/migrate-newer.apk \
             || echo "WARNING: :migrate-app APKs not produced; the migration gate will report NOT TESTED"
           cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk staged-apks/app-debug-androidTest.apk
+
+          # The real in-place update: the app's own last published build, fetched from the release the
+          # updater reads, installed on the device and then replaced by this run's build. Both are
+          # signed with the same committed key, exactly like the published artifacts, so the case is
+          # "an installed copy is updated", not a simulation of it. A missing previous build is
+          # reported as NOT TESTED by the gate rather than skipped in silence.
+          if gh release download latest-verified --repo "${{ github.repository }}" \
+               --pattern "CloneHub-Pro.apk" --dir staged-apks --clobber; then
+            mv staged-apks/CloneHub-Pro.apk staged-apks/released-previous.apk
+            echo "previous released build staged: $(stat -c %s staged-apks/released-previous.apk) bytes"
+          else
+            echo "WARNING: the previous released build could not be downloaded"
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: deep-redroid-build-binaries

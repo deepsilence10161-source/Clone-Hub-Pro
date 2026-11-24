@@ -27,8 +27,8 @@ android {
         // The in-app updater compares THIS number with the build-<versionCode> in the release title,
         // and the publish workflow reads the compiled value back out of the APK. Bumping it is the
         // only way a new build reaches installed copies; a new versionName alone is not an update.
-        versionCode 2002
-        versionName "2.0.2"
+        versionCode 2003
+        versionName "2.0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
