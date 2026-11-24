@@ -218,18 +218,28 @@ class UpdateActivity : AppCompatActivity() {
      * Answers the update question users actually ask: "installing the new APK over the old one says
      * App not installed".
      *
-     * The reason is measured, not guessed (audit §31): the artifact released before build-2002 is
-     * `com.clonehub.advanced.debug` while this build is `com.clonehub.pro`. Android treats those as two
-     * different applications, so it refuses to replace one with the other - unlike a key mismatch, no
-     * setting can change that. The panel therefore states this build's own package name and, when the
-     * offered release names a different one, the one-time migration: uninstall the old package, install
-     * this one, and from then on updates install in place.
+     * The panel states only what the device itself said (audit §31). Run 45446120508 of the migration
+     * gate installed two builds of one package that differ in nothing but the signing key and recorded
+     * every answer in the installer's own words:
+     *
+     *   install on a clean device ....... Success
+     *   different key over it ........... INSTALL_FAILED_UPDATE_INCOMPATIBLE:
+     *                                     signatures do not match newer version
+     *   same key over it ................ Success (in place)
+     *
+     * So the two facts a user needs are: same package + same key updates in place, and a different key
+     * is refused by the platform. The old build released before 2002 was also a different package
+     * (`com.clonehub.advanced.debug`), which is a third refusal with the same wording - the device
+     * cannot tell the user which of the two applied, so the panel states both and names this build.
      */
     private fun showMigrationPanel() {
         val own = packageName
-        val body = getString(R.string.update_migration_same_package, own)
-        tvMigration.text = "${getString(R.string.update_migration_title)}\n\n$body"
+        val body = getString(R.string.update_migration_in_place, own)
+        val samePackage = getString(R.string.update_migration_same_package, own)
+        val differentKey = getString(R.string.update_migration_different_key)
+        tvMigration.text = "${getString(R.string.update_migration_title)}\n\n$body\n\n$samePackage\n\n$differentKey"
         tvMigration.visibility = View.VISIBLE
+        Log.i(TAG, "UPDATE_SCREEN migration_panel package=$own")
     }
 
     override fun onResume() {

@@ -3,6 +3,9 @@ package com.clonehub.advanced.ui.update
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.view.View
+import android.widget.TextView
+import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,6 +18,7 @@ import org.junit.runners.MethodSorters
 import com.clonehub.advanced.core.update.UpdateChecker
 import com.clonehub.advanced.core.update.UpdateInstaller
 import com.clonehub.advanced.core.update.UpdatePath
+import com.clonehub.advanced.R
 import java.io.File
 
 /**
@@ -127,6 +131,40 @@ class UpdateFlowInstrumentedTest {
         // build is a fact about the release, not about the code, so it is logged, not asserted.
         assertNotNull("The release published no APK asset", info.apkUrl)
         assertEquals(info.installedVersionCode, UpdateChecker.installedVersionCode(context))
+    }
+
+    /**
+     * The migration panel is on screen and says what the device said.
+     *
+     * The wording in that panel is a claim about Android, so it is checked against a measurement, not
+     * against itself: run 45446120508 of the migration gate streamed two builds of one package that
+     * differ only in signing key and recorded every answer - the same key replaced the older build in
+     * place ("Success", the package still listed), the different key was refused with
+     * INSTALL_FAILED_UPDATE_INCOMPATIBLE. The panel must therefore show this build's own package name,
+     * the in-place fact, and the different-key refusal. Asserted from the rendered TextView, so a panel
+     * that silently disappeared or drifted from the evidence fails here.
+     */
+    @Test
+    fun f_migrationPanelStatesWhatTheDeviceSaid() {
+        ActivityScenario.launch(UpdateActivity::class.java).use { scenario ->
+            scenario.onActivity { activity ->
+                val panel = activity.findViewById<TextView>(R.id.tvUpdateMigration)
+                assertNotNull("The update screen has no migration panel", panel)
+                assertEquals("The migration panel is not visible", View.VISIBLE, panel.visibility)
+                val text = panel.text.toString()
+                Log.i(TAG, "UPDATE_GATE migration_panel chars=${text.length} text=$text")
+                val own = activity.packageName
+                assertTrue("The panel must name this build's package ($own)", text.contains(own))
+                assertTrue(
+                    "The panel must state that a same-key build installs in place",
+                    text.contains("in place", ignoreCase = true)
+                )
+                assertTrue(
+                    "The panel must quote the refusal the device actually gave",
+                    text.contains("INSTALL_FAILED_UPDATE_INCOMPATIBLE")
+                )
+            }
+        }
     }
 
     @Test
