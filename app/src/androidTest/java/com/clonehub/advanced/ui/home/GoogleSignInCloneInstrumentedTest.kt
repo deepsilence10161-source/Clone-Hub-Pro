@@ -113,6 +113,13 @@ class GoogleSignInCloneInstrumentedTest {
         // Both account types, measured in both processes. If the clone can see the non-Google type but
         // not Google's, the container filters by type; if it can see neither while the platform says
         // both are visible, the account call is answered before it reaches the platform.
+        // Native Google sign-in (the shape the field report uses) reaches the account service through
+        // Google Play services, not directly, so the gate records whether Play services is even
+        // visible in each process before it interprets any account answer.
+        Log.i(
+            TAG,
+            "GOOGLE_SIGNIN_PLAY_SERVICES normal=[${normal["play_services"]}] clone=[${cloned["play_services"]}]"
+        )
         Log.i(
             TAG,
             "GOOGLE_SIGNIN_TYPE_PARITY normal_google=[${normal["type_google"]}] " +

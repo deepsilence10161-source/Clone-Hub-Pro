@@ -230,6 +230,12 @@ final class AccountProbe {
             // ever visible inside the clone, the container is filtering by type and the fix belongs
             // where that filter lives.
             out.put("type_google", typeProbe(context, GOOGLE_ACCOUNT_TYPE));
+        // Native Google sign-in (the shape most apps use) does not go through AccountManager directly:
+        // it goes through Google Play services, which asks for the account and then mints the token.
+        // So the gate has to know whether the clone can see Play services at all, and whether its
+        // binder interface resolves there. Measured per process, because "installed" and "reachable
+        // from inside a clone" are different questions.
+        out.put("play_services", playServices(context));
             out.put("type_probe", typeProbe(context, PROBE_ACCOUNT_TYPE));
         } catch (Throwable error) {
             // This is what a user experiences as "the sign-in button does nothing": the call itself
@@ -239,6 +245,44 @@ final class AccountProbe {
             Log.e(TAG, "Account list failed", error);
         }
         return out;
+    }
+
+    /**
+     * Is Google Play services reachable from this process?
+     *
+     * Reported as three separate facts, because they fail separately: the package name resolves, the
+     * version is readable, and the binder interface Google's own SDKs bind to
+     * (`com.google.android.gms.common.internal.IGmsServiceBroker`) is present on the device. A clone
+     * that sees the package but not the service has a different defect from one that sees neither.
+     */
+    private static String playServices(Context context) {
+        String pkg = "com.google.android.gms";
+        StringBuilder out = new StringBuilder();
+        try {
+            android.content.pm.PackageInfo info = context.getPackageManager().getPackageInfo(pkg, 0);
+            out.append("installed=true version=").append(info.versionName);
+        } catch (Throwable error) {
+            out.append("installed=false (").append(error.getClass().getSimpleName()).append(")");
+        }
+        try {
+            android.content.Intent service = new android.content.Intent(
+                    "com.google.android.gms.auth.api.signin.service.START");
+            service.setPackage(pkg);
+            java.util.List<android.content.pm.ResolveInfo> services =
+                    context.getPackageManager().queryIntentServices(service, 0);
+            out.append(" signin_service=").append(services == null ? 0 : services.size());
+        } catch (Throwable error) {
+            out.append(" signin_service=error:").append(error.getClass().getSimpleName());
+        }
+        try {
+            Class<?> broker = Class.forName(
+                    "com.google.android.gms.common.internal.IGmsServiceBroker");
+            out.append(" broker_class=").append(broker != null);
+        } catch (Throwable error) {
+            // Play services is not installed in this image, so its classes are absent by design.
+            out.append(" broker_class=false");
+        }
+        return out.toString();
     }
 
     /**
