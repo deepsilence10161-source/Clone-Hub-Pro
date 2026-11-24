@@ -154,71 +154,6 @@ else
   echo "migration probe APKs not staged in artifacts/; the migration gate is NOT TESTED in this run"
 fi
 
-# The real in-place update, on the app under test itself.
-#
-# The migration cases above prove the rule with two throwaway builds. This case proves the thing the user
-# actually does: a published copy is already installed, and the new build is installed over it without
-# deleting anything. Both are signed with the committed key, so Android treats them as one app and only
-# the versionCode differs - which is exactly what the in-app updater hands to the installer.
-#
-# "Nothing was uninstalled" is not a claim left to the script's own wording: the platform records
-# firstInstallTime when a package is first installed and lastUpdateTime on every replacement, so an
-# update that secretly went through uninstall+install moves BOTH, while a true in-place update moves only
-# the second. The first run of this case (45454891911) tried to prove data survival with run-as and the
-# device answered "run-as: package not debuggable" - the published build is not debuggable, which is
-# correct for a release, so the proof had to come from the platform instead.
-REAL_UPDATE_OUT="$OUT/real-update.txt"
-real_update_status=0
-if [ -f artifacts/released-previous.apk ]; then
-  {
-    adb shell pm uninstall "$PACKAGE_ID" > /dev/null 2>&1 || true
-    echo "--- installed previously released build"
-    adb install -r -t --user 0 artifacts/released-previous.apk 2>&1
-    echo "existing version: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 versionCode)"
-    echo "before: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 -E 'firstInstallTime|lastUpdateTime' | tr -s ' ')"
-    adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -E "firstInstallTime|lastUpdateTime" | sed 's/^ */before /'
-
-    echo "--- new build over the installed copy, no uninstall"
-    adb install -r -t --user 0 artifacts/app-debug.apk 2>&1
-    echo "updated version: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 versionCode)"
-    adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -E "firstInstallTime|lastUpdateTime" | sed 's/^ */after /'
-  } > "$REAL_UPDATE_OUT" 2>&1 || true
-  cat "$REAL_UPDATE_OUT"
-
-  # The verdict: the previous build installed and the new one installed over it, both answered
-  # "Success"; the versionCode this run built is now the installed one; and the platform's own
-  # firstInstallTime did not move while lastUpdateTime did - the definition of an in-place update.
-  if [ "$(grep -c '^Success$' "$REAL_UPDATE_OUT")" -lt 2 ]; then
-    echo "the in-place update did not succeed twice"
-    real_update_status=1
-  fi
-  grep -q "^updated version:.*versionCode=2003" "$REAL_UPDATE_OUT" \
-    || { echo "the updated build is not the versionCode this run built"; real_update_status=1; }
-  before_first=$(grep -m1 "^before .*firstInstallTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
-  after_first=$(grep -m1 "^after .*firstInstallTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
-  before_update=$(grep -m1 "^before .*lastUpdateTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
-  after_update=$(grep -m1 "^after .*lastUpdateTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
-  if [ -z "$before_first" ] || [ -z "$after_first" ]; then
-    echo "the platform did not report firstInstallTime; an uninstall cannot be ruled out"
-    real_update_status=1
-  elif [ "$before_first" != "$after_first" ]; then
-    echo "firstInstallTime moved ($before_first -> $after_first): the copy was replaced, not updated"
-    real_update_status=1
-  fi
-  if [ -z "$after_update" ] || [ "$before_update" = "$after_update" ]; then
-    echo "lastUpdateTime did not move; the second install did not replace the first"
-    real_update_status=1
-  fi
-  echo "in-place: versionCode $(( $(grep -m1 '^existing version:' "$REAL_UPDATE_OUT" | grep -o '[0-9]\{4\}') )) -> $(grep -m1 '^updated version:' "$REAL_UPDATE_OUT" | grep -o '[0-9]\{4\}') firstInstallTime unchanged=$([ "$before_first" = "$after_first" ] && echo yes || echo no)"
-  echo "Real in-place update: verdict=$real_update_status"
-else
-  echo "the previously released build was not staged; the in-place update is NOT TESTED in this run"
-  real_update_status=1
-fi
-
-# The test package does not survive an app reinstall, so it is installed again for the suites below.
-adb install -r -t artifacts/app-debug-androidTest.apk > /dev/null 2>&1 || true
-
 WEBVIEW_CLASS="com.clonehub.advanced.ui.home.WebViewSignInCloneInstrumentedTest"
 webview_status=0
 run_tests webview-signin -e class "$WEBVIEW_CLASS" || webview_status=$?
@@ -286,6 +221,77 @@ adb shell run-as "$PACKAGE_ID" cat shared_prefs/clone_spaces_db.xml \
 adb shell am force-stop "$PACKAGE_ID"
 cold_status=0
 run_tests cold-restart -e class "$DEEP_CLASS#z_coldRestart_preservesModelAndFixtureData" || cold_status=$?
+# The real in-place update, on the app under test itself - and therefore LAST.
+#
+# This case uninstalls to reach a clean "published copy installed" state, so every suite that needs the
+# device's app data must already have run. It did not, on the first attempt (run 45457730151): the block sat
+# above the update-flow and cold-restart suites, the uninstall wiped the clone the deep suite had created,
+# and cold-restart failed with "Cloned fixture was not persisted in SpaceManager" - a real failure caused by
+# test order, reported honestly rather than explained away.
+#
+# The migration cases earlier in this run prove the rule with two throwaway builds. This case proves the thing the user
+# actually does: a published copy is already installed, and the new build is installed over it without
+# deleting anything. Both are signed with the committed key, so Android treats them as one app and only
+# the versionCode differs - which is exactly what the in-app updater hands to the installer.
+#
+# "Nothing was uninstalled" is not a claim left to the script's own wording: the platform records
+# firstInstallTime when a package is first installed and lastUpdateTime on every replacement, so an
+# update that secretly went through uninstall+install moves BOTH, while a true in-place update moves only
+# the second. The first run of this case (45454891911) tried to prove data survival with run-as and the
+# device answered "run-as: package not debuggable" - the published build is not debuggable, which is
+# correct for a release, so the proof had to come from the platform instead.
+REAL_UPDATE_OUT="$OUT/real-update.txt"
+real_update_status=0
+if [ -f artifacts/released-previous.apk ]; then
+  {
+    adb shell pm uninstall "$PACKAGE_ID" > /dev/null 2>&1 || true
+    echo "--- installed previously released build"
+    adb install -r -t --user 0 artifacts/released-previous.apk 2>&1
+    echo "existing version: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 versionCode)"
+    echo "before: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 -E 'firstInstallTime|lastUpdateTime' | tr -s ' ')"
+    adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -E "firstInstallTime|lastUpdateTime" | sed 's/^ */before /'
+
+    # dumpsys reports whole seconds, so two installs inside the same second look identical. A pause
+    # longer than that is what makes lastUpdateTime a measurement instead of a coincidence.
+    sleep 3
+    echo "--- new build over the installed copy, no uninstall"
+    adb install -r -t --user 0 artifacts/app-debug.apk 2>&1
+    echo "updated version: $(adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -m1 versionCode)"
+    adb shell dumpsys package "$PACKAGE_ID" 2>/dev/null | grep -E "firstInstallTime|lastUpdateTime" | sed 's/^ */after /'
+  } > "$REAL_UPDATE_OUT" 2>&1 || true
+  cat "$REAL_UPDATE_OUT"
+
+  # The verdict: the previous build installed and the new one installed over it, both answered
+  # "Success"; the versionCode this run built is now the installed one; and the platform's own
+  # firstInstallTime did not move while lastUpdateTime did - the definition of an in-place update.
+  if [ "$(grep -c '^Success$' "$REAL_UPDATE_OUT")" -lt 2 ]; then
+    echo "the in-place update did not succeed twice"
+    real_update_status=1
+  fi
+  grep -q "^updated version:.*versionCode=2003" "$REAL_UPDATE_OUT" \
+    || { echo "the updated build is not the versionCode this run built"; real_update_status=1; }
+  before_first=$(grep -m1 "^before .*firstInstallTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
+  after_first=$(grep -m1 "^after .*firstInstallTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
+  before_update=$(grep -m1 "^before .*lastUpdateTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
+  after_update=$(grep -m1 "^after .*lastUpdateTime" "$REAL_UPDATE_OUT" | tr -s ' ' | cut -d' ' -f3-)
+  if [ -z "$before_first" ] || [ -z "$after_first" ]; then
+    echo "the platform did not report firstInstallTime; an uninstall cannot be ruled out"
+    real_update_status=1
+  elif [ "$before_first" != "$after_first" ]; then
+    echo "firstInstallTime moved ($before_first -> $after_first): the copy was replaced, not updated"
+    real_update_status=1
+  fi
+  if [ -z "$after_update" ] || [ "$before_update" = "$after_update" ]; then
+    echo "lastUpdateTime did not move; the second install did not replace the first"
+    real_update_status=1
+  fi
+  echo "in-place: versionCode $(( $(grep -m1 '^existing version:' "$REAL_UPDATE_OUT" | grep -o '[0-9]\{4\}') )) -> $(grep -m1 '^updated version:' "$REAL_UPDATE_OUT" | grep -o '[0-9]\{4\}') firstInstallTime unchanged=$([ "$before_first" = "$after_first" ] && echo yes || echo no)"
+  echo "Real in-place update: verdict=$real_update_status"
+else
+  echo "the previously released build was not staged; the in-place update is NOT TESTED in this run"
+  real_update_status=1
+fi
+
 if [ "$deep_status" -ne 0 ] || [ "$cold_status" -ne 0 ] || [ "$update_status" -ne 0 ] || [ "$webview_status" -ne 0 ] || [ "$legacy_status" -ne 0 ] || [ "$real_update_status" -ne 0 ]; then
   echo "Deep gate failure: deep-suite=$deep_status cold-restart=$cold_status update-flow=$update_status webview-signin=$webview_status legacy-update=$legacy_status real-update=$real_update_status"
   exit 1
