@@ -46,23 +46,6 @@ android {
     }
 
     buildTypes {
-        // The APK this project has been handing out as "2.0.2" - the one in Drive and in the
-        // repository's own releases before build-2002 - identified itself as
-        // com.clonehub.advanced.debug. Android refuses to update a different package name, and it
-        // refuses to update a package signed with another key either, so that artifact could never
-        // be updated in place: the user had to uninstall first. This flavour reproduces it exactly
-        // (same applicationId, same default debug key, same versionCode) so the migration can be
-        // tested instead of described.
-        legacyDebug {
-            initWith debug
-            applicationIdSuffix ".debug"
-            versionCode 2001
-            versionName "2.0.1"
-            // The key that artifact carried was a per-machine Gradle debug key, so this flavour
-            // signs with Gradle's default as well - on purpose, to reproduce the failure.
-            signingConfig null
-        }
-
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -72,7 +55,8 @@ android {
             // Keep the tested APK's package identical to the installable main app.
             // The bundled VM uses legacy JNI references in virtual agent processes.
             debuggable false
-            // One key for every machine, so a build can update the previous build.
+            // One key for every machine, so a build can update the previous build. (The legacy
+            // artifact that must not be updatable is built by :legacy-app, which uses its own key.)
             if (hasUpdateKeystore) {
                 signingConfig signingConfigs.update
             }

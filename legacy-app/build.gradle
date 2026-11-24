@@ -1,0 +1,43 @@
+// The artifact this project handed out before build-2002: package com.clonehub.advanced.debug,
+// versionCode 2001, signed with a per-machine Gradle debug key.
+//
+// It exists so the update problem can be *measured*. Android refuses to install com.clonehub.pro over
+// it ("App not installed"), and the only fix available to a user who already has it is to uninstall it
+// once. LegacyUpdateMigrationTest installs this APK for real, then measures each case.
+//
+// Deliberately a separate module with one activity and no dependency on :app: it must be a genuinely
+// different app, and building it must not change how :app is built or named.
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.clonehub.advanced.legacy'
+    compileSdk 35
+    buildToolsVersion "35.0.0"
+
+    defaultConfig {
+        applicationId "com.clonehub.advanced.debug"
+        minSdk 24
+        targetSdk 35
+        versionCode 2001
+        versionName "2.0.1"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            // Gradle's own debug keystore, on purpose: that is what the old artifact carried, and a
+            // shared key would quietly remove the very mismatch the gate is meant to reproduce.
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+}
