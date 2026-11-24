@@ -1107,3 +1107,110 @@ The container's account layer is inside the sealed runtime (`assets/oqd.apk`). I
 Android's `IAccountManager`), and those methods carry **no bytecode in this dex**, so the behaviour that
 answers a clone's account query is not in the readable part of the runtime. Patching it by guesswork
 would be exactly the assumption this project does not ship.
+
+## 31. The update question, answered on a device instead of argued
+
+The user's report was: installing a newer APK over an older one answers **"App not installed"**, and it
+works only after deleting the app. Three separate causes exist, and all three are now measured rather than
+reasoned about. Everything below is a line in CI evidence, not a description of the code.
+
+### 31.1 Two packages are two apps (the build the user had)
+
+The artifact installed before build-2002 is `com.clonehub.advanced.debug` (versionCode 2001, certificate
+sha256 `33d31064…`), built on a developer machine with Gradle's per-machine debug key. Every build from this
+project is `com.clonehub.pro` (certificate `e2f0843c…`). Android answers a different `applicationId` exactly
+as it answers a different key: it refuses, and no setting changes either.
+
+### 31.2 The rule, measured with two builds that differ only in key
+
+`migrate-app` compiles one package (`com.clonehub.pro.migrate`), one versionCode (3001), twice: `older`
+signed with a per-machine key, `newer` signed with the committed key. The gate installs them by streaming
+from the host — `adb install`, the same path a store uses — and keeps the installer's own words
+(run `45460542979`, `evidence/legacy-update.txt`):
+
+```
+--- case=install-older-key
+Performing Streamed Install
+Success
+--- case=new-over-old-same-package-different-key
+adb: failed to install artifacts/migrate-newer.apk: Failure [INSTALL_FAILED_UPDATE_INCOMPATIBLE:
+Existing package com.clonehub.pro.migrate signatures do not match newer version; ignoring!]
+--- case=install-new-key-on-empty
+Success
+--- case=in-place-update-same-key
+Success
+```
+
+Two earlier runs of the same cases reported nothing at all, and the reason was worth keeping: the cases
+lived inside instrumentation, and `UiDevice.executeShellCommand` runs as the **test app's uid**, so `pm
+install` was refused before it reached anybody and returned an empty string (runs `45440731787`,
+`45442678874`). Moving them into the gate shell was not enough — `pm install /data/local/tmp/...` is still
+refused on Android 14, in the installer's words "Can't open file" (run `45444458598`), because the installer
+may not open an app-supplied file from that directory. Streaming from the host is what works.
+
+### 31.3 The update the user actually performs: this app, over the previous release
+
+Run `45460542979`, `evidence/real-update.txt`:
+
+```
+--- installed previously released build        (com.clonehub.pro, the published build-2002)
+Success
+existing version:     versionCode=2002 …
+before lastUpdateTime=2026-11-24 18:37:19
+before firstInstallTime=2026-11-24 18:37:19
+--- new build over the installed copy, no uninstall
+Success
+updated version:     versionCode=2003 …
+after lastUpdateTime=2026-11-24 18:37:23
+after firstInstallTime=2026-11-24 18:37:19
+```
+
+`firstInstallTime` did not move, `lastUpdateTime` did, and the versionCode went from 2002 to 2003 with no
+uninstall anywhere in the case. That is the package manager's own record of a replacement, and it is what
+makes "the update installs in place" a measurement instead of a promise.
+
+Two honest notes on how this case reached that state. Data survival was first probed with `run-as` and the
+device answered "package not debuggable: com.clonehub.pro" (run `45454891911`) — correct for a release
+build, so the proof moved to the platform's timestamps. And the case itself, sitting above the other suites,
+uninstalled the app and destroyed the clone the deep suite had created, which made cold-restart fail with
+"Cloned fixture was not persisted in SpaceManager" (run `45457730151`). That was a real failure caused by
+test order; the case now runs last.
+
+### 31.4 What the app itself says
+
+The update screen's migration panel is built from the measurement above, not from a story about package
+names: this build's package, the fact that a same-package same-key build replaces in place with clones and
+data kept, and the different-key refusal quoted verbatim. Live on API 34 (run `45460542979`,
+`evidence/update-logcat.txt`): `UPDATE_SCREEN migration_panel package=com.clonehub.pro`, panel rendered with
+1001 characters, and `UpdateFlowInstrumentedTest` (6 tests, OK) asserts the rendered panel names this
+package, states the in-place case and quotes `INSTALL_FAILED_UPDATE_INCOMPATIBLE`.
+
+That test earned its place immediately: on its first run (API 34, run `45449308614`) it failed with "The
+migration panel is not visible expected:<0> but was:<8>". The panel was only built inside `showOffer()`,
+which runs after the release channel answers — so a phone with no network, exactly the situation where a
+user is looking at "App not installed", got no explanation at all. The panel now renders in `onCreate`,
+before any network work.
+
+### 31.5 The published build this section is measured against
+
+`latest-verified` and `verified-build-2003`: "Clone Hub Pro 2.0.3, build-2003", `com.clonehub.pro`
+versionCode **2003** versionName **2.0.3**, 7,940,358 bytes, sha256 `104f7d53…efef3514`, signing
+certificate sha256 `e2f0843c8f5cc9e8dc67a7af860815d6` — the same committed key as build-2002, read back out
+of the published file. Gates on the source commit `8a49d0d`: strict E2E `45460542545`, deep
+`45460542979`, API matrix 27/28/30/31/34/35 `45460543348`, real-app smoke `45460542618` — all success.
+
+The API matrix had been red on API 28 for one reason, and it was in the harness, not the app: the emulator
+went offline mid-run and every later command failed with an unrelated exit code, while the retry rule read
+the pinned reference app's (correct and expected) `INSTALL_FAILED_OLDER_SDK` line first and filed the level
+as a real failure (run `45446120669`). adb calls in the gate now record a lost device as evidence, and the
+retry rule checks that evidence before the reference-app exemption.
+
+### 31.6 Still NOT TESTED on the update path
+
+- Installing build-2003 **through the app's own updater on a physical phone** end to end: download from the
+  release, digest check, FileProvider hand-off, system installer dialog, user confirmation. The gate proves
+  every ingredient and the install itself; the tap-through on real hardware is not covered.
+- An in-place update over the **pre-2002 package** (`com.clonehub.advanced.debug`). It is impossible by
+  definition — that is §31.1 — and no gate can make it possible; the one-time uninstall is the migration.
+- Downgrades, and updates that cross an `INSTALL_FAILED_VERSION_DOWNGRADE` boundary.
+- OEM installer UIs (MIUI, One UI, ColorOS) and the "unknown sources" prompt on a real phone.
