@@ -1194,10 +1194,12 @@ before any network work.
 ### 31.5 The published build this section is measured against
 
 `latest-verified` and `verified-build-2003`: "Clone Hub Pro 2.0.3, build-2003", `com.clonehub.pro`
-versionCode **2003** versionName **2.0.3**, 7,940,358 bytes, sha256 `104f7d53…efef3514`, signing
+versionCode **2003** versionName **2.0.3**, 7,940,358 bytes, sha256 `3486e69e…12405197` (run
+`45464516214`; an earlier publish of the same code was `104f7d53…`), signing
 certificate sha256 `e2f0843c8f5cc9e8dc67a7af860815d6` — the same committed key as build-2002, read back out
-of the published file. Gates on the source commit `8a49d0d`: strict E2E `45460542545`, deep
-`45460542979`, API matrix 27/28/30/31/34/35 `45460543348`, real-app smoke `45460542618` — all success.
+of the published file. Gates on the source commit `eaffd45`: strict E2E `45463409307`, deep
+`45463409282`; on `8a49d0d`, whose app code is identical: API matrix 27/28/30/31/34/35 `45460543348` and
+real-app smoke `45460542618` — all success.
 
 The API matrix had been red on API 28 for one reason, and it was in the harness, not the app: the emulator
 went offline mid-run and every later command failed with an unrelated exit code, while the retry rule read
