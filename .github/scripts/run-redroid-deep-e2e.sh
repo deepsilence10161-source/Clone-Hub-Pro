@@ -106,7 +106,10 @@ run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 # runs as the test app's own uid, so `pm install` is refused and returns an empty answer (runs
 # 45440731787, 45442678874 - the files were staged correctly and every case still came back blank). The
 # gate shell is the uid Android allows to install, which is also the only place the installer's own words
-# are visible.
+# are visible. `pm install <path>` is still refused there on Android 14: the installer may not open an
+# app-supplied file under /data/local/tmp and says so plainly - "Can't open file:
+# /data/local/tmp/legacy-update/migrate-older.apk", run 45444458598. So the APK is streamed from the host,
+# which is what `adb install` does and what every store does.
 #
 # The two APKs are one package, one versionCode, two keys: `migrate-older` carries Gradle's per-machine
 # debug key (the build a user already has), `migrate-newer` carries the committed key (the build being
@@ -118,11 +121,11 @@ legacy_status=0
   adb shell pm uninstall "$LEGACY_PKG" > /dev/null 2>&1 || true
 
   echo "--- case=install-older-key"
-  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-older.apk 2>&1
+  adb install -r -t --user 0 artifacts/migrate-older.apk 2>&1
   adb shell pm list packages "$LEGACY_PKG" 2>&1
 
   echo "--- case=new-over-old-same-package-different-key"
-  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-newer.apk 2>&1
+  adb install -r -t --user 0 artifacts/migrate-newer.apk 2>&1
   adb shell dumpsys package "$LEGACY_PKG" 2>/dev/null | grep -m1 -E "signatures=|Signature" || true
 
   echo "--- case=remove-old-key-build"
@@ -130,11 +133,11 @@ legacy_status=0
   adb shell pm list packages "$LEGACY_PKG" 2>&1
 
   echo "--- case=install-new-key-on-empty"
-  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-newer.apk 2>&1
+  adb install -r -t --user 0 artifacts/migrate-newer.apk 2>&1
   adb shell dumpsys package "$LEGACY_PKG" 2>/dev/null | grep -m1 -E "signatures=|Signature" || true
 
   echo "--- case=in-place-update-same-key"
-  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-newer.apk 2>&1
+  adb install -r -t --user 0 artifacts/migrate-newer.apk 2>&1
   adb shell pm list packages "$LEGACY_PKG" 2>&1
 } > "$OUT/legacy-update.txt" 2>&1 || true
 cat "$OUT/legacy-update.txt"
