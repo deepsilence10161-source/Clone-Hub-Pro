@@ -92,7 +92,12 @@ class LegacyUpdateMigrationTest {
     private fun install(apkName: String): String {
         val path = "$STAGED_DIR/$apkName"
         val exists = device.executeShellCommand("ls -l $path 2>/dev/null").contains(apkName)
-        if (!exists) return "MISSING($path)"
+        if (!exists) {
+            // Reported as its own case rather than an empty result: an empty verdict once looked like a
+            // silent refusal from the installer when the file had simply never been staged.
+            Log.i(TAG, "LEGACY_UPDATE_GATE case=staged-file-missing apk=$path")
+            return "MISSING($path)"
+        }
         val output = device.executeShellCommand(
             "pm install -r -t --user 0 $path 2>&1; echo EXIT=$?"
         ).trim()

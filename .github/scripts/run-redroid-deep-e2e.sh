@@ -108,9 +108,15 @@ LEGACY_CLASS="com.clonehub.advanced.ui.update.LegacyUpdateMigrationTest"
 legacy_status=0
 if [ -f artifacts/migrate-older.apk ] && [ -f artifacts/migrate-newer.apk ]; then
   adb shell mkdir -p /data/local/tmp/legacy-update
-  adb push artifacts/migrate-older.apk /data/local/tmp/legacy-update/migrate-older.apk > /dev/null
-  adb push artifacts/migrate-newer.apk /data/local/tmp/legacy-update/migrate-newer.apk > /dev/null
+  # The push output is kept: the first attempt discarded it, so a failed push looked exactly like a
+  # successful one and the gate then reported four empty results (run 45440731787).
+  adb push artifacts/migrate-older.apk /data/local/tmp/legacy-update/migrate-older.apk \
+    > "$OUT/legacy-push.txt" 2>&1 || true
+  adb push artifacts/migrate-newer.apk /data/local/tmp/legacy-update/migrate-newer.apk \
+    >> "$OUT/legacy-push.txt" 2>&1 || true
   adb shell chmod 644 /data/local/tmp/legacy-update/*.apk || true
+  adb shell ls -l /data/local/tmp/legacy-update >> "$OUT/legacy-push.txt" 2>&1 || true
+  cat "$OUT/legacy-push.txt"
   run_tests legacy-update -e class "$LEGACY_CLASS" || legacy_status=$?
   adb logcat -d -v threadtime | grep "LEGACY_UPDATE_GATE" > "$OUT/legacy-update-logcat.txt" 2>/dev/null || true
   cat "$OUT/legacy-update-logcat.txt" || true
