@@ -60,6 +60,12 @@ class UpdateActivity : AppCompatActivity() {
         supportActionBar?.title = getString(R.string.update_title)
         bindViews()
         showInstalledState()
+        // The migration panel answers "App not installed" and has nothing to do with the release
+        // channel, so it is on screen before any network work starts. Measured on API 34 (run
+        // 45449308614): the panel was only built inside showOffer(), and the gate that reads it found
+        // it GONE - the one answer a user needs when an update is refused was unavailable exactly when
+        // the check could not reach the channel, which is the common case on a phone with no network.
+        showMigrationPanel()
         check(force = false)
     }
 
@@ -146,6 +152,8 @@ class UpdateActivity : AppCompatActivity() {
             tvStatus.visibility = View.VISIBLE
             btnInstall.isEnabled = true
         }
+        // The panel is already on screen from onCreate; refreshing it here only keeps the wording
+        // tied to the build being offered.
         showMigrationPanel()
         tvNotes.text = info.notes ?: getString(R.string.update_no_notes)
         tvNotes.visibility = View.VISIBLE
