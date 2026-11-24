@@ -29,3 +29,24 @@ if command -v javac >/dev/null 2>&1 && [ -x tools/javac-androidtest.sh ]; then
     echo "precheck: android.jar not cached, skipping the Java compile (CI still compiles it)"
   fi
 fi
+
+# Android resources: an XML parser accepts what aapt2 rejects (an escaped quote inside a <string>, for
+# instance), and the build failed on exactly that. When aapt2 is available, compile the resources for
+# real; otherwise say so instead of passing silently.
+AAPT2_BIN="${AAPT2_BIN:-}"
+if [ -z "$AAPT2_BIN" ]; then
+  AAPT2_BIN="$(command -v aapt2 || true)"
+fi
+if [ -n "$AAPT2_BIN" ] && [ -x "$AAPT2_BIN" ]; then
+  TMP_RES="$(mktemp -d)"
+  if ! "$AAPT2_BIN" compile --dir app/src/main/res -o "$TMP_RES" > "$TMP_RES/out.txt" 2>&1; then
+    cat "$TMP_RES/out.txt"
+    echo "precheck: aapt2 rejected the resources" >&2
+    rm -rf "$TMP_RES"
+    exit 1
+  fi
+  rm -rf "$TMP_RES"
+  echo "aapt2 accepted the resources"
+else
+  echo "precheck: aapt2 not available, resources not compiled (CI compiles them)"
+fi
