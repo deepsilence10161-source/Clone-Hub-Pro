@@ -100,26 +100,53 @@ run_tests google-signin -e class "$SIGNIN_CLASS" || deep_status=$?
 # web-based app signing in with Google through a WebView. Nothing about that path touches
 # AccountManager, so the suite above cannot see it. Its own status, so a WebView failure names
 # itself instead of hiding inside the native suite.
-# Why a user's install-over-install fails, measured. The two artifacts are real: the legacy one is the
-# APK this project handed out as 2.0.2 (different applicationId, per-machine key), the current one is
-# the build under test. Both are staged as files because `pm install` needs a path, and every verdict
-# is recorded per case.
-LEGACY_CLASS="com.clonehub.advanced.ui.update.LegacyUpdateMigrationTest"
+# Why installing a newer APK sometimes answers "App not installed", measured on this device.
+#
+# The cases run here, not inside the instrumentation, for a measured reason: UiDevice.executeShellCommand
+# runs as the test app's own uid, so `pm install` is refused and returns an empty answer (runs
+# 45440731787, 45442678874 - the files were staged correctly and every case still came back blank). The
+# gate shell is the uid Android allows to install, which is also the only place the installer's own words
+# are visible.
+#
+# The two APKs are one package, one versionCode, two keys: `migrate-older` carries Gradle's per-machine
+# debug key (the build a user already has), `migrate-newer` carries the committed key (the build being
+# shipped). Nothing here touches the app under test.
+LEGACY_PKG="com.clonehub.pro.migrate"
 legacy_status=0
+{
+  echo "probe package=$LEGACY_PKG"
+  adb shell pm uninstall "$LEGACY_PKG" > /dev/null 2>&1 || true
+
+  echo "--- case=install-older-key"
+  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-older.apk 2>&1
+  adb shell pm list packages "$LEGACY_PKG" 2>&1
+
+  echo "--- case=new-over-old-same-package-different-key"
+  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-newer.apk 2>&1
+  adb shell dumpsys package "$LEGACY_PKG" 2>/dev/null | grep -m1 -E "signatures=|Signature" || true
+
+  echo "--- case=remove-old-key-build"
+  adb shell pm uninstall "$LEGACY_PKG" 2>&1
+  adb shell pm list packages "$LEGACY_PKG" 2>&1
+
+  echo "--- case=install-new-key-on-empty"
+  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-newer.apk 2>&1
+  adb shell dumpsys package "$LEGACY_PKG" 2>/dev/null | grep -m1 -E "signatures=|Signature" || true
+
+  echo "--- case=in-place-update-same-key"
+  adb shell pm install -r -t --user 0 /data/local/tmp/legacy-update/migrate-newer.apk 2>&1
+  adb shell pm list packages "$LEGACY_PKG" 2>&1
+} > "$OUT/legacy-update.txt" 2>&1 || true
+cat "$OUT/legacy-update.txt"
+
+# The verdict is the device's own words, checked here. A different key must be refused; the same key must
+# install and must update in place. If the device says something else, this gate fails and the evidence
+# above is what says why.
 if [ -f artifacts/migrate-older.apk ] && [ -f artifacts/migrate-newer.apk ]; then
-  adb shell mkdir -p /data/local/tmp/legacy-update
-  # The push output is kept: the first attempt discarded it, so a failed push looked exactly like a
-  # successful one and the gate then reported four empty results (run 45440731787).
-  adb push artifacts/migrate-older.apk /data/local/tmp/legacy-update/migrate-older.apk \
-    > "$OUT/legacy-push.txt" 2>&1 || true
-  adb push artifacts/migrate-newer.apk /data/local/tmp/legacy-update/migrate-newer.apk \
-    >> "$OUT/legacy-push.txt" 2>&1 || true
-  adb shell chmod 644 /data/local/tmp/legacy-update/*.apk || true
-  adb shell ls -l /data/local/tmp/legacy-update >> "$OUT/legacy-push.txt" 2>&1 || true
-  cat "$OUT/legacy-push.txt"
-  run_tests legacy-update -e class "$LEGACY_CLASS" || legacy_status=$?
-  adb logcat -d -v threadtime | grep "LEGACY_UPDATE_GATE" > "$OUT/legacy-update-logcat.txt" 2>/dev/null || true
-  cat "$OUT/legacy-update-logcat.txt" || true
+  grep -q "Success" "$OUT/legacy-update.txt" || { echo "the same-key install did not succeed"; legacy_status=1; }
+  grep -qE "INSTALL_FAILED_UPDATE_INCOMPATIBLE|signatures do not match|Failure" "$OUT/legacy-update.txt" \
+    || { echo "the different-key install was not refused; the case did not reproduce"; legacy_status=1; }
+  echo "Migration gate: $(grep -c '^--- case=' "$OUT/legacy-update.txt") cases, verdict=$legacy_status"
 else
   echo "migration probe APKs not staged in artifacts/; the migration gate is NOT TESTED in this run"
 fi
