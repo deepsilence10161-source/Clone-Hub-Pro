@@ -27,8 +27,35 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# Every command below talks to the device. Some of them sit in `until` loops, where a failing adb call
+# does not stop the loop - it just spins until the job's 40-minute timeout. Measured on API 28, run
+# 45446120669: HomeActivity was started, then every later command answered "device offline" for
+# 20 seconds until something further down failed with an unrelated exit code 224. That is the emulator
+# dying, and the honest record of it is the phrase "device offline" - which is exactly what
+# should-retry-level.sh looks for. The wrapper streams output untouched (screencap is binary) and, when
+# adb answers that the device is gone, records it and stops the level at that point.
+DEVICE_LOST_FLAG="${EVIDENCE_DIR}/device-offline.txt"
+adb() {
+  command adb "$@"
+  local status=$?
+  if [ "$status" -ne 0 ]; then
+    local state
+    state=$(command adb get-state 2>&1 || true)
+    case "$state" in
+      *offline*|*"no devices"*|*"not found"*)
+        echo "adb: the device stopped answering (adb $*)"
+        printf 'device offline: adb %s -> %s\n' "$*" "$state" >> "${EVIDENCE_DIR}/live_test_logcat.txt"
+        printf 'adb %s -> %s\n' "$*" "$state" > "${DEVICE_LOST_FLAG}"
+        ;;
+    esac
+  fi
+  return "$status"
+}
+
+timeout 300 adb wait-for-device
 adb wait-for-device
-until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do
+until [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; do
+  [ -f "${DEVICE_LOST_FLAG}" ] && { echo "device lost while waiting for boot"; exit 70; }
   sleep 2
 done
 adb shell settings put global window_animation_scale 0

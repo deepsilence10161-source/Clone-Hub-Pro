@@ -13,6 +13,16 @@ EVIDENCE_DIR="${1:-evidence}"
 LOG="${EVIDENCE_DIR}/live_test_logcat.txt"
 RESULTS="${EVIDENCE_DIR}/instrumentation-results.txt"
 
+# The device stopped answering mid-run. This is checked before anything else because the levels that
+# lose their emulator leave a half-written evidence directory: measured on API 28, run 45446120669, where
+# HomeActivity was started and every later adb call answered "device offline" until the step died with an
+# unrelated exit code. The old order read the pinned reference app's INSTALL_FAILED_OLDER_SDK line first
+# and answered "not applicable", so a dead platform was filed as a real app failure and never retried.
+if [ -f "${EVIDENCE_DIR}/device-offline.txt" ] && [ -s "${EVIDENCE_DIR}/device-offline.txt" ]; then
+  echo "retry: the device went offline during the run ($(head -n 1 "${EVIDENCE_DIR}/device-offline.txt"))"
+  exit 0
+fi
+
 # A test result exists: the app ran, so a failure here is a real failure.
 if [ -s "${RESULTS}" ] && grep -q "INSTRUMENTATION_STATUS\|OK (\|FAILURES" "${RESULTS}"; then
   echo "no retry: instrumentation produced results (the app was tested)"
